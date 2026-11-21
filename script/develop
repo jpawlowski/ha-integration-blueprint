@@ -2,9 +2,10 @@
 
 # script/develop: Start Home Assistant in development mode
 #
-# Starts Home Assistant with asyncio debug mode enabled, using the config/ directory
-# for configuration. This does not change any log level — those come from the logger:
-# block in config/configuration.yaml. Automatically cleans up accidental package
+# Starts Home Assistant with asyncio debug mode enabled, in the active Home Assistant
+# environment (script/ha-env) and its config directory: config/ for minimum, another one
+# that shares configuration.yaml with it otherwise. This does not change any log level —
+# those come from the logger: block in config/configuration.yaml. Automatically cleans up accidental package
 # installations and sets PYTHONPATH to load the integration from custom_components/.
 #
 # Usage:
@@ -20,12 +21,23 @@ cd "$SCRIPT_DIR/.."
 
 # shellcheck source=script/.lib/output.sh
 source "$SCRIPT_DIR/.lib/output.sh"
+# shellcheck source=script/.lib/download.sh
+source "$SCRIPT_DIR/.lib/download.sh"
+# shellcheck source=script/.lib/ha_version.sh
+source "$SCRIPT_DIR/.lib/ha_version.sh"
+# shellcheck source=script/.lib/ha_envs.sh
+source "$SCRIPT_DIR/.lib/ha_envs.sh"
 
 activate_venv
+ha_envs_notice
+export HA_CONFIG_DIR
+HA_CONFIG_DIR="$(ha_config_dir)"
+CONFIG_PATH="${PWD}/${HA_CONFIG_DIR}"
+HA_RUNNING_VERSION="$(python3 -c 'from homeassistant.const import __version__; print(__version__)')"
 
 # Kill any existing Home Assistant and debugpy processes
 log_header "Cleaning up existing processes"
-if pkill -f "hass --config.*${PWD}/config"; then
+if pkill -f "hass --config ${PWD}/(config|\.local/ha-config/)"; then
     log_info "Stopped existing Home Assistant process"
 fi
 if pkill -f "debugpy.*5678"; then
@@ -42,6 +54,10 @@ if [[ ! -d ${PWD}/config ]]; then
     mkdir -p "${PWD}/config"
     hass --config "${PWD}/config" --script ensure_config
 fi
+if [[ $HA_CONFIG_DIR != config ]]; then
+    ha_envs_prepare_config "$HA_CONFIG_DIR"
+fi
+ha_envs_guard_config "$HA_CONFIG_DIR" "$HA_RUNNING_VERSION"
 
 "$SCRIPT_DIR/setup/seed-http-config"
 "$SCRIPT_DIR/setup/sync-hacs"
@@ -58,10 +74,11 @@ run_hook "develop" "pre"
 export PYTHONPATH="${PWD}${PYTHONPATH:+:${PYTHONPATH}}"
 
 log_header "Starting Home Assistant in development mode"
-log_info "Config directory: ${PWD}/config"
+log_info "Home Assistant: ${HA_RUNNING_VERSION} ($(ha_envs_current_slot || true))"
+log_info "Config directory: ${CONFIG_PATH}"
 log_info "asyncio debug mode: enabled"
 log_separator
 echo ""
 
 # Start Home Assistant
-hass --config "${PWD}/config" --debug
+hass --config "${CONFIG_PATH}" --debug

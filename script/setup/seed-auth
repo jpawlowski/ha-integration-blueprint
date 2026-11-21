@@ -35,7 +35,8 @@ cd "$SCRIPT_DIR/../.."
 # shellcheck source=script/.lib/output.sh
 source "$SCRIPT_DIR/../.lib/output.sh"
 
-TOKEN_FILE="config/.storage/dev_access_token"
+export HA_CONFIG_DIR="${HA_CONFIG_DIR:-$(ha_config_dir)}"
+TOKEN_FILE="$HA_CONFIG_DIR/.storage/dev_access_token"
 
 run_hook "setup/seed-auth" "pre"
 

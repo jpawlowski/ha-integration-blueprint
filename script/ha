@@ -46,6 +46,7 @@ source "$SCRIPT_DIR/.lib/integration.sh"
 export INTEGRATION_DOMAIN
 
 activate_venv
+export HA_CONFIG_DIR="${HA_CONFIG_DIR:-$(ha_config_dir)}"
 
 run_hook "ha" "pre"
 

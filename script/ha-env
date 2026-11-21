@@ -1,0 +1,140 @@
+#!/bin/bash
+
+# script/ha-env: Manage the Home Assistant environments side by side
+#
+# minimum (the hacs.json release) is always installed; latest (newest stable release) and beta (newest
+# pre-release) are added on demand or through HA_ENVS in .devcontainer/.env.local. Tests, script/develop
+# and script/ha follow the active environment; each one other than minimum keeps its own config directory.
+#
+# Usage:
+#   ./script/ha-env list               installed environments, versions, the active one
+#   ./script/ha-env add <slot>         install latest or beta
+#   ./script/ha-env use <slot>         switch the active environment
+#   ./script/ha-env refresh [slot]     move one or every installed environment to its newest version
+#   ./script/ha-env remove <slot>      uninstall latest or beta
+#
+# Examples:
+#   ./script/ha-env add beta && ./script/ha-env use beta
+#   ./script/ha-env refresh
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/.."
+
+# shellcheck source=script/.lib/output.sh
+source "$SCRIPT_DIR/.lib/output.sh"
+# shellcheck source=script/.lib/download.sh
+source "$SCRIPT_DIR/.lib/download.sh"
+# shellcheck source=script/.lib/ha_version.sh
+source "$SCRIPT_DIR/.lib/ha_version.sh"
+# shellcheck source=script/.lib/ha_envs.sh
+source "$SCRIPT_DIR/.lib/ha_envs.sh"
+
+usage() {
+    sed -n '/^# Usage:/,/^$/p' "$0" | sed 's/^# \{0,1\}//'
+    exit 2
+}
+
+ha_running() {
+    pgrep -f "hass --config ${PWD}/(config|\.local/ha-config/)" >/dev/null
+}
+
+# A slot the active Home Assistant runs on must not change under it.
+refuse_while_running() {
+    if [[ $1 == "$(ha_envs_current_slot)" ]] && ha_running; then
+        log_error "Home Assistant is running on $1 — stop it first, then run this again"
+        exit 1
+    fi
+}
+
+require_slot() {
+    case "${1:-}" in
+    minimum | latest | beta) ;;
+    custom) [[ $2 == use ]] || {
+        log_error "custom is HA_VERSION's environment — build it with: HA_VERSION=<version> script/setup/bootstrap"
+        exit 2
+    } ;;
+    *) usage ;;
+    esac
+}
+
+cmd_list() {
+    local slot version active
+    active=$(ha_envs_current_slot)
+    for slot in "${HA_ENVS_SLOTS[@]}" custom; do
+        version=$(ha_envs_version_of "$slot")
+        [[ -n $version || $slot != custom ]] || continue
+        printf '%s %-8s %s\n' "$([[ $slot == "$active" ]] && echo '*' || echo ' ')" "$slot" "${version:-not installed}"
+    done
+    ha_envs_notice
+}
+
+cmd_add() {
+    require_slot "$1" add
+    if [[ -n $(ha_envs_version_of "$1") ]]; then
+        log_info "$1 is installed already — script/ha-env refresh $1 moves it to the newest version"
+        return 0
+    fi
+    use_mise_env
+    ha_envs_refresh "$1"
+    log_step "Switch to it with: script/ha-env use $1"
+}
+
+cmd_use() {
+    require_slot "$1" use
+    if [[ $1 == "$(ha_envs_current_slot)" ]]; then
+        log_info "$1 is active already"
+        return 0
+    fi
+    if ha_running; then
+        log_error "Home Assistant is running — stop it first, then switch"
+        exit 1
+    fi
+    ha_envs_use "$1"
+    log_success "Active: $1 (Home Assistant $(ha_envs_version_of "$1"), config $(ha_config_dir))"
+    log_step "Scripts follow at once; an interactive shell activated earlier needs: source $(ha_envs_root)/bin/activate"
+}
+
+cmd_refresh() {
+    local slots=() slot failed=0
+    if [[ -n ${1:-} ]]; then
+        require_slot "$1" refresh
+        [[ -n $(ha_envs_version_of "$1") ]] || {
+            log_error "$1 is not installed — run: script/ha-env add $1"
+            exit 1
+        }
+        slots=("$1")
+    else
+        mapfile -t slots < <(ha_envs_installed | grep -vx custom)
+    fi
+    for slot in "${slots[@]}"; do
+        refuse_while_running "$slot"
+    done
+    use_mise_env
+    for slot in "${slots[@]}"; do
+        log_header "Home Assistant environment: $slot"
+        ha_envs_refresh "$slot" || failed=1
+    done
+    ha_envs_prune
+    uv cache prune --quiet
+    [[ -n ${1:-} || $failed == 1 ]] || ha_envs_mark_refreshed
+    return "$failed"
+}
+
+cmd_remove() {
+    require_slot "$1" remove
+    ha_envs_remove "$1"
+    ha_envs_prune
+    uv cache prune --quiet
+    log_success "Removed $1"
+}
+
+case "${1:-}" in
+list) cmd_list ;;
+add) cmd_add "${2:-}" ;;
+use) cmd_use "${2:-}" ;;
+refresh) cmd_refresh "${2:-}" ;;
+remove) cmd_remove "${2:-}" ;;
+*) usage ;;
+esac

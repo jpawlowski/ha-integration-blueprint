@@ -9,11 +9,10 @@ integration. `--all` widens them to the whole instance.
 """
 
 import json
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from .client import EXIT_UNREACHABLE, HaError
-from .instance import run_state
+from .instance import CONFIG_DIR, run_state
 from .output import emit_json, emit_pairs, emit_table
 
 if TYPE_CHECKING:
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 
     from .client import HaClient
 
-META_FILE = Path("config/.storage/dev_access_token.json")
+META_FILE = CONFIG_DIR / ".storage" / "dev_access_token.json"
 
 LOG_LEVELS = ("debug", "info", "warning", "error", "critical")
 
@@ -421,5 +420,5 @@ async def cmd_token(client: HaClient, args: argparse.Namespace) -> int:
     del client, args
     if not META_FILE.is_file():
         raise HaError("no development token — run ./script/develop")
-    emit_pairs(json.loads(META_FILE.read_text(encoding="utf-8")) | {"token_file": "config/.storage/dev_access_token"})
+    emit_pairs(json.loads(META_FILE.read_text(encoding="utf-8")) | {"token_file": str(META_FILE.with_suffix(""))})
     return 0

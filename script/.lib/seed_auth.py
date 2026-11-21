@@ -51,7 +51,7 @@ EXIT_HA_RUNNING = 12
 EXIT_REVOKED = 13
 EXIT_NOTHING_TO_REVOKE = 14
 
-CONFIG_DIR = Path("config")
+CONFIG_DIR = Path(os.environ.get("HA_CONFIG_DIR", "config"))
 STORAGE_DIR = CONFIG_DIR / ".storage"
 AUTH_STORE = STORAGE_DIR / "auth"
 TOKEN_FILE = STORAGE_DIR / "dev_access_token"

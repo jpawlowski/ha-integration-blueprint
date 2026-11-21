@@ -15,9 +15,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 import fcntl
 import json
+import os
 from pathlib import Path
 
-LOCK_FILE = Path("config/.ha_run.lock")
+# script/ha exports the config directory of the active Home Assistant environment.
+CONFIG_DIR = Path(os.environ.get("HA_CONFIG_DIR", "config"))
+LOCK_FILE = CONFIG_DIR / ".ha_run.lock"
 
 
 @dataclass(frozen=True)

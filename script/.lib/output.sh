@@ -120,10 +120,24 @@ resolve_venv_path() {
     return 1
 }
 
+# Print the config directory of the active Home Assistant environment, relative to the repository root:
+# config/ for minimum (and for a venv without environments), its own directory for every other one.
+ha_config_dir() {
+    local venv_path slot=""
+    if venv_path="$(resolve_venv_path 2>/dev/null)" && [[ -L $venv_path/current ]]; then
+        slot="$(basename "$(readlink "$venv_path/current")")"
+    fi
+    case "$slot" in
+    "" | minimum) printf 'config' ;;
+    *) printf '.local/ha-config/%s' "$slot" ;;
+    esac
+}
+
 # Activate the Home Assistant virtual environment if not already active.
-# Silently skips when VIRTUAL_ENV is already set (e.g. in CI or nested calls).
+# An activation that still names an environment `script/ha-env use` has switched away from is renewed.
 activate_venv() {
     if [[ -n ${VIRTUAL_ENV:-} ]]; then
+        _renew_stale_venv
         return 0
     fi
     local venv_path
@@ -140,9 +154,23 @@ activate_venv() {
     source "$venv_path/bin/activate"
 }
 
+# A shell activated before `script/ha-env use` keeps the old version's path, because activate resolves the link.
+_renew_stale_venv() {
+    local venv_path root active
+    venv_path="$(resolve_venv_path 2>/dev/null)" || return 0
+    [[ -L $venv_path/current ]] || return 0
+    root="$(realpath "$venv_path")"
+    active="$(realpath "$venv_path/current")"
+    if [[ $(realpath -m "$VIRTUAL_ENV") == "$root"/versions/* && $(realpath -m "$VIRTUAL_ENV") != "$active" ]]; then
+        # shellcheck source=/dev/null
+        source "$venv_path/bin/activate"
+    fi
+}
+
 # Like activate_venv, for a script that needs the venv only for optional extras: carries on without one.
 activate_venv_if_present() {
     if [[ -n ${VIRTUAL_ENV:-} ]]; then
+        _renew_stale_venv
         return 0
     fi
     local venv_path
