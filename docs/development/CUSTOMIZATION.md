@@ -261,6 +261,26 @@ cp .devcontainer/.env.local.example .devcontainer/.env.local
 
 `.env.local` is gitignored and listed in `.templatesyncignore` — it is never committed and never touched by template sync.
 
+### Testing against a newer Home Assistant
+
+`hacs.json` is the minimum your users need, and by default the dev environment installs exactly that, so tests prove the
+minimum works. To develop and test on a newer release without raising it, set `HA_VERSION` for your environment only:
+
+```bash
+HA_VERSION=latest script/setup/bootstrap   # or beta, 2026.12, an exact version
+script/test
+script/setup/bootstrap                     # back to the minimum
+```
+
+Bootstrap rebuilds the virtual environment whenever the version changes, and installs the `pytest-homeassistant`
+release of that version, so the test fixtures always match the Home Assistant they run against; `requirements_test.txt`
+and `hacs.json` stay as they are. To keep the newer version across container rebuilds, put `HA_VERSION` into
+`.devcontainer/.env.local`. `script/develop` then runs that version too.
+
+Code written this way must still run on the minimum: use only what the minimum version offers, and let the newer one
+show you the deprecations coming. The _Newer Home Assistant_ workflow does the same in CI — against the newest stable
+and beta release, whenever one is newer than the pin, without blocking a pull request.
+
 ---
 
 ## VS Code Settings Overrides
