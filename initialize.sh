@@ -138,6 +138,7 @@ NC='\033[0m' # No Color
 # Statistics tracking
 declare -A file_stats
 total_replacements=0
+format_summary=""
 
 # Print colored output
 print_color() {
@@ -1306,6 +1307,51 @@ ROLE_BLOCK_EOF
     print_success "Rewrote the repository-role section in $file"
 }
 
+# Reformat Python and Markdown, whose wrapping and table widths shift with the length of the substituted names. Ruff
+# runs directly: script/python's clean step would uninstall any package named like a custom_components/ directory.
+format_after_rename() {
+    if $DRY_RUN; then
+        print_dryrun "Would reformat Python and Markdown files"
+        return 0
+    fi
+
+    local venv="" bootstrap=""
+    # shellcheck source=script/.lib/output.sh
+    venv=$(source ./script/.lib/output.sh && resolve_venv_path 2> /dev/null) || venv=""
+    # shellcheck source=script/.lib/output.sh
+    bootstrap=$(source ./script/.lib/output.sh && run_state bootstrap) || bootstrap=""
+    if [[ -z $venv || $bootstrap == "running" || ! -x node_modules/.bin/prettier
+        || ! -x node_modules/.bin/markdownlint-cli2 ]]; then
+        format_summary="skipped, the development environment is not set up yet - run script/lint after script/setup/bootstrap"
+        print_warning "Formatting $format_summary"
+        return 0
+    fi
+
+    print_color "$BLUE" "Reformatting files after the renames..."
+    local paths=() path output failed=()
+    for path in custom_components tests script/.lib script/tests; do
+        [[ -d $path ]] && paths+=("$path")
+    done
+    # shellcheck source=/dev/null
+    if ! output=$(source "$venv/bin/activate" && ruff format --quiet "${paths[@]}" \
+        && ruff check --fix --quiet "${paths[@]}" 2>&1); then
+        failed+=("Python")
+        printf '%s\n' "$output" | tail -n 5
+    fi
+    if ! output=$(./script/markdown 2>&1); then
+        failed+=("Markdown")
+        printf '%s\n' "$output" | tail -n 5
+    fi
+
+    if ((${#failed[@]})); then
+        format_summary="incomplete for ${failed[*]} - run script/lint"
+        print_warning "Formatting $format_summary"
+    else
+        format_summary="Python and Markdown reformatted, not counted in the list above"
+        print_success "Formatted Python and Markdown"
+    fi
+}
+
 # Display statistics
 show_statistics() {
     local header_text="Customization Complete - Statistics"
@@ -1328,6 +1374,10 @@ show_statistics() {
     done
 
     echo ""
+    if [[ -n $format_summary ]]; then
+        echo "Formatting: $format_summary"
+        echo ""
+    fi
 
     if $DRY_RUN; then
         print_color "$MAGENTA" "🔮 DRY-RUN MODE: No files were actually modified."
@@ -1705,6 +1755,7 @@ main() {
         # shellcheck disable=SC2086 # One argument per category
         write_categories "custom_components/$domain/manifest.json" $categories
     fi
+    format_after_rename
 
     # Show statistics
     local stats_prefix=""
