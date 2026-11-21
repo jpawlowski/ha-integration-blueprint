@@ -56,7 +56,8 @@ jobs:
         run: |
           source script/.lib/output.sh
           source script/.lib/ha_version.sh
-          version=$(bash script/.lib/ha_version.sh)
+          version=""
+          target_ha_version version
           pinned=$(ha_test_pin_version)
           echo "HA_VERSION=${version}" >> "${GITHUB_OUTPUT}"
           # A beta older than the pin, as between two release trains, is skipped.
