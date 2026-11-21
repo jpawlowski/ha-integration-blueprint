@@ -4,6 +4,27 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `pytest-homeassistant` — 2026-11-21
+
+**Check:** `! grep -rq pytest_homeassistant_custom_component tests/ && script/ha-version-sync >/dev/null 2>&1`
+
+The sync replaces `pytest-homeassistant-custom-component` in `requirements_test.txt` with Home Assistant's own
+`pytest-homeassistant`, which starts at 2026.11. `tests/` and `hacs.json` are not synced, so until this is done
+`script/test` fails on the imports and `script/ha-version-sync` on the release train:
+
+1. Raise `homeassistant` in `hacs.json` to `2026.11.0`. Users on an older Home Assistant get no further updates, so
+   it is a breaking change ([`ha-breaking-changes`](../../ha-breaking-changes/SKILL.md)).
+2. Replace `pytest_homeassistant_custom_component` with `pytest_homeassistant` in every import under `tests/`.
+3. Delete the autouse `auto_enable_custom_integrations` fixture from `tests/conftest.py` — the new `hass` fixture
+   loads custom integrations itself.
+4. Move recorded payloads to `tests/fixtures/`: `load_fixture()` now resolves there, no longer next to the test file.
+5. Run `script/setup/bootstrap`, which rebuilds the virtual environment for the new Home Assistant version, then
+   `script/test`.
+
+To stay below 2026.11 instead, record this step as skipped and keep the old pin as
+[`CUSTOMIZATION.md`](../../../../docs/development/CUSTOMIZATION.md#staying-on-an-older-home-assistant-version)
+describes.
+
 ## `upstream-rename` — 2026-11-02
 
 **Check:** `grep -q 'jpawlowski/ha-integration-blueprint' .github/workflows/template-sync.yml`
