@@ -38,7 +38,8 @@ The sync replaces `pytest-homeassistant-custom-component` in `requirements_test.
 `script/test` fails on the imports and `script/ha-version-sync` on the release train:
 
 1. Raise `homeassistant` in `hacs.json` to `2026.11.0`. Users on an older Home Assistant get no further updates, so
-   it is a breaking change ([`ha-breaking-changes`](../../ha-breaking-changes/SKILL.md)).
+   name the new minimum in your changelog; it is not a breaking change on its own
+   ([`ha-breaking-changes`](../../ha-breaking-changes/SKILL.md#1-recognise-it)).
 2. Replace `pytest_homeassistant_custom_component` with `pytest_homeassistant` in every import under `tests/`.
 3. Delete the autouse `auto_enable_custom_integrations` fixture from `tests/conftest.py` — the new `hass` fixture
    loads custom integrations itself.
