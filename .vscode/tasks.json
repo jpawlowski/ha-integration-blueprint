@@ -14,6 +14,60 @@
       "isBackground": true
     },
     {
+      "label": "Run Home Assistant (Latest)",
+      "type": "shell",
+      "command": "./script/develop --env latest",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Run Home Assistant (Beta)",
+      "type": "shell",
+      "command": "./script/develop --env beta",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Switch Home Assistant Environment",
+      "type": "shell",
+      "command": "./script/ha-env use ${input:haEnvironment}",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Add Home Assistant Environment",
+      "type": "shell",
+      "command": "./script/ha-env add ${input:haOptionalEnvironment}",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Refresh Home Assistant Environments",
+      "type": "shell",
+      "command": "./script/ha-env refresh",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Run Tests",
       "type": "shell",
       "command": "./script/test -v",
@@ -161,6 +215,22 @@
         "panel": "new"
       },
       "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "haEnvironment",
+      "type": "pickString",
+      "description": "Home Assistant environment to switch to",
+      "options": ["minimum", "latest", "beta"],
+      "default": "minimum"
+    },
+    {
+      "id": "haOptionalEnvironment",
+      "type": "pickString",
+      "description": "Home Assistant environment to install",
+      "options": ["latest", "beta"],
+      "default": "beta"
     }
   ]
 }

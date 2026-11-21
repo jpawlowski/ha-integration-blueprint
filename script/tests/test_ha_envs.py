@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+import shutil
 import subprocess
 
 import pytest
@@ -192,3 +193,98 @@ def test_notice_names_a_stale_refresh_and_a_minimum_off_the_hacs_release(workdir
 
     assert "last refreshed over 7 days ago" in output
     assert "hacs.json asks for 2026.12" in output
+
+
+def _config(workdir: Path, ran: str) -> None:
+    """A config/ last run by Home Assistant `ran`, with a little state of its own."""
+    (workdir / "config" / ".storage").mkdir(parents=True)
+    (workdir / "config" / ".storage" / "core.config_entries").write_text("{}\n", encoding="utf-8")
+    (workdir / "config" / ".HA_VERSION").write_text(f"{ran}\n", encoding="utf-8")
+    (workdir / "config" / "configuration.yaml").write_text("default_config:\n", encoding="utf-8")
+
+
+@pytest.mark.unit
+def test_a_new_config_dir_shares_files_and_starts_from_the_minimum_state(workdir: Path) -> None:
+    """A newer environment links the shared files and copies config/'s state, which it can migrate forward."""
+    _config(workdir, "2026.11.2")
+    beta = workdir / ".local" / "ha-config" / "beta"
+
+    result = _bash(workdir, f"ha_envs_prepare_config {beta} 2026.12.0b1")
+
+    assert result.returncode == 0, result.stderr
+    assert (beta / "configuration.yaml").is_symlink()
+    assert (beta / "configuration.yaml").read_text(encoding="utf-8") == "default_config:\n"
+    assert not (beta / ".storage").is_symlink()
+    assert (beta / ".storage" / "core.config_entries").is_file()
+
+
+@pytest.mark.unit
+def test_an_older_environment_starts_with_empty_state(workdir: Path) -> None:
+    """config/'s state is never handed to a Home Assistant older than the one that last wrote it."""
+    _config(workdir, "2026.11.2")
+    beta = workdir / ".local" / "ha-config" / "beta"
+
+    result = _bash(workdir, f"ha_envs_prepare_config {beta} 2026.11.0b6")
+
+    assert result.returncode == 0, result.stderr
+    assert (beta / "configuration.yaml").is_symlink()
+    assert not (beta / ".storage").exists()
+
+
+@pytest.mark.unit
+def test_an_existing_config_dir_keeps_its_own_state(workdir: Path) -> None:
+    """Only a new config directory starts from config/; one with state of its own is left alone."""
+    _config(workdir, "2026.11.2")
+    beta = workdir / ".local" / "ha-config" / "beta"
+    (beta / ".storage").mkdir(parents=True)
+    (beta / ".storage" / "own").write_text("mine\n", encoding="utf-8")
+
+    _bash(workdir, f"ha_envs_prepare_config {beta} 2026.12.0b1")
+
+    assert sorted(path.name for path in (beta / ".storage").iterdir()) == ["own"]
+
+
+@pytest.mark.unit
+def test_the_guard_moves_aside_state_a_newer_version_wrote(workdir: Path) -> None:
+    """State migrated by a newer Home Assistant is kept as a backup instead of breaking an older start."""
+    _config(workdir, "2026.12.0")
+    (workdir / "config" / "home-assistant_v2.db").write_text("db\n", encoding="utf-8")
+
+    result = _bash(workdir, "ha_envs_guard_config config 2026.11.2; ha_envs_guard_config config 2026.12.0")
+
+    assert result.returncode == 0, result.stderr
+    assert sorted(path.name for path in (workdir / "config").iterdir() if ".bak" in path.name) == [
+        ".storage.2026.12.0.bak",
+        "home-assistant_v2.db.2026.12.0.bak",
+    ]
+    assert not (workdir / "config" / ".storage").exists()
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("shell", ["bash", "zsh"])
+def test_the_prompt_names_the_active_environment_and_follows_a_switch(tmp_path: Path, shell: str) -> None:
+    """Before each prompt the hook renews a stale activation and shows the slot and version now active."""
+    if shutil.which(shell) is None:
+        pytest.skip(f"{shell} is not installed")
+    root = tmp_path / "root"
+    for version in ("2026.11.2", "2026.12.0b1"):
+        (root / "versions" / version / "bin").mkdir(parents=True)
+        (root / "versions" / version / ".ha-version").write_text(f"{version}\n", encoding="utf-8")
+        (root / "versions" / version / "bin" / "activate").write_text(
+            f'VIRTUAL_ENV="{root}/versions/{version}"; export VIRTUAL_ENV\n', encoding="utf-8"
+        )
+    (root / "slots").mkdir()
+    (root / "slots" / "minimum").symlink_to("../versions/2026.11.2")
+    (root / "slots" / "beta").symlink_to("../versions/2026.12.0b1")
+    (root / "current").symlink_to("slots/minimum")
+    (root / "bin").symlink_to("current/bin")
+    script = (
+        f"PS1='$ '; source {LIB / 'ha_env_prompt.sh'}; _ha_env_prompt; echo \"$PS1|${{VIRTUAL_ENV##*/}}\"; "
+        f'ln -sfn slots/beta {root}/current; _ha_env_prompt; echo "$PS1|${{VIRTUAL_ENV##*/}}"'
+    )
+    env = {**os.environ, "HA_ENV_ROOT": str(root), "VIRTUAL_ENV": f"{root}/versions/2026.11.2"}
+
+    result = subprocess.run([shell, "-c", script], env=env, capture_output=True, text=True, check=False)
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == ["(ha-minimum 2026.11.2) $ |2026.11.2", "(ha-beta 2026.12.0b1) $ |2026.12.0b1"]

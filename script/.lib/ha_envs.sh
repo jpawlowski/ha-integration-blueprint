@@ -83,7 +83,7 @@ ha_envs_installed() {
 }
 
 ha_envs_create_venv() {
-    uv venv --quiet "$1"
+    uv venv --quiet --prompt "ha-$(basename "$1")" "$1"
 }
 
 # ha_envs_install DIR VERSION — install the project, its tests and Home Assistant VERSION into the venv DIR.
@@ -240,15 +240,31 @@ ha_envs_migrate() {
     hash -r
 }
 
-# Give a slot's own config directory the files it shares with config/; its .storage, database and log stay its own.
+# ha_envs_prepare_config DIR VERSION — give a slot's own config directory the files it shares with config/; its
+# .storage, database and log stay its own. A new one starts from config/'s state when VERSION can migrate it forward.
 ha_envs_prepare_config() {
-    local dir="$1" item
+    local dir="$1" version="$2" item ran
     mkdir -p "$dir"
     for item in configuration.yaml secrets.yaml automations.yaml scripts.yaml scenes.yaml custom_components blueprints www; do
         if [[ -e config/$item && ! -e $dir/$item && ! -L $dir/$item ]]; then
             ln -s "$(realpath --relative-to="$dir" "config/$item")" "$dir/$item"
         fi
     done
+    [[ ! -e $dir/.storage && ! -e $dir/.HA_VERSION && -d config/.storage && -f config/.HA_VERSION ]] || return 0
+    ran=$(<config/.HA_VERSION)
+    if ha_envs_newer "$ran" "$version"; then
+        log_info "$dir starts empty: config/ was last run by Home Assistant $ran, newer than $version"
+        return 0
+    fi
+    log_step "Starting $dir from the state in config/ (Home Assistant $ran)"
+    cp -a config/.storage "$dir/.storage"
+    cp config/.HA_VERSION "$dir/.HA_VERSION"
+}
+
+# ha_envs_newer A B — whether version A is newer than version B.
+ha_envs_newer() {
+    python3 -c 'import sys; from packaging.version import Version; sys.exit(Version(sys.argv[1]) <= Version(sys.argv[2]))' \
+        "$1" "$2"
 }
 
 # ha_envs_guard_config DIR VERSION — move aside what a newer Home Assistant than VERSION migrated in DIR.
@@ -256,8 +272,7 @@ ha_envs_guard_config() {
     local dir="$1" version="$2" ran item
     [[ -f $dir/.HA_VERSION ]] || return 0
     ran=$(<"$dir/.HA_VERSION")
-    python3 -c 'import sys; from packaging.version import Version; sys.exit(Version(sys.argv[1]) <= Version(sys.argv[2]))' \
-        "$ran" "$version" || return 0
+    ha_envs_newer "$ran" "$version" || return 0
     log_warning "$dir was last run by Home Assistant $ran, newer than $version — moving its state aside"
     for item in .storage home-assistant_v2.db home-assistant_v2.db-shm home-assistant_v2.db-wal; do
         [[ -e $dir/$item ]] && mv "$dir/$item" "$dir/$item.$ran.bak"

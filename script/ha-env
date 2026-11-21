@@ -93,7 +93,7 @@ cmd_use() {
     fi
     ha_envs_use "$1"
     log_success "Active: $1 (Home Assistant $(ha_envs_version_of "$1"), config $(ha_config_dir))"
-    log_step "Scripts follow at once; an interactive shell activated earlier needs: source $(ha_envs_root)/bin/activate"
+    log_step "Scripts follow at once, open dev container terminals at their next prompt"
 }
 
 cmd_refresh() {
