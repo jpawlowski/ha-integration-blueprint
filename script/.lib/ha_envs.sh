@@ -71,12 +71,14 @@ ha_envs_create_venv() {
 
 # Print what an environment is built from — its version and the requirements files — so an unchanged one is skipped.
 ha_envs_inputs() {
-    local file
     printf '%s\n' "$1"
-    for file in "${HA_ENVS_REQUIREMENTS[@]}"; do
-        [[ -f $file ]] && sha256sum "$file"
-    done
-    return 0
+    python3 - "${HA_ENVS_REQUIREMENTS[@]}" <<'PY'
+import hashlib, os, sys
+for name in sys.argv[1:]:
+    if os.path.isfile(name):
+        with open(name, "rb") as handle:
+            print(f"{hashlib.sha256(handle.read()).hexdigest()}  {name}")
+PY
 }
 
 # ha_envs_install DIR VERSION — install the project, its tests and Home Assistant VERSION into the venv DIR.
@@ -87,8 +89,7 @@ ha_envs_install() {
     pinned=$(ha_test_pin_version)
     (
         set -euo pipefail
-        # shellcheck source=/dev/null
-        source "$dir/bin/activate"
+        _use_venv "$dir"
         log_header "Installing development dependencies into Home Assistant $version"
         uv pip install --requirement requirements_dev.txt
 
@@ -229,7 +230,7 @@ ha_envs_prune() {
         --output-format json 2>/dev/null | python3 -c '
 import json, os, sys
 homes = set()
-for name in os.listdir(sys.argv[1]):
+for name in os.listdir(sys.argv[1]) if os.path.isdir(sys.argv[1]) else ():
     try:
         cfg = open(os.path.join(sys.argv[1], name, "pyvenv.cfg"), encoding="utf-8").read()
     except OSError:
@@ -250,6 +251,10 @@ ha_envs_migrate() {
     local root
     root="$(ha_venv_preferred_path)"
     [[ -f $root/pyvenv.cfg && ! -L $root/pyvenv.cfg ]] || return 0
+    if ha_running; then
+        log_error "Home Assistant is running from $root — stop it first, then run this again"
+        return 1
+    fi
     log_warning "Moving $root to one environment per Home Assistant version — the old one is rebuilt"
     if declare -F deactivate >/dev/null 2>&1; then
         deactivate
@@ -267,7 +272,7 @@ ha_envs_prepare_config() {
     mkdir -p "$dir"
     for item in configuration.yaml secrets.yaml automations.yaml scripts.yaml scenes.yaml custom_components blueprints www; do
         if [[ -e config/$item && ! -e $dir/$item && ! -L $dir/$item ]]; then
-            ln -s "$(realpath --relative-to="$dir" "config/$item")" "$dir/$item"
+            ln -s "$(python3 -c 'import os, sys; print(os.path.relpath(*sys.argv[1:]))' "config/$item" "$dir")" "$dir/$item"
         fi
     done
     [[ ! -e $dir/.storage && ! -e $dir/.HA_VERSION && -d config/.storage && -f config/.HA_VERSION ]] || return 0

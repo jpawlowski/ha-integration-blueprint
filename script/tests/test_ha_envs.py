@@ -1,5 +1,7 @@
 """Tests for script/.lib/ha_envs.sh, with stubbed version resolution and venv builds."""
 
+import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -25,9 +27,15 @@ ha_envs_install() {
 VERSIONS = {"STUB_MINIMUM": "2026.11.2", "STUB_LATEST": "2026.11.2", "STUB_BETA": "2026.12.0b1"}
 
 
+def _outside_container() -> dict[str, str]:
+    """The environment without what marks a dev container or CI, so the venv root is the test's own."""
+    hidden = {"REMOTE_CONTAINERS", "CODESPACES", "GITHUB_ACTIONS", "VIRTUAL_ENV"}
+    return {k: v for k, v in os.environ.items() if k not in hidden}
+
+
 def _bash(workdir: Path, commands: str, **stubs: str) -> subprocess.CompletedProcess[str]:
     """Run commands with the library and the stubs loaded, in workdir, outside any dev container or CI."""
-    env = {k: v for k, v in os.environ.items() if k not in {"REMOTE_CONTAINERS", "CODESPACES", "GITHUB_ACTIONS"}}
+    env = _outside_container()
     script = "\n".join(
         [
             "set -euo pipefail",
@@ -361,3 +369,100 @@ def test_prune_uninstalls_downloaded_pythons_no_environment_uses(workdir: Path) 
     assert (workdir / "uv-calls").read_text(encoding="utf-8") == (
         f"uv python uninstall --quiet --install-dir {python} cpython-3.16.0-linux\n"
     )
+
+
+@pytest.mark.unit
+def test_prune_survives_downloaded_pythons_without_any_environment(workdir: Path) -> None:
+    """A Python download whose venv never got built is removed instead of aborting the caller."""
+    python = _root(workdir) / "python"
+    (python / "cpython-3.15.2-linux" / "bin").mkdir(parents=True)
+    listing = [{"key": "cpython-3.15.2-linux", "path": f"{python}/cpython-3.15.2-linux/bin/python3"}]
+    stub = f"""uv() {{
+    if [[ $1 == python && $2 == list ]]; then echo '{json.dumps(listing)}'; else echo "uv $*" >>"$PWD/uv-calls"; fi
+}}"""
+
+    result = _bash(workdir, stub + "\nha_envs_prune; echo done")
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.endswith("done\n")
+    assert "cpython-3.15.2-linux" in (workdir / "uv-calls").read_text(encoding="utf-8")
+
+
+@pytest.mark.unit
+def test_inputs_hash_the_requirements_as_sha256sum_does(workdir: Path) -> None:
+    """The format stays the one earlier builds recorded, so no environment is reinstalled for it."""
+    (workdir / "requirements_test.txt").write_text("pytest-homeassistant==2026.11.2\n", encoding="utf-8")
+    digest = hashlib.sha256(b"pytest-homeassistant==2026.11.2\n").hexdigest()
+
+    result = _bash(workdir, "ha_envs_inputs 2026.11.2")
+
+    assert result.stdout == f"2026.11.2\n{digest}  requirements_test.txt\n"
+
+
+@pytest.mark.unit
+def test_migrate_refuses_while_home_assistant_runs_from_the_old_venv(workdir: Path) -> None:
+    """The single venv of the old layout is not cleared under a running instance."""
+    root = _root(workdir)
+    (root / "bin").mkdir(parents=True)
+    (root / "pyvenv.cfg").write_text("home = old\n", encoding="utf-8")
+    (workdir / "config").mkdir()
+
+    with (workdir / "config" / ".ha_run.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        result = _bash(workdir, "ha_envs_migrate")
+
+    assert result.returncode == 1
+    assert (root / "pyvenv.cfg").is_file()
+
+
+def _copy_scripts(workdir: Path, *names: str) -> None:
+    """Copy scripts and the shared library into workdir, so they run against its files."""
+    shutil.copytree(LIB, workdir / "script" / ".lib")
+    for name in names:
+        (workdir / "script" / name).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(LIB.parent / name, workdir / "script" / name)
+
+
+@pytest.mark.unit
+def test_refresh_without_any_environment_points_at_bootstrap(workdir: Path) -> None:
+    """Nothing installed yet is reported, not an unbound-variable error."""
+    _copy_scripts(workdir, "ha-env")
+
+    result = subprocess.run(
+        [str(workdir / "script" / "ha-env"), "refresh"],
+        cwd=workdir,
+        env=_outside_container(),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "script/setup/bootstrap" in result.stderr
+    assert "unbound" not in result.stderr
+
+
+@pytest.mark.unit
+def test_reset_starts_the_active_environment_over_and_leaves_config_alone(workdir: Path) -> None:
+    """With beta active, its own directory is emptied and kept from copying config/'s state again."""
+    _config(workdir, "2026.11.2")
+    _copy_scripts(workdir, "setup/reset")
+    (workdir / "script" / "setup" / "setup").write_text("#!/bin/bash\n", encoding="utf-8")
+    (workdir / "script" / "setup" / "setup").chmod(0o755)
+    assert _bash(workdir, "ha_envs_refresh beta; ha_envs_use beta").returncode == 0
+    beta = workdir / ".local" / "ha-config" / "beta"
+    assert _bash(workdir, f"ha_envs_prepare_config {beta} 2026.12.0b1").returncode == 0
+
+    result = subprocess.run(
+        [str(workdir / "script" / "setup" / "reset"), "--yes"],
+        cwd=workdir,
+        env=_outside_container(),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert [path.name for path in beta.iterdir()] == [".storage"]
+    assert not any((beta / ".storage").iterdir())
+    assert (workdir / "config" / ".storage" / "core.config_entries").is_file()

@@ -106,6 +106,10 @@ cmd_refresh() {
             [[ -n $(ha_envs_version_of "$slot") ]] && slots+=("$slot")
         done
     fi
+    if [[ ${#slots[@]} -eq 0 ]]; then
+        log_error "No Home Assistant environment is installed — run: script/setup/bootstrap"
+        exit 1
+    fi
     if [[ -z $(ha_envs_version_of "${slots[0]}") ]]; then
         log_error "${slots[0]} is not installed — run: script/ha-env add ${slots[0]}"
         exit 1

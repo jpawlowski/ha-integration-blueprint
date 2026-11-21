@@ -16,7 +16,7 @@
     {
       "label": "Run Home Assistant (Environment)",
       "type": "shell",
-      "command": "./script/develop --env ${input:haEnvironment}",
+      "command": "./script/develop --env ${input:haEnvironment} --force",
       "group": "test",
       "presentation": {
         "reveal": "always",

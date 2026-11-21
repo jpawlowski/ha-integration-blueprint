@@ -121,23 +121,35 @@ else
     ACTIVE=$(ha_current_slot)
     [[ -n $ACTIVE && $ACTIVE != custom ]] || ACTIVE=minimum
 fi
-log_header "Home Assistant environment: $BASE_SLOT"
-ha_envs_refresh "$BASE_SLOT" || exit 1
+# A running Home Assistant keeps its environment: neither refreshed nor switched away from, so prune keeps its version.
+RUNNING_SLOT=""
+if ha_running; then
+    RUNNING_SLOT=$(ha_current_slot)
+    ACTIVE=$RUNNING_SLOT
+    log_warning "Home Assistant is running on $RUNNING_SLOT — leaving that environment as it is; stop it and run bootstrap again to update it"
+fi
+refresh_unless_running() {
+    log_header "Home Assistant environment: $1"
+    if [[ $1 == "$RUNNING_SLOT" && -n $(ha_envs_version_of "$1") ]]; then
+        log_info "Skipped: Home Assistant runs on it"
+        return 0
+    fi
+    ha_envs_refresh "$1"
+}
+refresh_unless_running "$BASE_SLOT" || exit 1
 read -ra SLOTS <<<"${HA_ENVS:-}"
 for SLOT in "${SLOTS[@]}"; do
     [[ $SLOT != minimum ]] || continue
-    log_header "Home Assistant environment: $SLOT"
-    ha_envs_refresh "$SLOT" || log_warning "Skipping $SLOT — the other environments are unaffected"
+    refresh_unless_running "$SLOT" || log_warning "Skipping $SLOT — the other environments are unaffected"
 done
 
 [[ -n $(ha_envs_version_of "$ACTIVE") ]] || ACTIVE=minimum
 ha_envs_use "$ACTIVE"
-[[ $ACTIVE == custom ]] || ha_envs_remove custom
+[[ $ACTIVE == custom || -n $RUNNING_SLOT ]] || ha_envs_remove custom
 ha_envs_prune
 log_success "Active Home Assistant environment: $ACTIVE ($(ha_envs_version_of "$ACTIVE"))"
 
-# shellcheck source=/dev/null
-source "$VENV_PATH/bin/activate"
+activate_venv
 
 log_header "Installing Node.js dependencies"
 if command -v npm >/dev/null 2>&1; then

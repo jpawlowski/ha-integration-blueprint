@@ -293,7 +293,10 @@ version its Home Assistant release ships with, so a beta that already needs the 
 - **Prompt:** dev container terminals show the active environment, such as `(ha-beta 2026.12.0b2)`, follow a switch at
   their next prompt, and say who switched when it was not them.
 - **Safety:** `script/ha-env use` and `script/develop --env` refuse to switch while Home Assistant runs, unless you pass
-  `--force`; a refresh never changes the environment a running instance uses.
+  `--force`. The VS Code task passes it, since you start it yourself, like plain `script/develop`. Neither a refresh
+  nor `script/setup/bootstrap` changes the environment a running instance uses.
+- **Reset:** `script/setup/reset` starts the active environment over: `config/` for `minimum`, otherwise its own
+  directory, which then starts empty instead of from `config/`.
 - **Staleness:** `script/ha-env list`, `script/develop` and `script/test` remind you when `latest` or `beta` was last
   refreshed over a week ago — Home Assistant ships a beta a week — or when `minimum` no longer matches `hacs.json`.
 
