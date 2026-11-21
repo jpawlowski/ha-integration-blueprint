@@ -4,12 +4,12 @@ This guide will help you install and set up the Integration Blueprint custom int
 
 ## Prerequisites
 
-- Home Assistant 2026.10.0 or newer
+- Home Assistant 2026.11.0 or newer
 - Network connectivity to [external service/device]
 
 ## Installation
 
-### Via the Marketplace (Home Assistant 2026.11 and newer, recommended)
+### Via the Marketplace (recommended)
 
 1. Go to **Settings** → **Marketplace**
 2. Add this repository as a custom repository: `https://github.com/jpawlowski/ha-integration-blueprint`, category "Integration". The Marketplace asks you to connect a GitHub account for repositories outside its catalog.
@@ -17,7 +17,7 @@ This guide will help you install and set up the Integration Blueprint custom int
 
 A restart is not needed for the first installation; updates and removal ask for one.
 
-### Via HACS (before Home Assistant 2026.11)
+### Via HACS (only if this integration supports Home Assistant before 2026.11)
 
 1. Open HACS in your Home Assistant instance
 2. Click the three dots in the top right corner

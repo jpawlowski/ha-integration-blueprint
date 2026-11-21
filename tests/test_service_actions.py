@@ -1,7 +1,7 @@
 """Tests for the refresh_data service action."""
 
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.ha_integration_domain.const import DOMAIN
 from custom_components.ha_integration_domain.service_actions import SERVICE_REFRESH_DATA

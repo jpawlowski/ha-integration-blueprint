@@ -65,9 +65,9 @@ jobs:
         with:
           path: |
             .local/ha-venv
-          key: ha-venv-${{ runner.os }}-ha${{ steps.ha_version.outputs.HA_VERSION }}-${{ hashFiles('mise.toml', '.config/mise/conf.d/*.toml', '**/requirements*.txt') }}
+          key: ha-venv-v2-${{ runner.os }}-ha${{ steps.ha_version.outputs.HA_VERSION }}-${{ hashFiles('mise.toml', '.config/mise/conf.d/*.toml', '**/requirements*.txt') }}
           restore-keys: |
-            ha-venv-${{ runner.os }}-ha${{ steps.ha_version.outputs.HA_VERSION }}-
+            ha-venv-v2-${{ runner.os }}-ha${{ steps.ha_version.outputs.HA_VERSION }}-
 
       - name: Install dependencies
         run: script/setup/bootstrap

@@ -51,16 +51,15 @@ Uncomment and customize these badges if you want to use them:
 
 ### Step 1: Install the Integration
 
-**Prerequisites:** Home Assistant 2026.11 or newer has the Marketplace built in (**Settings** → **Marketplace**). On older versions, install [HACS](https://hacs.xyz/) (Home Assistant Community Store) first.
+**Prerequisites:** Home Assistant 2026.11 or newer, which has the Marketplace built in (**Settings** → **Marketplace**).
 
-Click the button below to open the integration in the Marketplace, or in HACS on older versions:
+Click the button below to open the integration in the Marketplace:
 
-[![Open your Home Assistant instance and open this repository in the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jpawlowski&repository=ha-integration-blueprint&category=integration)
+[![Open your Home Assistant instance and open this repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=jpawlowski&repository=ha-integration-blueprint&category=integration)
 
-Then:
+Then click "Download" to install the integration. The Marketplace loads it right away, without a restart.
 
-1. Click "Download" to install the integration
-2. With HACS (before Home Assistant 2026.11), **restart Home Assistant**. The Marketplace loads it right away.
+On a Home Assistant version before 2026.11, if this integration still supports it, install [HACS](https://hacs.xyz/) (Home Assistant Community Store) first, add this repository there as a custom repository, download it, and restart Home Assistant.
 
 > [!NOTE]
 > The My Home Assistant redirect will first take you to a landing page. Click the button there to open your Home Assistant instance.
@@ -68,7 +67,7 @@ Then:
 <details>
 <summary><strong>Manual Installation (Advanced)</strong></summary>
 
-If you prefer not to use the Marketplace or HACS:
+If you prefer not to use the Marketplace:
 
 1. Download the `custom_components/ha_integration_domain/` folder from this repository
 2. Copy it to your Home Assistant's `custom_components/` directory

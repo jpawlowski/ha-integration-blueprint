@@ -91,7 +91,7 @@ Rewrite the registry entries inside `async_migrate_entry()` with `er.async_migra
 downgrade, whereas a newer major version makes it refuse the entry instead:
 
 ```python
-async def async_migrate_entry(hass: HomeAssistant, entry: {ClassPrefix}ConfigEntry) -> bool:
+async def async_migrate_entry(hass: HomeAssistant, entry: {ClassPrefix}ConfigEntry) -> None:
     """Migrate an old config entry."""
     if entry.version == 1:
         registry = er.async_get(hass)
@@ -109,7 +109,6 @@ async def async_migrate_entry(hass: HomeAssistant, entry: {ClassPrefix}ConfigEnt
 
         await er.async_migrate_entries(hass, entry.entry_id, _migrate)
         hass.config_entries.async_update_entry(entry, version=2, minor_version=1)
-    return True
 ```
 
 The entity ID follows the registry entry, so the user's automations keep working. A collision means the new entity

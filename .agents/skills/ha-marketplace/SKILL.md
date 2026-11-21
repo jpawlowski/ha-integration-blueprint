@@ -17,8 +17,8 @@ description: >-
 The Marketplace is the `marketplace` integration in Home Assistant Core from 2026.11 (**Settings** → **Marketplace**).
 It is HACS brought into Core: same catalog ([hacs/default](https://github.com/hacs/default)), same `hacs.json`, same
 [HACS action](https://github.com/hacs/action). On first start it takes over a HACS installation and Home Assistant
-2026.11 blocks the HACS custom integration. Users below 2026.11 still install through HACS, so everything here must
-satisfy both: anything this repository supports down to the minimum in `hacs.json` reaches some users through HACS.
+2026.11 blocks the HACS custom integration. With 2026.11 as the minimum in `hacs.json`, every user of this
+repository installs and updates through the Marketplace.
 
 Sources, checked against these pages — re-read them before relying on a detail that matters:
 [how it works](https://contributors.home-assistant.io/marketplace/how-it-works/),
