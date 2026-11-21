@@ -186,7 +186,7 @@ Two bots share the updates without overlapping — a dependency raised by both w
 | GitHub Actions, npm, dev container features, `requirements_dev.txt` | Dependabot (`.github/dependabot.yml`) | weekly, minor/patch grouped per ecosystem                                             |
 | `mise.toml`, the mise version in workflows and the dev container    | Renovate (`.github/renovate.json`)    | weekly, one `tooling` group                                                           |
 | `manifest.json` + `requirements.txt`                                | Renovate                              | one per package, a major waits for approval; `fix(deps)` only for a security advisory |
-| `pytest-homeassistant-custom-component`                             | Renovate                              | its own; a new release train fails `script/ha-version-sync` until `hacs.json` follows |
+| `pytest-homeassistant`                                              | Renovate                              | its own; a new release train fails `script/ha-version-sync` until `hacs.json` follows |
 
 Renovate needs its GitHub App installed on the repository and does nothing without it: no error, no pull request.
 Dependabot has no mise ecosystem, so without the App the tool pins and the runtime requirements only move by hand;

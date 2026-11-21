@@ -49,7 +49,6 @@ tests/
 
 **Defined in `tests/conftest.py`** — use these names, never a per-file variant:
 
-- `auto_enable_custom_integrations` - autouse wrapper around `enable_custom_integrations`
 - `config_entry` - `MockConfigEntry`, not yet added to `hass`
 - `mock_api` - the mocked data source, patched where the integration imports it
 - `init_integration` - `config_entry` set up with `mock_api` active, returned loaded
@@ -57,8 +56,9 @@ tests/
 **No `coordinator` fixture.** A test that builds or patches the coordinator couples itself to its constructor and
 internals; mock the client and let setup build the coordinator, then assert through `hass.states`.
 
-**From `pytest-homeassistant-custom-component`** — never redefine: `hass`, `hass_client` (authenticated HTTP client,
-needed for diagnostics), `entity_registry`, `device_registry`, `issue_registry`, `snapshot`, `caplog`. `freezer` comes
+**From `pytest-homeassistant`** — never redefine: `hass` (loads custom integrations without a wrapper fixture),
+`hass_client` (authenticated HTTP client, needed for diagnostics), `entity_registry`, `device_registry`,
+`issue_registry`, `entity_registry_enabled_by_default`, `snapshot`, `caplog`. `freezer` comes
 from `pytest-freezer`; advance it with `freezer.tick()` plus `async_fire_time_changed`, never `time.sleep`.
 
 **Use [Syrupy](https://github.com/syrupy-project/syrupy) for large outputs:**

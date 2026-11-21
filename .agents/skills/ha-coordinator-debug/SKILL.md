@@ -153,7 +153,7 @@ Two debug modes catch what no log level shows: Home Assistant's own, and asyncio
 API from the wrong thread and blocking the event loop are reported the moment they happen, instead of surfacing later
 as an unexplained hang or a state that quietly went wrong.
 
-A `debug_console:` line in `config/configuration.yaml` (HA 2026.11+) adds a Python console under **Settings** >
+A `debug_console:` line in `config/configuration.yaml` adds a Python console under **Settings** >
 **Tools**, with `hass` in scope — quicker than a log line and a restart for inspecting live objects. It runs in the event
 loop, so never call anything blocking there.
 

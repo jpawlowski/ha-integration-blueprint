@@ -1,13 +1,13 @@
 # Home Assistant Integration Blueprint
 
-[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.10%2B-blue.svg)](https://www.home-assistant.io/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.11%2B-blue.svg)](https://www.home-assistant.io/)
 [![Python](https://img.shields.io/badge/python-3.14%2B-blue.svg)](https://www.python.org/)
 [![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-Ready-purple.svg)](#ai-agent-support)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 A modern blueprint for creating Home Assistant custom integrations, based on [ludeeus/integration_blueprint](https://github.com/ludeeus/integration_blueprint) but closely aligned with **Home Assistant Core development practices**.
 
-This blueprint is designed to work with **Home Assistant 2026.10+** and includes all the patterns and tooling you need to build a professional integration without reinventing the wheel.
+This blueprint is designed to work with **Home Assistant 2026.11+** and includes all the patterns and tooling you need to build a professional integration without reinventing the wheel.
 
 > [!IMPORTANT]
 > **Use the template — don't fork!**
@@ -201,7 +201,7 @@ Creating a custom integration from scratch means figuring out config flows, coor
 **What makes this blueprint different:**
 
 - ✅ **Core-aligned development**: Follows Home Assistant Core patterns and tooling conventions
-- ✅ **Future-proof**: Compatible with Home Assistant 2026.10+ (including latest breaking changes)
+- ✅ **Future-proof**: Compatible with Home Assistant 2026.11+ (including latest breaking changes)
 - ✅ **Modern Python**: Built for Python 3.14+ with `asyncio.timeout` (no deprecated `async_timeout`)
 - ✅ **Fast tooling**: Uses [uv](https://github.com/astral-sh/uv) for lightning-fast dependency management, and [mise](https://mise.jdx.dev) pins Python and every command-line tool to one version for the dev container, CI and your own machine
 - ✅ **Works anywhere**: The dev container, a local machine, or the cloud sessions of Claude Code and Codex — an agent's session sets itself up, nothing to configure in the cloud — see [Working without the dev container](docs/development/LOCAL_SETUP.md)
@@ -209,7 +209,7 @@ Creating a custom integration from scratch means figuring out config flows, coor
 - ✅ **Security checks built in**: Secrets are caught before a commit (betterleaks), on push (GitHub push protection) and in a weekly history scan (TruffleHog); CodeQL and zizmor check the code and the workflows; actions are pinned to commit SHAs and workflows run with read-only tokens — see [Repository setup](docs/development/REPOSITORY_SETUP.md)
 - ✅ **Careful with dependencies**: Dependabot and Renovate share the updates, new releases wait a few days before they are proposed, and a template sync never lowers a version your bots already raised — see [Dependency updates](docs/development/DEPENDENCY_UPDATES.md)
 - ✅ **Fast rebuilds**: Named Docker volumes keep the Python venv _and_ uv's package cache alive across container rebuilds — no re-downloading on every `Rebuild Container`
-- ✅ **Complete test setup**: Includes `pytest-homeassistant-custom-component` for proper testing
+- ✅ **Complete test setup**: Includes `pytest-homeassistant` for proper testing
 - ✅ **Developer-friendly**: Comprehensive scripts for development, testing, and maintenance
 - ✅ **Stays current**: Weekly automated PRs keep your project in sync with blueprint improvements, and `script/blueprint-update` walks you through the changes a sync cannot deliver — see [Customization Guide](docs/development/CUSTOMIZATION.md)
 - ✅ **Sparing with CI minutes**: Draft pull requests run nothing, fork pull requests wait for your approval, and a merge does not repeat checks the pull request already passed
@@ -737,7 +737,7 @@ The [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json) configu
 - Node.js LTS (for frontend development if needed)
 - GitHub CLI pre-installed
 - All VS Code extensions configured (Python, Ruff, YAML, etc.)
-- Home Assistant 2026.10+ automatically installed
+- Home Assistant 2026.11+ automatically installed
 - The Marketplace for other custom integrations (built in from Home Assistant 2026.11, HACS pre-installed before)
 - Automatic port forwarding for Home Assistant (port 8123)
 
@@ -841,7 +841,7 @@ The blueprint includes a complete test setup:
 **Tools provided:**
 
 - `pytest` for running tests
-- `pytest-homeassistant-custom-component` for Home Assistant-specific fixtures
+- `pytest-homeassistant` for Home Assistant-specific fixtures
 - `pytest-asyncio` for async test support
 - `pytest-cov` for coverage reporting
 
@@ -851,7 +851,7 @@ Create test files in the `tests/` directory. Example:
 ```python
 """Test integration setup."""
 from homeassistant.core import HomeAssistant
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 async def test_setup_entry(hass: HomeAssistant) -> None:
     """Test setting up the integration."""
@@ -896,12 +896,12 @@ While this blueprint is inspired by the original, it includes significant enhanc
 
 | Feature                     | This Blueprint                                                                           | Original Blueprint             |
 | --------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------ |
-| **Home Assistant version**  | 2026.10+ (Python 3.14 native)                                                            | 2026.3.x                       |
+| **Home Assistant version**  | 2026.11+ (Python 3.14 native)                                                            | 2026.3.x                       |
 | **Timeout handling**        | `asyncio.timeout` (modern)                                                               | `async_timeout` (deprecated)   |
 | **Package manager**         | uv (fast)                                                                                | pip (standard)                 |
 | **Container rebuild speed** | Named Docker volumes keep venv + uv cache alive across rebuilds — near-instant re-attach | Fresh install on every rebuild |
 | **Development scripts**     | Comprehensive Scripts to Rule Them All                                                   | Basic scripts                  |
-| **Test infrastructure**     | Preconfigured `pytest-homeassistant-custom-component`                                    | Manual test setup needed       |
+| **Test infrastructure**     | Preconfigured `pytest-homeassistant`                                                     | Manual test setup needed       |
 | **Type checking**           | Pyright configured                                                                       | Not included                   |
 | **Marketplace / HACS**      | Built in from 2026.11, HACS auto-installed before                                        | Manual setup                   |
 | **VS Code tasks**           | Pre-configured tasks for common operations                                               | Not included                   |
@@ -918,7 +918,7 @@ Once you have the blueprint working with your device or service:
 
 #### Testing & quality
 
-- **Add tests**: Use `pytest-homeassistant-custom-component` to test your config flow, coordinator, and entities
+- **Add tests**: Use `pytest-homeassistant` to test your config flow, coordinator, and entities
 - **Run type checking**: Ensure `script/type-check` passes without errors
 - **Test with real Home Assistant**: Install via the Marketplace or copy to your real HA instance
 
@@ -960,7 +960,7 @@ Once you have the blueprint working with your device or service:
 - [uv package manager](https://github.com/astral-sh/uv) - Fast Python package installer
 - [Ruff](https://github.com/astral-sh/ruff) - Fast Python linter and formatter
 - [Pyright](https://github.com/microsoft/pyright) - Static type checker for Python
-- [pytest-homeassistant-custom-component](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component) - Test fixtures for custom components
+- [pytest-homeassistant](https://github.com/home-assistant/core/tree/dev/packages/pytest-homeassistant) - Test fixtures from Home Assistant Core
 
 ### Community resources
 
