@@ -9,7 +9,7 @@ description: >-
   repository", or when editing hacs.json or the brand/ folder. SYMPTOMS — load this if you are about to: open the hacs/default pull request yourself; add an
   `ignore` to the HACS action to make it pass; delete a repository that is in the catalog; delete an old release;
   write user data into the integration folder; set `zip_release`; ship Home Assistant's own logo as the brand icon;
-  or raise `homeassistant` in hacs.json without treating it as a breaking change.
+  or raise `homeassistant` in hacs.json without naming the new minimum in the changelog.
 ---
 
 # Publish through the Marketplace
@@ -72,9 +72,9 @@ The Marketplace reads `hacs.json` from the root **for every version it installs*
 
 - **`homeassistant`** — the minimum version for _this_ release. The Marketplace does not offer the release to an
   older Home Assistant and shows those users earlier versions instead. Raise it in the release whose code first needs
-  the newer version, never ahead of it. Raising it drops users, so it goes through
-  [`ha-breaking-changes`](../ha-breaking-changes/SKILL.md); `script/ha-version-sync` then makes the pytest plugin pin
-  follow ([`ha-modern-apis`](../ha-modern-apis/SKILL.md)). A `b0` suffix (`"2026.11.0b0"`) also admits that
+  the newer version, never ahead of it. Raising it is not breaking, but older installs silently stop getting fixes,
+  so the changelog names it ([`ha-breaking-changes`](../ha-breaking-changes/SKILL.md#1-recognise-it));
+  `script/ha-version-sync` then makes the pytest plugin pin follow ([`ha-modern-apis`](../ha-modern-apis/SKILL.md)). A `b0` suffix (`"2026.11.0b0"`) also admits that
   release's betas. Only checked for repositories with releases.
 - **`persistent_directory`** — an update replaces the whole integration folder; this names one subfolder the
   Marketplace moves aside and restores. ❌ Do not design for it: user data and runtime state belong in
