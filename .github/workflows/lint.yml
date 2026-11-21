@@ -90,7 +90,7 @@ jobs:
         uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
         with:
           # renovate: datasource=github-releases depName=jdx/mise extractVersion=^v(?<version>.+)$
-          version: "2026.11.9"
+          version: "2026.11.10"
 
       # A step rather than a job of its own: the scan takes seconds, and every job is billed in whole minutes.
       - name: Scan for secrets
