@@ -283,8 +283,8 @@ switches and starts in one step, and VS Code has the same as tasks. Each environ
 its kind: `beta` only ever holds a pre-release, even while the newest one is older than `latest`, and `latest` only a
 stable release. Each one gets the `pytest-homeassistant` release of its version, so the test fixtures always match
 the Home Assistant they run against; `requirements_test.txt` and `hacs.json` stay as they are. Each one also gets the Python
-version its Home Assistant release ships with: mise's when it matches, otherwise a build uv downloads into the same
-volume — so a beta that already needs the next Python runs next to a minimum on the current one.
+version its Home Assistant release ships with, as a build uv downloads once into the same volume — so a minimum on an
+older Python, a latest and a beta that already needs the next one run side by side.
 
 - **Config:** `minimum` runs from `config/`. Every other environment runs from `.local/ha-config/<name>/`, which links
   `configuration.yaml` and the other shared files from `config/` but keeps its own `.storage`, database and log, since a

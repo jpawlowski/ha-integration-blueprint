@@ -51,14 +51,14 @@ ha_envs_version_of() {
     printf '%s\n' "${target##*/}"
 }
 
-# ha_envs_create_venv DIR VERSION — a venv on the Python that Home Assistant VERSION asks for; uv takes mise's when it
-# matches and otherwise downloads a build into python/ beside the venvs, so it survives with them in the same volume.
+# ha_envs_create_venv DIR VERSION — a venv on the Python that Home Assistant VERSION asks for, always a uv-managed
+# build in python/ beside the venvs: one from the OS image or mise could vanish while the venv survives in the volume.
 ha_envs_create_venv() {
-    local dir="$1" python args=()
+    local dir="$1" python args=(--python-preference only-managed)
     python=$(ha_python_for "$2" 2>/dev/null) || python=""
     if [[ -n $python ]]; then
         log_info "Python $python for Home Assistant $2"
-        args=(--python "$python")
+        args+=(--python "$python")
     fi
     UV_PYTHON_INSTALL_DIR="$(ha_venv_preferred_path)/python" uv venv --quiet --prompt "ha-${dir##*/}" "${args[@]}" "$dir"
 }

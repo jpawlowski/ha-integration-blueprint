@@ -338,8 +338,9 @@ ha_envs_create_venv "$PWD/.local/ha-venv/versions/2099.1.0" 2099.1.0
     assert result.returncode == 0, result.stderr
     with_python, without = [line for line in result.stdout.splitlines() if line.startswith("UV_PYTHON_INSTALL_DIR")]
     assert with_python.startswith(f"UV_PYTHON_INSTALL_DIR={_root(workdir)}/python venv")
-    assert "--python 3.15" in with_python
-    assert "--python" not in without
+    assert "--python-preference only-managed --python 3.15" in with_python
+    assert "--python-preference only-managed" in without
+    assert "--python 3" not in without
 
 
 @pytest.mark.unit
