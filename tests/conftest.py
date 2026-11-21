@@ -6,7 +6,7 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.ha_integration_domain.const import DOMAIN
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
@@ -14,11 +14,6 @@ from homeassistant.core import HomeAssistant
 
 # The response the demo endpoint returns; the client turns it into the device payload.
 API_RESPONSE: dict[str, Any] = {"userId": 1, "id": 1, "title": "demo", "body": "demo"}
-
-
-@pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
-    """Load custom integrations in every test."""
 
 
 @pytest.fixture(autouse=True)

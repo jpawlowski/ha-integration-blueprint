@@ -4,8 +4,8 @@ from datetime import timedelta
 
 from freezegun.api import FrozenDateTimeFactory
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed
-from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClientMocker
+from pytest_homeassistant.common import MockConfigEntry, async_fire_time_changed
+from pytest_homeassistant.test_util.aiohttp import AiohttpClientMocker
 
 from custom_components.ha_integration_domain.api.client import API_URL, DEFAULT_RETRY_AFTER
 from custom_components.ha_integration_domain.coordinator.base import MIN_RETRY_AFTER, UPDATE_INTERVAL
