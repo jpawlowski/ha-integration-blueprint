@@ -72,23 +72,13 @@ else
     fi
 fi
 
-if [[ $CONFIG_DIR != config ]]; then
-    # Only links into config/ are shared here, and script/develop makes them again; an empty .storage keeps it from
-    # starting over from config/'s state.
+# Another environment's directory stays in place, so script/develop does not start it over from config/'s state; the
+# links into config/ it holds are made again there.
+if [[ $FULL_RESET == true ]]; then
     log_step "Removing all files in $CONFIG_DIR/"
     find "$CONFIG_DIR" -mindepth 1 -delete
-    mkdir "$CONFIG_DIR/.storage"
-fi
-if [[ $FULL_RESET == true ]]; then
-    # Full reset: Remove everything
-    if [[ $CONFIG_DIR == config ]]; then
-        log_step "Removing all files in config/ directory"
-        rm -rf config/* config/.* 2>/dev/null || true
-    fi
 
-    # Check if configuration.yaml exists in git
     if git ls-files --error-unmatch config/configuration.yaml >/dev/null 2>&1; then
-        # Restore configuration.yaml from git
         log_step "Restoring configuration.yaml from git repository"
         git checkout HEAD -- config/configuration.yaml || {
             log_error "Failed to restore configuration.yaml from git"
@@ -97,11 +87,10 @@ if [[ $FULL_RESET == true ]]; then
     else
         log_warning "configuration.yaml is not tracked in git repository"
     fi
-elif [[ $CONFIG_DIR == config ]]; then
-    # Standard reset: Keep configuration.yaml
+else
     log_step "Removing all files except configuration.yaml"
-    if ! find config -mindepth 1 -depth ! -name 'configuration.yaml' -exec rm -rf {} \; 2>/dev/null; then
-        log_error "Failed to clean config/ directory"
+    if ! find "$CONFIG_DIR" -mindepth 1 -depth ! -name 'configuration.yaml' -exec rm -rf {} \; 2>/dev/null; then
+        log_error "Failed to clean $CONFIG_DIR/ directory"
         exit 1
     fi
 fi

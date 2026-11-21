@@ -345,6 +345,13 @@ ha_envs_create_venv "$PWD/.local/ha-venv/versions/2099.1.0" 2099.1.0
     assert "--python 3" not in without
 
 
+def _uv_listing(listing: list[dict[str, str]]) -> str:
+    """A uv stub that lists these Python builds and records every other call in uv-calls."""
+    return f"""uv() {{
+    if [[ $1 == python && $2 == list ]]; then echo '{json.dumps(listing)}'; else echo "uv $*" >>"$PWD/uv-calls"; fi
+}}"""
+
+
 @pytest.mark.unit
 def test_prune_uninstalls_downloaded_pythons_no_environment_uses(workdir: Path) -> None:
     """Uv lists its builds; one stays while a venv's home points at it, through uv's minor-version link."""
@@ -359,9 +366,7 @@ def test_prune_uninstalls_downloaded_pythons_no_environment_uses(workdir: Path) 
         {"key": f"cpython-{b}-linux", "path": f"{python}/cpython-{b[:4]}-linux/bin/python3"}
         for b in ("3.15.2", "3.16.0")
     ]
-    stub = f"""uv() {{
-    if [[ $1 == python && $2 == list ]]; then echo '{json.dumps(listing)}'; else echo "uv $*" >>"$PWD/uv-calls"; fi
-}}"""
+    stub = _uv_listing(listing)
 
     result = _bash(workdir, stub + "\nha_envs_prune")
 
@@ -377,9 +382,7 @@ def test_prune_survives_downloaded_pythons_without_any_environment(workdir: Path
     python = _root(workdir) / "python"
     (python / "cpython-3.15.2-linux" / "bin").mkdir(parents=True)
     listing = [{"key": "cpython-3.15.2-linux", "path": f"{python}/cpython-3.15.2-linux/bin/python3"}]
-    stub = f"""uv() {{
-    if [[ $1 == python && $2 == list ]]; then echo '{json.dumps(listing)}'; else echo "uv $*" >>"$PWD/uv-calls"; fi
-}}"""
+    stub = _uv_listing(listing)
 
     result = _bash(workdir, stub + "\nha_envs_prune; echo done")
 
@@ -423,19 +426,24 @@ def _copy_scripts(workdir: Path, *names: str) -> None:
         shutil.copy(LIB.parent / name, workdir / "script" / name)
 
 
-@pytest.mark.unit
-def test_refresh_without_any_environment_points_at_bootstrap(workdir: Path) -> None:
-    """Nothing installed yet is reported, not an unbound-variable error."""
-    _copy_scripts(workdir, "ha-env")
-
-    result = subprocess.run(
-        [str(workdir / "script" / "ha-env"), "refresh"],
+def _run_script(workdir: Path, name: str, *args: str) -> subprocess.CompletedProcess[str]:
+    """Run a script copied by _copy_scripts, outside any dev container or CI."""
+    return subprocess.run(
+        [str(workdir / "script" / name), *args],
         cwd=workdir,
         env=_outside_container(),
         capture_output=True,
         text=True,
         check=False,
     )
+
+
+@pytest.mark.unit
+def test_refresh_without_any_environment_points_at_bootstrap(workdir: Path) -> None:
+    """Nothing installed yet is reported, not an unbound-variable error."""
+    _copy_scripts(workdir, "ha-env")
+
+    result = _run_script(workdir, "ha-env", "refresh")
 
     assert result.returncode == 1
     assert "script/setup/bootstrap" in result.stderr
@@ -444,28 +452,57 @@ def test_refresh_without_any_environment_points_at_bootstrap(workdir: Path) -> N
 
 @pytest.mark.unit
 def test_reset_starts_the_active_environment_over_and_leaves_config_alone(workdir: Path) -> None:
-    """With beta active, its own directory is emptied and kept from copying config/'s state again."""
+    """With beta active, its own directory is emptied, and stays empty instead of copying config/'s state again."""
     _config(workdir, "2026.11.2")
     _copy_scripts(workdir, "setup/reset")
     (workdir / "script" / "setup" / "setup").write_text("#!/bin/bash\n", encoding="utf-8")
     (workdir / "script" / "setup" / "setup").chmod(0o755)
-    assert _bash(workdir, "ha_envs_refresh beta; ha_envs_use beta").returncode == 0
     beta = workdir / ".local" / "ha-config" / "beta"
-    assert _bash(workdir, f"ha_envs_prepare_config {beta} 2026.12.0b1").returncode == 0
+    prepare = f"ha_envs_prepare_config {beta} 2026.12.0b1"
+    assert _bash(workdir, f"ha_envs_refresh beta; ha_envs_use beta; {prepare}").returncode == 0
 
-    result = subprocess.run(
-        [str(workdir / "script" / "setup" / "reset"), "--yes"],
-        cwd=workdir,
-        env=_outside_container(),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = _run_script(workdir, "setup/reset", "--yes")
+    assert _bash(workdir, prepare).returncode == 0
 
     assert result.returncode == 0, result.stderr
-    assert [path.name for path in beta.iterdir()] == [".storage"]
-    assert not any((beta / ".storage").iterdir())
+    assert not (beta / ".storage").exists()
+    assert (beta / "configuration.yaml").is_symlink()
     assert (workdir / "config" / ".storage" / "core.config_entries").is_file()
+
+
+@pytest.mark.unit
+def test_refresh_leaves_the_environment_home_assistant_runs_on(workdir: Path) -> None:
+    """The running slot comes from the run record, which stays right after a forced switch away from it."""
+    _bash(workdir, "ha_envs_refresh minimum; ha_envs_refresh beta; ha_envs_use minimum")
+    (workdir / ".local" / "ha-develop.json").write_text('{"slot": "beta"}\n', encoding="utf-8")
+    (workdir / ".local" / "ha-config" / "beta").mkdir(parents=True)
+
+    with (workdir / ".local" / "ha-config" / "beta" / ".ha_run.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        result = _bash(workdir, "ha_envs_refresh beta || echo status=$?", STUB_BETA="2026.12.0b2")
+
+    assert "status=2" in result.stdout
+    assert _slot(workdir, "beta") == "2026.12.0b1"
+
+
+@pytest.mark.unit
+def test_version_helpers_read_the_test_pin_train_and_kind(workdir: Path) -> None:
+    """The plugin's repackaging suffix is not part of the Home Assistant version it names."""
+    (workdir / "requirements_test.txt").write_text("pytest-homeassistant==2026.12.0b1.post1\n", encoding="utf-8")
+
+    result = _bash(
+        workdir,
+        "ha_test_pin; ha_release_train 2026.11; ha_release_train 2026.11.0b3; "
+        "ha_version_is_prerelease 2026.12.0b1 && echo pre; ha_version_is_prerelease 2026.12.0 || echo stable",
+    )
+
+    assert result.stdout.splitlines() == [
+        "pytest-homeassistant 2026.12.0b1.post1 2026.12.0b1",
+        "2026.11",
+        "2026.11",
+        "pre",
+        "stable",
+    ]
 
 
 CUSTOM_PYPI = json.dumps(

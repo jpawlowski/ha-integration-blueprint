@@ -34,13 +34,9 @@ require_slot() {
     [[ " ${HA_ENVS_SLOTS[*]} " == *" ${1:-} "* ]] || usage
 }
 
-# Build each slot, then drop what no slot needs any more. A slot Home Assistant runs on is never changed under it.
+# Build each slot, then drop what no slot needs any more; ha_envs_refresh leaves the one Home Assistant runs on alone.
 refresh_slots() {
     local slot failed=0
-    if [[ " $* " == *" $(ha_current_slot) "* ]] && ha_running; then
-        log_error "Home Assistant is running on $(ha_current_slot) — stop it first, then run this again"
-        exit 1
-    fi
     use_mise_env
     for slot in "$@"; do
         log_header "Home Assistant environment: $slot"
@@ -66,21 +62,16 @@ cmd_list() {
     ha_envs_notice
 }
 
+# A version is for custom only, which it pins or moves; any other slot resolves its own.
 cmd_add() {
     require_slot "$1"
-    if [[ $1 == custom ]]; then
-        [[ -n ${2:-} ]] || usage
-        HA_ENVS_CUSTOM_VERSION="$2" refresh_slots custom
-        [[ $(ha_current_slot) == custom ]] || log_step "Switch to it with: script/ha-env use custom"
+    [[ -z ${2:-} || $1 == custom ]] || usage
+    if [[ -z ${2:-} && -n $(ha_envs_version_of "$1") ]]; then
+        log_info "$1 is installed already, on Home Assistant $(ha_envs_version_of "$1")"
         return 0
     fi
-    [[ -z ${2:-} ]] || usage
-    if [[ -n $(ha_envs_version_of "$1") ]]; then
-        log_info "$1 is installed already — script/ha-env refresh $1 moves it to the newest version"
-        return 0
-    fi
-    refresh_slots "$1"
-    log_step "Switch to it with: script/ha-env use $1"
+    HA_ENVS_CUSTOM_VERSION="${2:-}" refresh_slots "$1"
+    [[ $(ha_current_slot) == "$1" ]] || log_step "Switch to it with: script/ha-env use $1"
 }
 
 # Switching moves every terminal, script/test and the next start along, so it never happens under a running
@@ -97,7 +88,7 @@ cmd_use() {
         return 0
     fi
     if [[ $force == false ]] && ha_running; then
-        log_error "Home Assistant is running on $(ha_current_slot) — stop it first, or switch on purpose with --force"
+        log_error "Home Assistant is running on $(ha_running_slot) — stop it first, or switch on purpose with --force"
         exit 1
     fi
     ha_envs_use "$1"
@@ -109,19 +100,13 @@ cmd_refresh() {
     local slots=() slot
     if [[ -n ${1:-} ]]; then
         require_slot "$1"
+        [[ -n $(ha_envs_version_of "$1") ]] || die "$1 is not installed — run: script/ha-env add $1"
         slots=("$1")
     else
         for slot in "${HA_ENVS_SLOTS[@]}"; do
             [[ -n $(ha_envs_version_of "$slot") ]] && slots+=("$slot")
         done
-    fi
-    if [[ ${#slots[@]} -eq 0 ]]; then
-        log_error "No Home Assistant environment is installed — run: script/setup/bootstrap"
-        exit 1
-    fi
-    if [[ -z $(ha_envs_version_of "${slots[0]}") ]]; then
-        log_error "${slots[0]} is not installed — run: script/ha-env add ${slots[0]}"
-        exit 1
+        [[ ${#slots[@]} -gt 0 ]] || die "No Home Assistant environment is installed — run: script/setup/bootstrap"
     fi
     refresh_slots "${slots[@]}"
 }

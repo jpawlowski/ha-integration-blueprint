@@ -184,6 +184,44 @@ ha_test_pin_version() {
     printf '%s\n' "${pin%.dev*}"
 }
 
+# Print the test package requirements_test.txt pins, its version, and the Home Assistant version that names:
+# "pytest-homeassistant 2026.11.2.post1 2026.11.2". pytest-homeassistant-custom-component names its Home Assistant
+# only on PyPI, so the third field is empty when PyPI cannot say. Prints nothing for neither package.
+ha_test_pin() {
+    local package pin ha=""
+    read -r package pin < <(sed -En 's/^(pytest-homeassistant(-custom-component)?)==([^[:space:]#]+).*/\1 \3/p' \
+        requirements_test.txt 2>/dev/null) || return 0
+    if [[ $package == pytest-homeassistant ]]; then
+        ha=$(ha_test_pin_version)
+    else
+        ha=$(curl -sf --retry 2 "https://pypi.org/pypi/$package/$pin/json" | python3 -c '
+import json, sys
+for req in json.load(sys.stdin)["info"].get("requires_dist") or []:
+    if req.startswith("homeassistant=="):
+        print(req.split("==", 1)[1].split(";")[0].strip())
+        break
+' 2>/dev/null) || ha=""
+    fi
+    printf '%s %s %s\n' "$package" "$pin" "$ha"
+}
+
+# Print the release train of a Home Assistant version: 2026.11 for 2026.11, 2026.11.2 or 2026.11.0b3.
+ha_release_train() {
+    if [[ $1 =~ ^([0-9]+\.[0-9]+) ]]; then
+        printf '%s\n' "${BASH_REMATCH[1]}"
+    fi
+}
+
+ha_version_is_prerelease() {
+    [[ $1 =~ [0-9](a|b|rc)[0-9]+$ ]]
+}
+
+# Whether VERSION is a Home Assistant release on PyPI.
+ha_version_released() {
+    _pypi_populate_cache || return 1
+    printf '%s' "$_PYPI_JSON_CACHE" | python3 -c 'import json, sys; sys.exit(sys.argv[1] not in json.load(sys.stdin)["releases"])' "$1"
+}
+
 # Print the Python minor version a Home Assistant release asks for — the lower bound of its requires-python, which
 # is what Home Assistant ships it with — or nothing when PyPI does not say.
 ha_python_for() {

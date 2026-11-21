@@ -149,6 +149,15 @@ sys.exit(1)
 PY
 }
 
+# Print the environment a running Home Assistant uses — from the record script/develop writes, which stays right after
+# script/ha-env use --force — or nothing when none runs.
+ha_running_slot() {
+    ha_running || return 0
+    local slot
+    slot=$(jq -r '.slot // empty' .local/ha-develop.json 2>/dev/null) || slot=""
+    printf '%s' "${slot:-$(ha_current_slot)}"
+}
+
 # Print who runs this script: an agent where the agent says so in its environment, the developer otherwise.
 ha_actor() {
     if [[ -n ${AI_AGENT:-} ]]; then

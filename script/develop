@@ -45,7 +45,6 @@ done
 # Switch before stopping anything: script/ha-env use refuses while Home Assistant runs, unless --force.
 if [[ -n $ENV_SLOT ]]; then
     if [[ -z $(ha_envs_version_of "$ENV_SLOT") ]]; then
-        [[ $ENV_SLOT != custom ]] || die "custom holds no version yet — run: script/ha-env add custom <version>"
         "$SCRIPT_DIR/ha-env" add "$ENV_SLOT"
     fi
     "$SCRIPT_DIR/ha-env" use "${USE_ARGS[@]}" "$ENV_SLOT"

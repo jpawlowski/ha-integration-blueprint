@@ -113,39 +113,24 @@ if [[ "$VENV_IS_EXTERNAL" == "true" ]]; then
 fi
 
 # HA_VERSION=latest or beta builds and activates that environment instead of minimum; HA_ENVS adds more either way.
-# custom is pinned by hand only (script/ha-env add custom), and bootstrap leaves it as it is.
+# custom is pinned by hand only (script/ha-env add custom). ha_envs_refresh leaves the environment a running Home
+# Assistant uses alone (status 2), and it stays active.
+BASE_SLOT=minimum
 case "${HA_VERSION:-}" in
-latest | beta)
-    BASE_SLOT=$HA_VERSION
-    ACTIVE=$HA_VERSION
-    ;;
+latest | beta) BASE_SLOT=$HA_VERSION ;;
+"") ;;
 *)
-    HACS_TRAIN=$(hacs_min_ha_version 2>/dev/null) || HACS_TRAIN=""
-    HACS_TRAIN=${HACS_TRAIN%.*}
-    if [[ -n ${HA_VERSION:-} && $(cut -d. -f1-2 <<<"$HA_VERSION") != "$HACS_TRAIN" ]]; then
+    if [[ $(ha_release_train "$HA_VERSION") != "$(ha_release_train "$(hacs_min_ha_version 2>/dev/null || true)")" ]]; then
         log_warning "HA_VERSION=$HA_VERSION picks no environment: minimum follows hacs.json — for one particular release run: script/ha-env add custom $HA_VERSION"
     fi
-    BASE_SLOT=minimum
-    ACTIVE=$(ha_current_slot)
-    [[ -n $ACTIVE ]] || ACTIVE=minimum
     ;;
 esac
-# A running Home Assistant keeps its environment: neither refreshed nor switched away from, so prune keeps its version.
-RUNNING_SLOT=""
-if ha_running; then
-    RUNNING_SLOT=$(ha_current_slot)
-    ACTIVE=$RUNNING_SLOT
-    log_warning "Home Assistant is running on $RUNNING_SLOT — leaving that environment as it is; stop it and run bootstrap again to update it"
+ACTIVE=$(ha_running_slot)
+if [[ -z $ACTIVE && $BASE_SLOT == minimum ]]; then
+    ACTIVE=$(ha_current_slot)
 fi
-refresh_unless_running() {
-    log_header "Home Assistant environment: $1"
-    if [[ $1 == "$RUNNING_SLOT" && -n $(ha_envs_version_of "$1") ]]; then
-        log_info "Skipped: Home Assistant runs on it"
-        return 0
-    fi
-    ha_envs_refresh "$1"
-}
-refresh_unless_running "$BASE_SLOT" || exit 1
+log_header "Home Assistant environment: $BASE_SLOT"
+ha_envs_refresh "$BASE_SLOT" || [[ $? -eq 2 ]] || exit 1
 read -ra SLOTS <<<"${HA_ENVS:-}"
 for SLOT in "${SLOTS[@]}"; do
     [[ $SLOT != "$BASE_SLOT" ]] || continue
@@ -153,10 +138,11 @@ for SLOT in "${SLOTS[@]}"; do
         log_warning "HA_ENVS cannot hold custom — pin it by hand: script/ha-env add custom <version>"
         continue
     fi
-    refresh_unless_running "$SLOT" || log_warning "Skipping $SLOT — the other environments are unaffected"
+    log_header "Home Assistant environment: $SLOT"
+    ha_envs_refresh "$SLOT" || [[ $? -eq 2 ]] || log_warning "Skipping $SLOT — the other environments are unaffected"
 done
 
-[[ -n $(ha_envs_version_of "$ACTIVE") ]] || ACTIVE=$BASE_SLOT
+[[ -n $ACTIVE && -n $(ha_envs_version_of "$ACTIVE") ]] || ACTIVE=$BASE_SLOT
 ha_envs_use "$ACTIVE"
 ha_envs_prune
 log_success "Active Home Assistant environment: $ACTIVE ($(ha_envs_version_of "$ACTIVE"))"
