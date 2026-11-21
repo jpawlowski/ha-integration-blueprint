@@ -142,6 +142,7 @@ script/test --cov-html         # Coverage report (htmlcov/index.html)
 script/test tests/sensor/      # Specific directory
 script/test -k test_sensor     # Pattern matching
 script/test -m unit            # Marker filtering
+script/test --picked           # Only the test files changed in the working tree
 script/test --snapshot-update  # Update snapshots
 script/test -x                 # Stop at the first failure — the one to use while iterating
 script/test --cov-report term-missing   # Coverage with the uncovered lines listed in the terminal

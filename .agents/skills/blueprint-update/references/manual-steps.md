@@ -4,6 +4,16 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `test-timeout` — 2026-11-21
+
+**Check:** `grep -q '^timeout = ' pyproject.toml && grep -q -- '--picked' .vscode/tasks.json`
+
+Like Home Assistant Core, every test now fails after 10 seconds instead of hanging a whole run, and VS Code gets tasks
+for the changed tests and for snapshot updates. Neither file is synced:
+
+1. Add `timeout = 10` under `[tool.pytest.ini_options]` in `pyproject.toml` (`pytest-timeout` is installed already).
+2. Copy the blueprint's `Run Changed Tests` and `Update Test Snapshots` tasks into `.vscode/tasks.json`.
+
 ## `ha-environments` — 2026-11-21
 
 **Check:** `grep -q 'script/ha-env' .vscode/tasks.json && grep -q 'ha-config/<name>' AGENTS.md`
