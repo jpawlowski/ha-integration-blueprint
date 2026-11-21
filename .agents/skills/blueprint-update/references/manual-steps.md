@@ -4,6 +4,21 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `ha-environments` — 2026-11-21
+
+**Check:** `grep -q 'script/ha-env' .vscode/tasks.json && grep -q 'ha-config/<name>' AGENTS.md`
+
+The sync brings `script/ha-env`, the environment-aware `script/setup/bootstrap` and `script/develop`, and the prompt
+hook; `minimum` stays the default and `latest` or `beta` are added on demand
+([`CUSTOMIZATION.md`](../../../../docs/development/CUSTOMIZATION.md#testing-against-a-newer-home-assistant)).
+
+1. Run `script/setup/bootstrap` once. It moves the venv to one directory per Home Assistant version inside the same
+   volume and adds the prompt hook to `.bashrc` and `.zshrc` — no container rebuild.
+2. Copy the blueprint's `Run Home Assistant (Latest)`, `(Beta)`, `Switch`, `Add` and `Refresh Home Assistant
+Environment(s)` tasks and the `inputs` block into `.vscode/tasks.json`, which the sync leaves alone.
+3. In `AGENTS.md`, under the `config/.storage/` rule, add the sentence that the same holds for
+   `.local/ha-config/<name>/.storage/` on another environment.
+
 ## `pytest-homeassistant` — 2026-11-21
 
 **Check:** `! grep -rq pytest_homeassistant_custom_component tests/ && script/ha-version-sync >/dev/null 2>&1`

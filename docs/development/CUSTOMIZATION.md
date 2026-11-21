@@ -216,11 +216,12 @@ After changing either file, run **Dev Containers: Rebuild Container** to apply.
 
 ### Available variables
 
-| Variable          | Default                  | Description                                                                                                                                           |
-| ----------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `HA_VERSION`      | version from `hacs.json` | Home Assistant version to install. Accepts `latest`, `beta`, `YEAR.MONTH`, or an exact version like `2026.10.1`.                                      |
-| `HA_INSTALL_HACS` | `1`                      | Set to `0` to skip HACS installation (speeds up first-time setup). Ignored from Home Assistant 2026.11, which ships HACS as the built-in Marketplace. |
-| `APT_UPDATE`      | `0`                      | Set to `1` to run `apt-get update && apt-get upgrade` during setup.                                                                                   |
+| Variable          | Default                  | Description                                                                                                                                                         |
+| ----------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HA_VERSION`      | version from `hacs.json` | Home Assistant version to install. Accepts `latest`, `beta`, `YEAR.MONTH`, or an exact version like `2026.10.1`.                                                    |
+| `HA_ENVS`         | `minimum`                | Home Assistant environments bootstrap installs, e.g. `minimum latest beta` — see [Testing against a newer Home Assistant](#testing-against-a-newer-home-assistant). |
+| `HA_INSTALL_HACS` | `1`                      | Set to `0` to skip HACS installation (speeds up first-time setup). Ignored from Home Assistant 2026.11, which ships HACS as the built-in Marketplace.               |
+| `APT_UPDATE`      | `0`                      | Set to `1` to run `apt-get update && apt-get upgrade` during setup.                                                                                                 |
 
 ### Scope limitations
 
@@ -263,19 +264,44 @@ cp .devcontainer/.env.local.example .devcontainer/.env.local
 
 ### Testing against a newer Home Assistant
 
-`hacs.json` is the minimum your users need, and by default the dev environment installs exactly that, so tests prove the
-minimum works. To develop and test on a newer release without raising it, set `HA_VERSION` for your environment only:
+`hacs.json` is the minimum your users need, and by default the dev environment installs exactly that, so tests prove
+the minimum works. To develop and test on a newer release without raising it, add another Home Assistant environment
+next to it — `latest` (the newest stable release) or `beta` (the newest pre-release) — and switch between them:
 
 ```bash
-HA_VERSION=latest script/setup/bootstrap   # or beta, 2026.12, an exact version
-script/test
-script/setup/bootstrap                     # back to the minimum
+script/ha-env add beta       # install it once; minutes, about 2.4 GB
+script/ha-env use beta       # switch; seconds
+script/test                  # runs against the beta now, as does script/develop
+script/ha-env use minimum    # back
+script/ha-env refresh        # move every installed environment to its newest version
+script/ha-env remove beta    # free the disk again
+script/ha-env list           # what is installed and active, and who started a running instance
 ```
 
-Bootstrap rebuilds the virtual environment whenever the version changes, and installs the `pytest-homeassistant`
-release of that version, so the test fixtures always match the Home Assistant they run against; `requirements_test.txt`
-and `hacs.json` stay as they are. To keep the newer version across container rebuilds, put `HA_VERSION` into
-`.devcontainer/.env.local`. `script/develop` then runs that version too.
+`script/develop --env beta` switches and starts in one step, and VS Code has the same as tasks. Each environment keeps
+its kind: `beta` only ever holds a pre-release, even while the newest one is older than `latest`, and `latest` only a
+stable release. Each one gets the `pytest-homeassistant` release of its version, so the test fixtures always match
+the Home Assistant they run against; `requirements_test.txt` and `hacs.json` stay as they are.
+
+- **Config:** `minimum` runs from `config/`. Every other environment runs from `.local/ha-config/<name>/`, which links
+  `configuration.yaml` and the other shared files from `config/` but keeps its own `.storage`, database and log, since a
+  newer Home Assistant migrates `.storage` in a way an older one may not read. A new one starts from the state in
+  `config/` when its version can migrate that forward.
+- **Prompt:** dev container terminals show the active environment, such as `(ha-beta 2026.12.0b2)`, follow a switch at
+  their next prompt, and say who switched when it was not them.
+- **Safety:** switching refuses while Home Assistant runs on the environment, and `script/develop --env` refuses while
+  it runs on another one unless you pass `--force`. Agents switch only when asked.
+- **Staleness:** `script/ha-env list`, `script/develop` and `script/test` remind you when the environments were last
+  refreshed over a week ago, or when `minimum` no longer matches `hacs.json`.
+
+To have `latest` and `beta` installed on every container create, set `HA_ENVS` in `.devcontainer/.env.local`:
+
+```bash
+HA_ENVS="minimum latest beta"
+```
+
+`HA_VERSION=<version> script/setup/bootstrap` still builds one specific version, as the environment `custom`; a plain
+`script/setup/bootstrap` afterwards returns to `minimum`.
 
 Code written this way must still run on the minimum: use only what the minimum version offers, and let the newer one
 show you the deprecations coming. The _Newer Home Assistant_ workflow does the same in CI — against the newest stable

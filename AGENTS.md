@@ -127,7 +127,8 @@ These are the ones an agent typically breaks _before_ it realises a skill or ins
 - **While Home Assistant runs, ask it — do not read `config/.storage/`.** Those files are written 1–180 seconds after
   the change they describe and hold no live state at all, so `script/ha` is the source of truth. With Home Assistant
   stopped it is the other way round. Never write into `config/.storage/` while it runs; the next save discards the
-  edit. Decision table: [`ha-coordinator-debug`](.agents/skills/ha-coordinator-debug/SKILL.md).
+  edit. On another Home Assistant environment (`script/ha-env`) the same holds for `.local/ha-config/<name>/.storage/`.
+  Decision table: [`ha-coordinator-debug`](.agents/skills/ha-coordinator-debug/SKILL.md).
 
 ### Device registry ownership (Home Assistant 2026.8+)
 
