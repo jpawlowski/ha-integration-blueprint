@@ -183,6 +183,7 @@ def _without_environment(tmp_path: Path) -> dict[str, str]:
     """Return an environment in which neither a virtual environment nor the Node.js tools can be found."""
     (tmp_path / "script" / ".lib").mkdir(parents=True)
     shutil.copy(REPO_ROOT / "script" / ".lib" / "output.sh", tmp_path / "script" / ".lib")
+    shutil.copy(REPO_ROOT / "script" / ".lib" / "ha_env_renew.sh", tmp_path / "script" / ".lib")
     hidden = {"VIRTUAL_ENV", "REMOTE_CONTAINERS", "CODESPACES", "GITHUB_ACTIONS"}
     return {**{k: v for k, v in os.environ.items() if k not in hidden}, "HOME": str(tmp_path)}
 

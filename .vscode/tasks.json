@@ -14,21 +14,9 @@
       "isBackground": true
     },
     {
-      "label": "Run Home Assistant (Latest)",
+      "label": "Run Home Assistant (Environment)",
       "type": "shell",
-      "command": "./script/develop --env latest",
-      "group": "test",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": [],
-      "isBackground": true
-    },
-    {
-      "label": "Run Home Assistant (Beta)",
-      "type": "shell",
-      "command": "./script/develop --env beta",
+      "command": "./script/develop --env ${input:haEnvironment}",
       "group": "test",
       "presentation": {
         "reveal": "always",

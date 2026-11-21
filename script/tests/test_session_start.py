@@ -36,6 +36,7 @@ def repository(tmp_path: Path) -> Path:
     (repo / "script" / ".lib").mkdir(parents=True)
     (repo / "script" / "setup").mkdir()
     shutil.copy(ROOT / "script" / ".lib" / "output.sh", repo / "script" / ".lib" / "output.sh")
+    shutil.copy(ROOT / "script" / ".lib" / "ha_env_renew.sh", repo / "script" / ".lib" / "ha_env_renew.sh")
     _stub(repo, "bootstrap", "mkdir -p .local/ha-venv/bin && touch .local/ha-venv/bin/activate")
     _stub(repo, "toolchain", "true")
     subprocess.run(["git", "init", "--quiet"], cwd=repo, check=True)

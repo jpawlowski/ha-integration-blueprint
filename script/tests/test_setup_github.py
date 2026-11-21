@@ -38,6 +38,7 @@ def repository(tmp_path: Path) -> Path:
     (repo / "script" / ".lib").mkdir()
     shutil.copy(SCRIPT_DIR / "setup" / "github", repo / "script" / "setup" / "github")
     shutil.copy(SCRIPT_DIR / ".lib" / "output.sh", repo / "script" / ".lib" / "output.sh")
+    shutil.copy(SCRIPT_DIR / ".lib" / "ha_env_renew.sh", repo / "script" / ".lib" / "ha_env_renew.sh")
     (repo / ".github" / "rulesets").mkdir(parents=True)
     shutil.copy(ROOT / ".github" / "rulesets" / "main.json", repo / ".github" / "rulesets" / "main.json")
     (repo / ".github" / "dependabot.yml").write_text("version: 2\n", encoding="utf-8")

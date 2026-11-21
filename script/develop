@@ -2,13 +2,9 @@
 
 # script/develop: Start Home Assistant in development mode
 #
-# Starts Home Assistant with asyncio debug mode enabled, in the active Home Assistant
-# environment (script/ha-env) and its config directory: config/ for minimum, another one
-# that shares configuration.yaml with it otherwise. --env switches to another environment
-# first, installing it when needed; it refuses while Home Assistant runs on another environment,
-# unless --force says to take that instance over. This does not change any log level — those come from
-# the logger: block in config/configuration.yaml. Automatically cleans up accidental package
-# installations and sets PYTHONPATH to load the integration from custom_components/.
+# Starts Home Assistant with asyncio debug mode in the active Home Assistant environment and its config
+# directory (script/ha-env); --env switches first, as script/ha-env use does. Log levels come from
+# config/configuration.yaml. Cleans up accidental package installations and loads custom_components/.
 #
 # Usage:
 #   ./script/develop [--env minimum|latest|beta [--force]]
@@ -24,15 +20,11 @@ cd "$SCRIPT_DIR/.."
 
 # shellcheck source=script/.lib/output.sh
 source "$SCRIPT_DIR/.lib/output.sh"
-# shellcheck source=script/.lib/download.sh
-source "$SCRIPT_DIR/.lib/download.sh"
-# shellcheck source=script/.lib/ha_version.sh
-source "$SCRIPT_DIR/.lib/ha_version.sh"
 # shellcheck source=script/.lib/ha_envs.sh
 source "$SCRIPT_DIR/.lib/ha_envs.sh"
 
 ENV_SLOT=""
-FORCE=false
+USE_ARGS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
     --env)
@@ -40,7 +32,7 @@ while [[ $# -gt 0 ]]; do
         shift 2
         ;;
     --force)
-        FORCE=true
+        USE_ARGS+=(--force)
         shift
         ;;
     *)
@@ -50,13 +42,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Switching moves every terminal and script/test along; never do that under someone else's running instance by accident.
-ACTIVE_SLOT="$(ha_envs_current_slot)"
-if [[ -n $ENV_SLOT && $ENV_SLOT != "${ACTIVE_SLOT:-minimum}" && $FORCE == false ]] &&
-    pgrep -f "hass --config ${PWD}/(config|\.local/ha-config/)" >/dev/null; then
-    log_error "Home Assistant is running on ${ACTIVE_SLOT:-minimum}: --env $ENV_SLOT would stop it and switch every terminal"
-    log_step "Stop it first, or take it over on purpose: script/develop --env $ENV_SLOT --force"
-    exit 1
+# Switch before stopping anything: script/ha-env use refuses while Home Assistant runs, unless --force.
+if [[ -n $ENV_SLOT ]]; then
+    if [[ -z $(ha_envs_version_of "$ENV_SLOT") ]]; then
+        "$SCRIPT_DIR/ha-env" add "$ENV_SLOT"
+    fi
+    "$SCRIPT_DIR/ha-env" use "${USE_ARGS[@]}" "$ENV_SLOT"
 fi
 
 # Kill any existing Home Assistant and debugpy processes
@@ -69,17 +60,9 @@ if pkill -f "debugpy.*5678"; then
 fi
 sleep 1 # Give processes time to terminate
 
-if [[ -n $ENV_SLOT ]]; then
-    if [[ -z $(ha_envs_version_of "$ENV_SLOT") ]]; then
-        "$SCRIPT_DIR/ha-env" add "$ENV_SLOT"
-    fi
-    "$SCRIPT_DIR/ha-env" use "$ENV_SLOT"
-fi
-
 activate_venv
 ha_envs_notice
-export HA_CONFIG_DIR
-HA_CONFIG_DIR="$(ha_config_dir)"
+SLOT="$(ha_current_slot)"
 CONFIG_PATH="${PWD}/${HA_CONFIG_DIR}"
 HA_RUNNING_VERSION="$(python3 -c 'from homeassistant.const import __version__; print(__version__)')"
 
@@ -112,11 +95,13 @@ run_hook "develop" "pre"
 export PYTHONPATH="${PWD}${PYTHONPATH:+:${PYTHONPATH}}"
 
 log_header "Starting Home Assistant in development mode"
-log_info "Home Assistant: ${HA_RUNNING_VERSION} ($(ha_envs_current_slot || true))"
+log_info "Home Assistant: ${HA_RUNNING_VERSION}${SLOT:+ ($SLOT)}"
 log_info "Config directory: ${CONFIG_PATH}"
 mkdir -p .local
-printf '{"slot": "%s", "version": "%s", "config_dir": "%s", "started_by": "%s", "started_at": "%s"}\n' \
-    "$(ha_envs_current_slot || true)" "$HA_RUNNING_VERSION" "$HA_CONFIG_DIR" "$(ha_actor)" "$(date -Is)" >.local/ha-develop.json
+jq -n --arg slot "$SLOT" --arg version "$HA_RUNNING_VERSION" --arg config_dir "$HA_CONFIG_DIR" \
+    --arg started_by "$(ha_actor)" --arg started_at "$(date -Is)" \
+    '{slot: $slot, version: $version, config_dir: $config_dir, started_by: $started_by, started_at: $started_at}' \
+    >.local/ha-develop.json
 log_info "asyncio debug mode: enabled"
 log_separator
 echo ""

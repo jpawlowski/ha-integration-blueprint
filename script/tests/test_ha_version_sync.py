@@ -48,6 +48,7 @@ def repo(tmp_path: Path) -> Path:
     (root / "script" / ".lib").mkdir(parents=True)
     shutil.copy(SCRIPT_DIR / "ha-version-sync", root / "script" / "ha-version-sync")
     shutil.copy(SCRIPT_DIR / ".lib" / "output.sh", root / "script" / ".lib" / "output.sh")
+    shutil.copy(SCRIPT_DIR / ".lib" / "ha_env_renew.sh", root / "script" / ".lib" / "ha_env_renew.sh")
     (root / "pyproject.toml").write_text('requires-python = ">=3.14"\n', encoding="utf-8")
     (root / "mise.toml").write_text('[tools]\npython = "3.14.9"\n', encoding="utf-8")
     return root

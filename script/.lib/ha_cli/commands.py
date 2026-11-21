@@ -11,7 +11,7 @@ integration. `--all` widens them to the whole instance.
 import json
 from typing import TYPE_CHECKING, Any
 
-from .client import EXIT_UNREACHABLE, HaError
+from .client import EXIT_UNREACHABLE, TOKEN_FILE, HaError
 from .instance import CONFIG_DIR, develop_run, run_state
 from .output import emit_json, emit_pairs, emit_table
 
@@ -425,5 +425,5 @@ async def cmd_token(client: HaClient, args: argparse.Namespace) -> int:
     del client, args
     if not META_FILE.is_file():
         raise HaError("no development token — run ./script/develop")
-    emit_pairs(json.loads(META_FILE.read_text(encoding="utf-8")) | {"token_file": str(META_FILE.with_suffix(""))})
+    emit_pairs(json.loads(META_FILE.read_text(encoding="utf-8")) | {"token_file": str(TOKEN_FILE)})
     return 0

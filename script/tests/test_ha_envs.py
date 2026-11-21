@@ -14,9 +14,10 @@ resolve_ha_version() {
     local -n _r="$1"
     case "$2" in latest) _r="$STUB_LATEST" ;; beta) _r="$STUB_BETA" ;; *) _r="$2" ;; esac
 }
-ha_envs_create_venv() { mkdir -p "$1/bin" "$1/lib"; echo "home = stub" >"$1/pyvenv.cfg"; }
+ha_envs_create_venv() { mkdir -p "$1/bin" "$1/lib"; echo "home = stub" >"$1/pyvenv.cfg"; touch "$1/bin/activate"; }
 ha_envs_install() {
     [[ " ${STUB_FAIL:-} " == *" $2 "* ]] && return 1
+    echo "$2" >>"$1/installs"
     echo "$2" >"$1/bin/version"
 }
 """
@@ -29,7 +30,7 @@ def _bash(workdir: Path, commands: str, **stubs: str) -> subprocess.CompletedPro
     script = "\n".join(
         [
             "set -euo pipefail",
-            *(f"source {LIB / name}" for name in ("output.sh", "download.sh", "ha_version.sh", "ha_envs.sh")),
+            *(f"source {LIB / name}" for name in ("output.sh", "ha_envs.sh")),
             STUBS,
             commands,
         ]
@@ -114,6 +115,19 @@ def test_a_refresh_moves_the_slot_forward_and_prunes_the_old_version(workdir: Pa
 
 
 @pytest.mark.unit
+def test_an_unchanged_environment_is_not_installed_again(workdir: Path) -> None:
+    """A refresh skips the install when neither the version nor a requirements file changed."""
+    _bash(workdir, "ha_envs_refresh minimum; ha_envs_refresh minimum")
+    installs = _root(workdir) / "versions" / "2026.11.2" / "installs"
+    assert installs.read_text(encoding="utf-8").splitlines() == ["2026.11.2"]
+
+    (workdir / "requirements_test.txt").write_text("pytest-homeassistant==2026.11.2\n", encoding="utf-8")
+    _bash(workdir, "ha_envs_refresh minimum")
+
+    assert installs.read_text(encoding="utf-8").splitlines() == ["2026.11.2", "2026.11.2"]
+
+
+@pytest.mark.unit
 def test_a_failed_build_keeps_the_previous_version(workdir: Path) -> None:
     """The slot moves only after its new version built; the unfinished build is removed."""
     _bash(workdir, "ha_envs_refresh beta")
@@ -136,7 +150,7 @@ def test_use_mirrors_the_active_slot_at_the_root(workdir: Path) -> None:
     _bash(workdir, "ha_envs_use beta")
 
     assert (root / "bin" / "version").read_text(encoding="utf-8") == "2026.12.0b1\n"
-    assert _bash(workdir, "ha_envs_current_slot").stdout == "beta\n"
+    assert _bash(workdir, "ha_current_slot").stdout == "beta"
 
 
 @pytest.mark.unit
@@ -148,7 +162,7 @@ def test_use_refuses_a_slot_that_is_not_installed(workdir: Path) -> None:
 
     assert result.returncode == 1
     assert "script/ha-env add latest" in result.stdout + result.stderr
-    assert _bash(workdir, "ha_envs_current_slot").stdout == "minimum\n"
+    assert _bash(workdir, "ha_current_slot").stdout == "minimum"
 
 
 @pytest.mark.unit
@@ -161,7 +175,7 @@ def test_remove_keeps_minimum_and_the_active_slot(workdir: Path) -> None:
     result = _bash(workdir, "ha_envs_remove beta; ha_envs_prune")
 
     assert result.returncode == 0, result.stderr
-    assert _bash(workdir, "ha_envs_installed").stdout.split() == ["latest", "minimum"]
+    assert sorted(path.name for path in (_root(workdir) / "slots").iterdir()) == ["latest", "minimum"]
     assert _versions(workdir) == ["2026.11.2"]
 
 
@@ -283,7 +297,12 @@ def test_the_prompt_names_the_active_environment_and_follows_a_switch(tmp_path: 
         f"PS1='$ '; source {LIB / 'ha_env_prompt.sh'}; _ha_env_prompt; echo \"$PS1|${{VIRTUAL_ENV##*/}}\"; "
         f'ln -sfn slots/beta {root}/current; _ha_env_prompt; echo "$PS1|${{VIRTUAL_ENV##*/}}"'
     )
-    env = {**os.environ, "HA_ENV_ROOT": str(root), "VIRTUAL_ENV": f"{root}/versions/2026.11.2"}
+    env = {
+        **os.environ,
+        "HA_ENV_ROOT": str(root),
+        "VIRTUAL_ENV": f"{root}/versions/2026.11.2",
+        "WORKSPACE_ROOT": str(LIB.parents[1]),
+    }
 
     result = subprocess.run([shell, "-c", script], env=env, capture_output=True, text=True, check=False)
 

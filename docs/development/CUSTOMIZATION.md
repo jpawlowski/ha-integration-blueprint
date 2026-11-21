@@ -290,8 +290,8 @@ the Home Assistant they run against; `requirements_test.txt` and `hacs.json` sta
   `config/` when its version can migrate that forward.
 - **Prompt:** dev container terminals show the active environment, such as `(ha-beta 2026.12.0b2)`, follow a switch at
   their next prompt, and say who switched when it was not them.
-- **Safety:** switching refuses while Home Assistant runs on the environment, and `script/develop --env` refuses while
-  it runs on another one unless you pass `--force`. Agents switch only when asked.
+- **Safety:** `script/ha-env use` and `script/develop --env` refuse to switch while Home Assistant runs, unless you pass
+  `--force`; a refresh never changes the environment a running instance uses.
 - **Staleness:** `script/ha-env list`, `script/develop` and `script/test` remind you when the environments were last
   refreshed over a week ago, or when `minimum` no longer matches `hacs.json`.
 

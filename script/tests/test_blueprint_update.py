@@ -55,6 +55,7 @@ def repos(tmp_path: Path) -> tuple[Path, Path]:
     (project / "script" / ".lib").mkdir(parents=True)
     shutil.copy(SCRIPT_DIR / "blueprint-update", project / "script" / "blueprint-update")
     shutil.copy(SCRIPT_DIR / ".lib" / "output.sh", project / "script" / ".lib" / "output.sh")
+    shutil.copy(SCRIPT_DIR / ".lib" / "ha_env_renew.sh", project / "script" / ".lib" / "ha_env_renew.sh")
     shutil.copy(SCRIPT_DIR / ".lib" / "blueprint_update.py", project / "script" / ".lib" / "blueprint_update.py")
     _commit(
         project,

@@ -3,6 +3,9 @@
 # Source this file in your scripts with: source "$(dirname "$0")/../.lib/output.sh"
 # shellcheck disable=SC2034  # All variables in this library are used by sourcing scripts
 
+# shellcheck source=script/.lib/ha_env_renew.sh
+source "${BASH_SOURCE[0]%/*}/ha_env_renew.sh"
+
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
 readonly YELLOW='\033[1;33m'
@@ -95,13 +98,7 @@ require_command() {
 # healthy. Fall back to the other locations, but say so.
 resolve_venv_path() {
     local preferred candidate
-    if [[ -n ${REMOTE_CONTAINERS:-} || -n ${CODESPACES:-} ]]; then
-        preferred="$HOME/ha-venv"
-    elif [[ -n ${GITHUB_ACTIONS:-} ]]; then
-        preferred="${GITHUB_WORKSPACE:-.}/.local/ha-venv"
-    else
-        preferred="$PWD/.local/ha-venv"
-    fi
+    preferred="$(ha_venv_preferred_path)"
 
     if [[ -f "$preferred/bin/activate" ]]; then
         printf '%s' "$preferred"
@@ -120,6 +117,41 @@ resolve_venv_path() {
     return 1
 }
 
+# Print where bootstrap keeps the venv here: a named volume in the dev container, the workspace everywhere else.
+ha_venv_preferred_path() {
+    if [[ -n ${REMOTE_CONTAINERS:-} || -n ${CODESPACES:-} ]]; then
+        printf '%s' "$HOME/ha-venv"
+    elif [[ -n ${GITHUB_ACTIONS:-} ]]; then
+        printf '%s' "${GITHUB_WORKSPACE:-$PWD}/.local/ha-venv"
+    else
+        printf '%s' "$PWD/.local/ha-venv"
+    fi
+}
+
+# Print the active Home Assistant environment (script/ha-env), or nothing for a venv without environments.
+ha_current_slot() {
+    local venv_path link
+    venv_path="$(resolve_venv_path 2>/dev/null)" || return 0
+    link="$(readlink "$venv_path/current" 2>/dev/null)" || return 0
+    printf '%s' "${link##*/}"
+}
+
+# Whether a local Home Assistant runs in any environment: one holds the lock on its config directory's run lock.
+ha_running() {
+    python3 - config/.ha_run.lock .local/ha-config/*/.ha_run.lock <<'PY'
+import fcntl, sys
+for name in sys.argv[1:]:
+    try:
+        with open(name, "a") as handle:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        sys.exit(0)
+    except OSError:
+        continue
+sys.exit(1)
+PY
+}
+
 # Print who runs this script: an agent where the agent says so in its environment, the developer otherwise.
 ha_actor() {
     if [[ -n ${AI_AGENT:-} ]]; then
@@ -134,21 +166,21 @@ ha_actor() {
 # Print the config directory of the active Home Assistant environment, relative to the repository root:
 # config/ for minimum (and for a venv without environments), its own directory for every other one.
 ha_config_dir() {
-    local venv_path slot=""
-    if venv_path="$(resolve_venv_path 2>/dev/null)" && [[ -L $venv_path/current ]]; then
-        slot="$(basename "$(readlink "$venv_path/current")")"
-    fi
+    local slot
+    slot="$(ha_current_slot)"
     case "$slot" in
     "" | minimum) printf 'config' ;;
     *) printf '.local/ha-config/%s' "$slot" ;;
     esac
 }
 
-# Activate the Home Assistant virtual environment if not already active.
+# Activate the Home Assistant virtual environment if not already active, and export HA_CONFIG_DIR for it.
 # An activation that still names an environment `script/ha-env use` has switched away from is renewed.
 activate_venv() {
+    export HA_CONFIG_DIR
+    HA_CONFIG_DIR="$(ha_config_dir)"
     if [[ -n ${VIRTUAL_ENV:-} ]]; then
-        _renew_stale_venv
+        ha_env_renew "$(resolve_venv_path 2>/dev/null)"
         return 0
     fi
     local venv_path
@@ -165,23 +197,10 @@ activate_venv() {
     source "$venv_path/bin/activate"
 }
 
-# A shell activated before `script/ha-env use` keeps the old version's path, because activate resolves the link.
-_renew_stale_venv() {
-    local venv_path root active
-    venv_path="$(resolve_venv_path 2>/dev/null)" || return 0
-    [[ -L $venv_path/current ]] || return 0
-    root="$(realpath "$venv_path")"
-    active="$(realpath "$venv_path/current")"
-    if [[ $(realpath -m "$VIRTUAL_ENV") == "$root"/versions/* && $(realpath -m "$VIRTUAL_ENV") != "$active" ]]; then
-        # shellcheck source=/dev/null
-        source "$venv_path/bin/activate"
-    fi
-}
-
 # Like activate_venv, for a script that needs the venv only for optional extras: carries on without one.
 activate_venv_if_present() {
     if [[ -n ${VIRTUAL_ENV:-} ]]; then
-        _renew_stale_venv
+        ha_env_renew "$(resolve_venv_path 2>/dev/null)"
         return 0
     fi
     local venv_path

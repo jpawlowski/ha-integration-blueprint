@@ -19,10 +19,6 @@ cd "$SCRIPT_DIR/../.."
 
 # shellcheck source=script/.lib/output.sh
 source "$SCRIPT_DIR/../.lib/output.sh"
-# shellcheck source=script/.lib/download.sh
-source "$SCRIPT_DIR/../.lib/download.sh"
-# shellcheck source=script/.lib/ha_version.sh
-source "$SCRIPT_DIR/../.lib/ha_version.sh"
 # shellcheck source=script/.lib/ha_envs.sh
 source "$SCRIPT_DIR/../.lib/ha_envs.sh"
 
@@ -63,13 +59,9 @@ require_command uv "$UV_HINT"
 
 log_header "Preparing the Home Assistant environments"
 
-# The dev container keeps the environments in a named volume, everything else in the workspace.
-VENV_PATH="$(ha_envs_root)"
-if [[ -n "${REMOTE_CONTAINERS:-}" || -n "${CODESPACES:-}" ]]; then
-    VENV_IS_EXTERNAL=true
-else
-    VENV_IS_EXTERNAL=false
-fi
+VENV_PATH="$(ha_venv_preferred_path)"
+VENV_IS_EXTERNAL=false
+[[ $VENV_PATH == "$HOME/ha-venv" ]] && VENV_IS_EXTERNAL=true
 mkdir -p "$VENV_PATH"
 ha_envs_migrate
 
@@ -106,72 +98,41 @@ fi
 
 # Auto-activate venv in shell RC files (only in DevContainer/Codespaces where venv is external)
 if [[ "$VENV_IS_EXTERNAL" == "true" ]]; then
-    set +e
-    if [[ -f $HOME/.bashrc ]]; then
-        if ! grep -q "source $VENV_PATH/bin/activate" "$HOME/.bashrc" 2>/dev/null; then
-            log_step "Configuring Bash to auto-activate virtual environment"
-            echo "source $VENV_PATH/bin/activate" >>"$HOME/.bashrc" || log_warning "Failed to update .bashrc"
-        fi
-    fi
-    if [[ -f $HOME/.zshrc ]]; then
-        if ! grep -q "source $VENV_PATH/bin/activate" "$HOME/.zshrc"; then
-            log_step "Configuring ZSH to auto-activate virtual environment"
-            echo "source $VENV_PATH/bin/activate" >>"$HOME/.zshrc" || log_warning "Failed to update .zshrc"
-        fi
-    fi
-    # .devcontainer/.bashrc and .zshrc load .devcontainer/.env*; the block bootstrap used to add for that ran before
-    # WORKSPACE_ROOT was set, so it never did anything. Remove it where it still sits unchanged.
+    LEGACY_ENV_BLOCK="# DevContainer environment overrides (.env → .env.local, later wins)"
     for RC_FILE in "$HOME/.bashrc" "$HOME/.zshrc"; do
         [[ -f $RC_FILE ]] || continue
-        python3 - "$RC_FILE" <<'PY'
-import sys
-from pathlib import Path
-
-rc = Path(sys.argv[1])
-block = """# DevContainer environment overrides (.env → .env.local, later wins)
-# set -a auto-exports all variables so child processes (hass, pytest, uv) see them too.
-if [ -n "$WORKSPACE_ROOT" ]; then
-    set -a
-    [ -f "$WORKSPACE_ROOT/.devcontainer/.env" ] && source "$WORKSPACE_ROOT/.devcontainer/.env"
-    [ -f "$WORKSPACE_ROOT/.devcontainer/.env.local" ] && source "$WORKSPACE_ROOT/.devcontainer/.env.local"
-    set +a
-fi
-"""
-text = rc.read_text(encoding="utf-8")
-if block in text:
-    rc.write_text(text.replace(block, ""), encoding="utf-8")
-    print(f"Removed the unused environment block from {rc}")
-PY
+        if ! grep -qF "source $VENV_PATH/bin/activate" "$RC_FILE"; then
+            log_step "Configuring ${RC_FILE##*/} to auto-activate the virtual environment"
+            echo "source $VENV_PATH/bin/activate" >>"$RC_FILE" || log_warning "Failed to update $RC_FILE"
+        fi
+        # .devcontainer/.bashrc loads .devcontainer/.env*; this older copy ran before WORKSPACE_ROOT was set.
+        if grep -qxF "$LEGACY_ENV_BLOCK" "$RC_FILE"; then
+            sed -i "/^${LEGACY_ENV_BLOCK//./\\.}\$/,/^fi\$/d" "$RC_FILE"
+        fi
     done
-    set -e
 fi
 
-# HA_VERSION alone builds just that version, as the custom slot; otherwise HA_ENVS, which always includes minimum.
+# HA_VERSION alone builds just that version, as the custom slot; otherwise minimum. HA_ENVS adds more either way.
 if [[ -n ${HA_VERSION:-} ]]; then
-    read -ra SLOTS <<<"${HA_ENVS:-}"
-    SLOTS+=(custom)
+    BASE_SLOT=custom
+    ACTIVE=custom
 else
-    read -ra SLOTS <<<"minimum ${HA_ENVS:-}"
+    BASE_SLOT=minimum
+    ACTIVE=$(ha_current_slot)
+    [[ -n $ACTIVE && $ACTIVE != custom ]] || ACTIVE=minimum
 fi
-declare -A SEEN=()
+log_header "Home Assistant environment: $BASE_SLOT"
+ha_envs_refresh "$BASE_SLOT" || exit 1
+read -ra SLOTS <<<"${HA_ENVS:-}"
 for SLOT in "${SLOTS[@]}"; do
-    [[ -z ${SEEN[$SLOT]:-} ]] || continue
-    SEEN[$SLOT]=1
+    [[ $SLOT != minimum ]] || continue
     log_header "Home Assistant environment: $SLOT"
-    if ! ha_envs_refresh "$SLOT"; then
-        [[ $SLOT == minimum || $SLOT == custom ]] && exit 1
-        log_warning "Skipping $SLOT — the other environments are unaffected"
-    fi
+    ha_envs_refresh "$SLOT" || log_warning "Skipping $SLOT — the other environments are unaffected"
 done
 
-ACTIVE=$(ha_envs_current_slot)
-if [[ -n ${HA_VERSION:-} ]]; then
-    ACTIVE=custom
-elif [[ -z $ACTIVE || $ACTIVE == custom || -z $(ha_envs_version_of "$ACTIVE") ]]; then
-    ACTIVE=minimum
-fi
+[[ -n $(ha_envs_version_of "$ACTIVE") ]] || ACTIVE=minimum
 ha_envs_use "$ACTIVE"
-[[ -n ${HA_VERSION:-} ]] || ha_envs_remove custom
+[[ $ACTIVE == custom ]] || ha_envs_remove custom
 ha_envs_prune
 ha_envs_mark_refreshed
 log_success "Active Home Assistant environment: $ACTIVE ($(ha_envs_version_of "$ACTIVE"))"

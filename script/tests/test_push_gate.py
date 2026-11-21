@@ -23,6 +23,7 @@ def repository(tmp_path: Path) -> Path:
     (tmp_path / "script" / ".lib").mkdir(parents=True)
     shutil.copy(SCRIPT_DIR / "push-gate", tmp_path / "script" / "push-gate")
     shutil.copy(SCRIPT_DIR / ".lib" / "output.sh", tmp_path / "script" / ".lib" / "output.sh")
+    shutil.copy(SCRIPT_DIR / ".lib" / "ha_env_renew.sh", tmp_path / "script" / ".lib" / "ha_env_renew.sh")
     _stub(tmp_path, "lint-check", 0)
     _stub(tmp_path, "type-check", 0)
     for command in (

@@ -168,6 +168,29 @@ print(versions[-1] if versions else "")
     _rha_result="$version"
 }
 
+# Print the minimum Home Assistant version in hacs.json; fails when there is none.
+hacs_min_ha_version() {
+    local version
+    version=$(sed -n 's/.*"homeassistant"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' hacs.json 2>/dev/null | head -1)
+    [[ -n $version ]] && printf '%s\n' "$version"
+}
+
+# Print the Home Assistant version the pytest-homeassistant pin in requirements_test.txt matches: the pin without
+# the plugin's own repackaging suffix (.post1, .dev1). Prints nothing for another test package.
+ha_test_pin_version() {
+    local pin
+    pin=$(sed -n 's/^pytest-homeassistant==\([^[:space:]#]*\).*/\1/p' requirements_test.txt 2>/dev/null)
+    pin="${pin%.post*}"
+    printf '%s\n' "${pin%.dev*}"
+}
+
+# ha_version_newer A B — whether Home Assistant version A is newer than B, pre-releases included.
+ha_version_newer() {
+    [[ $1 != "$2" ]] || return 1
+    python3 -c 'import sys; from packaging.version import Version; sys.exit(Version(sys.argv[1]) <= Version(sys.argv[2]))' \
+        "$1" "$2"
+}
+
 # target_ha_version RESULT_VAR
 #
 # Resolves the Home Assistant version the tooling targets: HA_VERSION when it is
@@ -182,8 +205,7 @@ target_ha_version() {
     local _tha_version="${HA_VERSION:-}" _tha_resolved
 
     if [[ -z "$_tha_version" ]]; then
-        _tha_version=$(grep '"homeassistant"' hacs.json | head -1 | sed 's/.*"homeassistant"\s*:\s*"\([^"]*\)".*/\1/')
-        if [[ -z "$_tha_version" ]]; then
+        if ! _tha_version=$(hacs_min_ha_version); then
             log_error "HA_VERSION not set and could not be determined from hacs.json"
             return 1
         fi
