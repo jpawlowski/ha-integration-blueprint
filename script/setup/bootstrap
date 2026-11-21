@@ -23,6 +23,8 @@ source "$SCRIPT_DIR/../.lib/output.sh"
 source "$SCRIPT_DIR/../.lib/download.sh"
 # shellcheck source=script/.lib/ha_version.sh
 source "$SCRIPT_DIR/../.lib/ha_version.sh"
+# shellcheck source=script/.lib/ha_envs.sh
+source "$SCRIPT_DIR/../.lib/ha_envs.sh"
 
 # Load environment overrides in two layers (later layers win):
 #   .devcontainer/.env       — project-level defaults, committed to the repo
@@ -59,41 +61,17 @@ UV_HINT="mise (https://mise.jdx.dev/getting-started.html), then script/setup/too
 log_header "Checking for uv"
 require_command uv "$UV_HINT"
 
-log_header "Checking for Python virtual environment"
+log_header "Preparing the Home Assistant environments"
 
-# Determine venv location based on environment
-# In DevContainer: Use $HOME/ha-venv (named volume mounted directly in $HOME, avoids Docker creating ~/.local as root)
-# Local development: Use .local/ha-venv in workspace (isolated per project)
-# CI (GitHub Actions): Use workspace .local/ha-venv (both work)
+# The dev container keeps the environments in a named volume, everything else in the workspace.
+VENV_PATH="$(ha_envs_root)"
 if [[ -n "${REMOTE_CONTAINERS:-}" || -n "${CODESPACES:-}" ]]; then
-    # Running in DevContainer or Codespaces
-    VENV_PATH="$HOME/ha-venv"
     VENV_IS_EXTERNAL=true
-    log_info "DevContainer/Codespaces detected - using external venv"
-elif [[ -n "${GITHUB_ACTIONS:-}" ]]; then
-    # Running in GitHub Actions
-    VENV_PATH="${GITHUB_WORKSPACE:-.}/.local/ha-venv"
-    VENV_IS_EXTERNAL=false
-    log_info "GitHub Actions detected - using workspace venv"
 else
-    # Local development (Mac, Linux, WSL)
-    VENV_PATH=".local/ha-venv"
     VENV_IS_EXTERNAL=false
-    log_info "Local development detected - using workspace venv"
 fi
-
-if [[ ! -d "$VENV_PATH" ]]; then
-    log_info "Creating virtual environment at $VENV_PATH"
-    uv venv "$VENV_PATH"
-elif [[ ! -x "$VENV_PATH/bin/python3" ]]; then
-    # Venv exists but python3 is broken (broken symlink or missing).
-    # Use find instead of rm -rf: the path may be a named Docker volume mount point
-    # which cannot be removed itself — only its contents can be deleted.
-    log_warning "Existing venv has broken Python interpreter - recreating"
-    find "$VENV_PATH" -mindepth 1 -delete
-    log_info "Creating virtual environment at $VENV_PATH"
-    uv venv "$VENV_PATH"
-fi
+mkdir -p "$VENV_PATH"
+ha_envs_migrate
 
 # Create symlinks for IDE compatibility and tool expectations
 if [[ "$VENV_IS_EXTERNAL" == "true" ]]; then
@@ -104,7 +82,7 @@ if [[ "$VENV_IS_EXTERNAL" == "true" ]]; then
     if [[ -d .local/ha-venv && ! -L .local/ha-venv ]]; then
         log_warning "Skipping .local/ha-venv: directory already exists (not a symlink)"
     else
-        ln -sf "$VENV_PATH" .local/ha-venv
+        ln -sfn "$VENV_PATH" .local/ha-venv
     fi
 fi
 
@@ -116,18 +94,15 @@ mkdir -p .local
 if [[ -d .venv && ! -L .venv ]]; then
     log_warning "Skipping .venv: directory already exists (not a symlink)"
 else
-    ln -sf .local/ha-venv .venv
+    ln -sfn .local/ha-venv .venv
 fi
 
 # .local/venv → ha-venv (GitHub Copilot Agent expectation)
 if [[ -d .local/venv && ! -L .local/venv ]]; then
     log_warning "Skipping .local/venv: directory already exists (not a symlink)"
 else
-    ln -sf ha-venv .local/venv
+    ln -sfn ha-venv .local/venv
 fi
-
-# shellcheck source=/dev/null
-source "$VENV_PATH/bin/activate"
 
 # Auto-activate venv in shell RC files (only in DevContainer/Codespaces where venv is external)
 if [[ "$VENV_IS_EXTERNAL" == "true" ]]; then
@@ -176,87 +151,38 @@ EOF
     set -e
 fi
 
-target_ha_version HA_VERSION || exit 1
-
-HA_CORE_BASE_URL="https://raw.githubusercontent.com/home-assistant/core/${HA_VERSION}"
-
-# Recreate the venv if the installed HA version no longer matches the target.
-# This handles the cached-volume case: the venv persists across rebuilds, so without
-# this check an HA version bump would silently run on the old installation.
-# The marker file ($VENV_PATH/.ha-version) is written after a successful install below.
-#
-# This has to run *before* any dependency is installed: the rebuild empties the
-# venv, so anything installed earlier in the same run is thrown away and never
-# reinstalled.
-HA_VERSION_MARKER="$VENV_PATH/.ha-version"
-if [[ -f "$HA_VERSION_MARKER" ]]; then
-    CACHED_HA_VERSION=$(cat "$HA_VERSION_MARKER")
-    if [[ "$CACHED_HA_VERSION" != "$HA_VERSION" ]]; then
-        log_warning "HA version changed ($CACHED_HA_VERSION → $HA_VERSION) — recreating virtual environment"
-        # Leave the environment before deleting it. Otherwise Bash may keep the
-        # venv's uv executable cached and try to run it after it has been removed.
-        if declare -F deactivate >/dev/null 2>&1; then
-            deactivate
-        fi
-        # Use find instead of rm -rf: the path may be a named Docker volume mount point
-        # which cannot be removed itself — only its contents can be deleted.
-        find "$VENV_PATH" -mindepth 1 -delete
-        hash -r
-        require_command uv "$UV_HINT"
-        uv venv "$VENV_PATH"
-        # shellcheck source=/dev/null
-        source "$VENV_PATH/bin/activate"
-    fi
-fi
-
-log_header "Installing development dependencies"
-uv pip install --requirement requirements_dev.txt
-
-log_header "Installing test dependencies"
-uv pip install --requirement requirements_test.txt
-
-log_header "Installing runtime dependencies"
-if grep -qE '^[[:space:]]*[^[:space:]#]' requirements.txt 2>/dev/null; then
-    uv pip install --requirement requirements.txt
+# HA_VERSION alone builds just that version, as the custom slot; otherwise HA_ENVS, which always includes minimum.
+if [[ -n ${HA_VERSION:-} ]]; then
+    read -ra SLOTS <<<"${HA_ENVS:-}"
+    SLOTS+=(custom)
 else
-    log_info "No runtime dependencies defined (this is normal for blueprints)"
+    read -ra SLOTS <<<"minimum ${HA_ENVS:-}"
 fi
-
-if [[ -f requirements.local.txt ]]; then
-    log_header "Installing local extra dependencies (requirements.local.txt)"
-    uv pip install --requirement requirements.local.txt
-fi
-
-log_header "Installing Home Assistant ${HA_VERSION} runtime dependencies"
-mkdir -p "/tmp/homeassistant"
-_download "${HA_CORE_BASE_URL}/homeassistant/package_constraints.txt" "/tmp/homeassistant/package_constraints.txt" # constraints for requirements files
-_download "${HA_CORE_BASE_URL}/requirements.txt" "/tmp/requirements.txt"                                           # required by requirements_all.txt
-_download "${HA_CORE_BASE_URL}/requirements_all.txt" "/tmp/requirements_all.txt"
-uv pip install --requirement "/tmp/requirements_all.txt"
-
-log_header "Installing Home Assistant ${HA_VERSION} test dependencies"
-_download "${HA_CORE_BASE_URL}/requirements_test_pre_commit.txt" "/tmp/requirements_test_pre_commit.txt" # required by requirements_test.txt
-_download "${HA_CORE_BASE_URL}/requirements_test.txt" "/tmp/requirements_test.txt"
-uv pip install --requirement "/tmp/requirements_test.txt"
-
-log_header "Installing Home Assistant ${HA_VERSION} core"
-uv pip install "homeassistant==${HA_VERSION}"
-
-# requirements_test.txt pins the plugin release of the minimum version; another HA_VERSION needs its own release.
-PINNED_PLUGIN=$(sed -n 's/^pytest-homeassistant==\([^[:space:]#]*\).*/\1/p' requirements_test.txt)
-if [[ -n $PINNED_PLUGIN && ${PINNED_PLUGIN%.post*} != "$HA_VERSION" ]]; then
-    log_header "Installing pytest-homeassistant ${HA_VERSION} to match"
-    if ! uv pip install "pytest-homeassistant==${HA_VERSION}"; then
-        log_warning "No pytest-homeassistant release for Home Assistant ${HA_VERSION} — script/test runs the ${PINNED_PLUGIN} fixtures against it"
+declare -A SEEN=()
+for SLOT in "${SLOTS[@]}"; do
+    [[ -z ${SEEN[$SLOT]:-} ]] || continue
+    SEEN[$SLOT]=1
+    log_header "Home Assistant environment: $SLOT"
+    if ! ha_envs_refresh "$SLOT"; then
+        [[ $SLOT == minimum || $SLOT == custom ]] && exit 1
+        log_warning "Skipping $SLOT — the other environments are unaffected"
     fi
+done
+
+ACTIVE=$(ha_envs_current_slot)
+if [[ -n ${HA_VERSION:-} ]]; then
+    ACTIVE=custom
+elif [[ -z $ACTIVE || $ACTIVE == custom || -z $(ha_envs_version_of "$ACTIVE") ]]; then
+    ACTIVE=minimum
 fi
+ha_envs_use "$ACTIVE"
+[[ -n ${HA_VERSION:-} ]] || ha_envs_remove custom
+ha_envs_prune
+ha_envs_mark_refreshed
+log_success "Active Home Assistant environment: $ACTIVE ($(ha_envs_version_of "$ACTIVE"))"
 
-# Record the installed HA version so bootstrap can detect version changes on subsequent runs.
-echo "$HA_VERSION" >"$HA_VERSION_MARKER"
-
-set +e
-rm -rf /tmp/requirements*.txt /tmp/homeassistant/ || log_warning "Failed to clean up temporary files"
-set -e
+# shellcheck source=/dev/null
+source "$VENV_PATH/bin/activate"
 
 log_header "Installing Node.js dependencies"
 if command -v npm >/dev/null 2>&1; then
