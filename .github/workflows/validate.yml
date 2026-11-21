@@ -43,16 +43,13 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
-          if [[ "${EVENT}" == "pull_request" ]]; then
-            if changed=$(git diff --name-only "${BASE}...${HEAD}"); then
-              if ! grep -qE '^custom_components/|^hacs\.json$|^script/\.lib/ha_version\.sh$|^\.github/workflows/validate\.yml$' <<<"${changed}"; then
-                echo "Neither the integration nor its metadata changed — Hassfest and HACS skipped" >> "${GITHUB_STEP_SUMMARY}"
-                echo "relevant=false" >> "${GITHUB_OUTPUT}"
-                exit 0
-              fi
-            fi
-          fi
           echo "relevant=true" >> "${GITHUB_OUTPUT}"
+          [[ "${EVENT}" == "pull_request" ]] || exit 0
+          changed=$(git diff --name-only "${BASE}...${HEAD}") || exit 0
+          grep -qE '^custom_components/|^hacs\.json$|^script/\.lib/ha_version\.sh$|^\.github/workflows/validate\.yml$' \
+            <<<"${changed}" && exit 0
+          echo "Neither the integration nor its metadata changed — Hassfest and HACS skipped" >> "${GITHUB_STEP_SUMMARY}"
+          echo "relevant=false" >> "${GITHUB_OUTPUT}"
 
   hassfest: # https://contributors.home-assistant.io/blog/2020/04/16/hassfest/
     name: Hassfest validation
@@ -87,7 +84,7 @@ jobs:
           persist-credentials: false
 
       - name: Run hassfest validation
-        uses: home-assistant/actions/hassfest@86d4564712fa02543c808e3a693dd04f9d3f8361 # master
+        uses: home-assistant/actions/hassfest@86d4564712fa02543c808e3a693dd04f9d3f8361 # master # zizmor: ignore[ref-version-mismatch,stale-action-refs]
 
   hacs: # https://github.com/hacs/action
     name: HACS validation

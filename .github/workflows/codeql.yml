@@ -51,8 +51,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # The scope check below compares a pull request with its base.
-          fetch-depth: 0
+          fetch-depth: ${{ github.event_name == 'pull_request' && '0' || '1' }}
 
       # The workflow-level path filter lets a change through that matters to one language only.
       - name: Check whether this language is affected
