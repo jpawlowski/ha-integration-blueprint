@@ -5,12 +5,13 @@
 # Starts Home Assistant with asyncio debug mode enabled, in the active Home Assistant
 # environment (script/ha-env) and its config directory: config/ for minimum, another one
 # that shares configuration.yaml with it otherwise. --env switches to another environment
-# first, installing it when needed. This does not change any log level — those come from
+# first, installing it when needed; it refuses while Home Assistant runs on another environment,
+# unless --force says to take that instance over. This does not change any log level — those come from
 # the logger: block in config/configuration.yaml. Automatically cleans up accidental package
 # installations and sets PYTHONPATH to load the integration from custom_components/.
 #
 # Usage:
-#   ./script/develop [--env minimum|latest|beta]
+#   ./script/develop [--env minimum|latest|beta [--force]]
 #
 # Examples:
 #   ./script/develop
@@ -31,18 +32,32 @@ source "$SCRIPT_DIR/.lib/ha_version.sh"
 source "$SCRIPT_DIR/.lib/ha_envs.sh"
 
 ENV_SLOT=""
+FORCE=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
     --env)
         ENV_SLOT="${2:?--env needs minimum, latest or beta}"
         shift 2
         ;;
+    --force)
+        FORCE=true
+        shift
+        ;;
     *)
-        log_error "Unknown option: $1 (usage: script/develop [--env minimum|latest|beta])"
+        log_error "Unknown option: $1 (usage: script/develop [--env minimum|latest|beta [--force]])"
         exit 2
         ;;
     esac
 done
+
+# Switching moves every terminal and script/test along; never do that under someone else's running instance by accident.
+ACTIVE_SLOT="$(ha_envs_current_slot)"
+if [[ -n $ENV_SLOT && $ENV_SLOT != "${ACTIVE_SLOT:-minimum}" && $FORCE == false ]] &&
+    pgrep -f "hass --config ${PWD}/(config|\.local/ha-config/)" >/dev/null; then
+    log_error "Home Assistant is running on ${ACTIVE_SLOT:-minimum}: --env $ENV_SLOT would stop it and switch every terminal"
+    log_step "Stop it first, or take it over on purpose: script/develop --env $ENV_SLOT --force"
+    exit 1
+fi
 
 # Kill any existing Home Assistant and debugpy processes
 log_header "Cleaning up existing processes"
@@ -99,6 +114,9 @@ export PYTHONPATH="${PWD}${PYTHONPATH:+:${PYTHONPATH}}"
 log_header "Starting Home Assistant in development mode"
 log_info "Home Assistant: ${HA_RUNNING_VERSION} ($(ha_envs_current_slot || true))"
 log_info "Config directory: ${CONFIG_PATH}"
+mkdir -p .local
+printf '{"slot": "%s", "version": "%s", "config_dir": "%s", "started_by": "%s", "started_at": "%s"}\n' \
+    "$(ha_envs_current_slot || true)" "$HA_RUNNING_VERSION" "$HA_CONFIG_DIR" "$(ha_actor)" "$(date -Is)" >.local/ha-develop.json
 log_info "asyncio debug mode: enabled"
 log_separator
 echo ""

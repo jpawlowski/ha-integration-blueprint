@@ -278,6 +278,7 @@ def test_the_prompt_names_the_active_environment_and_follows_a_switch(tmp_path: 
     (root / "slots" / "beta").symlink_to("../versions/2026.12.0b1")
     (root / "current").symlink_to("slots/minimum")
     (root / "bin").symlink_to("current/bin")
+    (root / ".switched").write_text("minimum\tbeta\tagent (claude-code)\t14:03\n", encoding="utf-8")
     script = (
         f"PS1='$ '; source {LIB / 'ha_env_prompt.sh'}; _ha_env_prompt; echo \"$PS1|${{VIRTUAL_ENV##*/}}\"; "
         f'ln -sfn slots/beta {root}/current; _ha_env_prompt; echo "$PS1|${{VIRTUAL_ENV##*/}}"'
@@ -288,3 +289,4 @@ def test_the_prompt_names_the_active_environment_and_follows_a_switch(tmp_path: 
 
     assert result.returncode == 0, result.stderr
     assert result.stdout.splitlines() == ["(ha-minimum 2026.11.2) $ |2026.11.2", "(ha-beta 2026.12.0b1) $ |2026.12.0b1"]
+    assert "switched: minimum → beta (by agent (claude-code) at 14:03)" in result.stderr

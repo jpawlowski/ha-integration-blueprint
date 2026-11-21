@@ -178,15 +178,20 @@ ha_envs_refresh() {
     log_success "$slot: Home Assistant $version"
 }
 
-# Make SLOT the active environment and mirror it at the venv root.
+# Make SLOT the active environment and mirror it at the venv root. A switch is recorded in .switched (from, to,
+# who, when; tab-separated), which the prompt hook reports in every open terminal.
 ha_envs_use() {
-    local root entry
+    local root entry previous
     root="$(ha_envs_root)"
     if [[ -z $(ha_envs_version_of "$1") ]]; then
         log_error "$1 is not installed — run: script/ha-env add $1"
         return 1
     fi
+    previous="$(ha_envs_current_slot)"
     ln -sfn "slots/$1" "$root/current"
+    if [[ -n $previous && $previous != "$1" ]]; then
+        printf '%s\t%s\t%s\t%s\n' "$previous" "$1" "$(ha_actor)" "$(date +%H:%M)" >"$root/.switched"
+    fi
     for entry in "${HA_ENVS_ROOT_LINKS[@]}"; do
         if [[ -e $root/current/$entry ]]; then
             ln -sfn "current/$entry" "$root/$entry"

@@ -120,6 +120,17 @@ resolve_venv_path() {
     return 1
 }
 
+# Print who runs this script: an agent where the agent says so in its environment, the developer otherwise.
+ha_actor() {
+    if [[ -n ${AI_AGENT:-} ]]; then
+        printf 'agent (%s)' "${AI_AGENT%%_*}"
+    elif [[ -n ${CLAUDECODE:-} ]]; then
+        printf 'agent (claude-code)'
+    else
+        printf 'developer'
+    fi
+}
+
 # Print the config directory of the active Home Assistant environment, relative to the repository root:
 # config/ for minimum (and for a venv without environments), its own directory for every other one.
 ha_config_dir() {

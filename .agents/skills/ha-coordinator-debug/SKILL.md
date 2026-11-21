@@ -72,6 +72,11 @@ script/ha status    # exit 0 up, exit 2 down; `started` and `uptime` reveal a re
 - **Announce it before you take exclusive control**, so the developer knows to keep their hands off meanwhile. That
   covers `script/setup/reset`, `script/ha token --rotate` and `--revoke`, and any loop that restarts repeatedly — all
   of them need Home Assistant stopped or undisturbed.
+- **The Home Assistant environment is the developer's choice, never yours.** `script/ha-env use`,
+  `script/ha-env refresh` and `script/develop --env` move every terminal, `script/test` and the instance to another
+  version at once. Switch only when asked; `script/ha-env list` and `script/ha status` show what is active and who
+  started the running instance. Never pass `--force` to take a running instance over without asking, and name the
+  environment that is active when you finish.
 - **`ha call`, `ha flow`, `ha reload` and `ha loglevel` change what the developer sees.** Cheap and reversible, but a
   config entry created by a flow stays until someone removes it.
 - **State the run state when you finish — after checking it**, never from memory.

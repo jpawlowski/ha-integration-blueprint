@@ -67,6 +67,10 @@ cmd_list() {
         [[ -n $version || $slot != custom ]] || continue
         printf '%s %-8s %s\n' "$([[ $slot == "$active" ]] && echo '*' || echo ' ')" "$slot" "${version:-not installed}"
     done
+    if ha_running && [[ -f .local/ha-develop.json ]]; then
+        jq -r '"Home Assistant is running on \(.slot // "?"), started by \(.started_by // "?") at \(.started_at // "?")"' \
+            .local/ha-develop.json
+    fi
     ha_envs_notice
 }
 

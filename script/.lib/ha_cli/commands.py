@@ -12,7 +12,7 @@ import json
 from typing import TYPE_CHECKING, Any
 
 from .client import EXIT_UNREACHABLE, HaError
-from .instance import CONFIG_DIR, run_state
+from .instance import CONFIG_DIR, develop_run, run_state
 from .output import emit_json, emit_pairs, emit_table
 
 if TYPE_CHECKING:
@@ -80,14 +80,19 @@ async def cmd_status(client: HaClient, args: argparse.Namespace) -> int:
             print(verdict)
         return EXIT_UNREACHABLE
 
+    run = develop_run() if local.running else {}
     if args.json:
-        emit_json({"config": config, "core": core, "local_lock_held": local.running, "uptime": local.uptime})
+        emit_json(
+            {"config": config, "core": core, "local_lock_held": local.running, "uptime": local.uptime, "run": run}
+        )
         return 0
     emit_pairs(
         {
             "url": client.url,
             "state": core.get("state"),
             "version": config.get("version"),
+            "environment": run.get("slot") or "-",
+            "started_by": run.get("started_by") or "-",
             "location": config.get("location_name"),
             "config_dir": config.get("config_dir"),
             "started": local.started.isoformat(timespec="seconds") if local.started else "-",

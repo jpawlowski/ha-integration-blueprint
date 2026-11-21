@@ -14,7 +14,7 @@ fi
 _HA_ENV_BASE_PS1="$PS1"
 
 _ha_env_prompt() {
-    local root active slot version
+    local root active slot version to who at
     HA_ENV_PROMPT=""
     if [[ -L $HA_ENV_ROOT/current ]]; then
         root="$(realpath -m "$HA_ENV_ROOT")"
@@ -27,6 +27,17 @@ _ha_env_prompt() {
         slot="$(basename "$(readlink "$HA_ENV_ROOT/current")")"
         version="$(cat "$HA_ENV_ROOT/current/.ha-version" 2>/dev/null)"
         HA_ENV_PROMPT="(ha-${slot}${version:+ $version}) "
+        # Someone else switched — another terminal, a VS Code task or an agent: say so once, before this prompt.
+        if [[ -n ${_HA_ENV_LAST:-} && $_HA_ENV_LAST != "$slot" ]]; then
+            IFS=$'\t' read -r _ to who at <"$HA_ENV_ROOT/.switched" 2>/dev/null || true
+            if [[ ${to:-} == "$slot" && -n ${who:-} ]]; then
+                printf '\033[1;33m⚠ Home Assistant environment switched: %s → %s (by %s at %s)\033[0m\n' \
+                    "$_HA_ENV_LAST" "$slot" "$who" "$at" >&2
+            else
+                printf '\033[1;33m⚠ Home Assistant environment switched: %s → %s\033[0m\n' "$_HA_ENV_LAST" "$slot" >&2
+            fi
+        fi
+        _HA_ENV_LAST="$slot"
     fi
     PS1="${HA_ENV_PROMPT}${_HA_ENV_BASE_PS1}"
 }
