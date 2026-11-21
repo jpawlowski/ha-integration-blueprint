@@ -358,3 +358,15 @@ def test_prune_drops_downloaded_pythons_no_environment_uses(workdir: Path) -> No
 
     assert result.returncode == 0, result.stderr
     assert sorted(path.name for path in python.iterdir()) == ["cpython-3.15-linux", "cpython-3.15.2-linux"]
+
+
+@pytest.mark.unit
+def test_uv_keeps_its_hardlinks_where_cache_and_venvs_share_a_filesystem(tmp_path: Path) -> None:
+    """Only a hardlink-hostile setup gets a link mode; on one filesystem uv's own default stays, and no probe remains."""
+    (tmp_path / "cache").mkdir()
+    (tmp_path / "venv").mkdir()
+
+    result = _bash(tmp_path, f"ha_envs_link_mode {tmp_path / 'cache'} {tmp_path / 'venv'} || echo default")
+
+    assert result.stdout.strip() == "default"
+    assert not [path for path in tmp_path.rglob("*") if "probe" in path.name]

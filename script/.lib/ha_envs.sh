@@ -73,17 +73,33 @@ ha_envs_inputs() {
     return 0
 }
 
+# ha_envs_link_mode CACHE DIR — the uv link mode that shares files from CACHE into the venv DIR: nothing to print
+# where uv's default works (a hardlink on one filesystem; macOS clones already), "clone" across volumes of a
+# copy-on-write filesystem such as btrfs or XFS, and "copy" where neither works, which uv would fall back to anyway.
+ha_envs_link_mode() {
+    local cache="$1" dir="$2" probe mode=copy
+    [[ $(uname) != Darwin && -d $cache && -d $dir ]] || return 1
+    probe=$(mktemp "$cache/.ha-envs-probe.XXXXXX") || return 1
+    if ln "$probe" "$dir/.ha-envs-probe" 2>/dev/null; then
+        mode=""
+    elif cp --reflink=always "$probe" "$dir/.ha-envs-probe" 2>/dev/null; then
+        mode=clone
+    fi
+    rm -f "$probe" "$dir/.ha-envs-probe"
+    [[ -n $mode ]] && printf '%s\n' "$mode"
+}
+
 # ha_envs_install DIR VERSION — install the project, its tests and Home Assistant VERSION into the venv DIR.
 ha_envs_install() {
     local dir="$1" version="$2" base="https://raw.githubusercontent.com/home-assistant/core/$2"
-    local tmp pinned status=0
+    local tmp pinned link_mode status=0
     tmp=$(mktemp -d)
     pinned=$(ha_test_pin_version)
     (
         set -euo pipefail
-        # The uv cache and the venvs sit on separate volumes, so hardlinks fail and uv would copy every file; a
-        # copy-on-write clone shares the data instead, and uv copies where the filesystem cannot clone.
-        export UV_LINK_MODE="${UV_LINK_MODE:-clone}"
+        if [[ -z ${UV_LINK_MODE:-} ]] && link_mode=$(ha_envs_link_mode "$(uv cache dir)" "$dir"); then
+            export UV_LINK_MODE="$link_mode"
+        fi
         # shellcheck source=/dev/null
         source "$dir/bin/activate"
         log_header "Installing development dependencies into Home Assistant $version"
