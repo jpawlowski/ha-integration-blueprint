@@ -30,6 +30,7 @@ source "$SCRIPT_DIR/.lib/output.sh"
 python3 <<'PY'
 import importlib.metadata
 import json
+import os
 import re
 import sys
 import urllib.request
@@ -51,8 +52,9 @@ def pypi_info(package: str, version: str) -> dict | None:
     An unreachable PyPI says nothing about whether this repository's versions agree, so the caller skips the one check
     that needs it rather than blocking a commit. Only an unusable reply stays fatal, since that is structural.
     """
+    base = os.environ.get("HA_VERSION_SYNC_PYPI_URL", "https://pypi.org/pypi")
     try:
-        with urllib.request.urlopen(f"https://pypi.org/pypi/{package}/{version}/json", timeout=15) as resp:
+        with urllib.request.urlopen(f"{base}/{package}/{version}/json", timeout=15) as resp:
             return json.loads(resp.read().decode("utf-8")).get("info", {})
     except (OSError, ValueError) as err:
         warn(f"Could not reach PyPI for {package}=={version} ({err}) - skipping the check that needs it")
@@ -92,12 +94,13 @@ def assert_no_hardcoded_ha_version(path: str) -> None:
 
 
 # ── pytest-homeassistant ─────────────────────────────────────────────────────
-# Each release carries the version of the Home Assistant release it pins, so the pin names the version itself.
+# Each release carries the version of the Home Assistant release it pins, so the pin names the version itself; a
+# repackaging suffix (.post1, .dev1) is the plugin's own.
 req_text = Path("requirements_test.txt").read_text(encoding="utf-8")
 pytest_ha: str | None = None
 if m := re.search(r"^pytest-homeassistant==([^\s#]+)", req_text, re.MULTILINE):
-    pytest_ha = m.group(1)
-    pin = f"pytest-homeassistant=={pytest_ha}"
+    pytest_ha = re.sub(r"\.(post|dev)\d+$", "", m.group(1))
+    pin = f"pytest-homeassistant=={m.group(1)}"
 elif m := re.search(r"^pytest-homeassistant-custom-component==([^\s#]+)", req_text, re.MULTILINE):
     # The predecessor, which a project below Home Assistant 2026.11 keeps; only PyPI knows which release it pins.
     pin = f"pytest-homeassistant-custom-component=={m.group(1)}"
