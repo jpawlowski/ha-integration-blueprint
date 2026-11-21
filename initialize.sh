@@ -602,7 +602,7 @@ CATEGORIES_MIN_HA="2026.11"
 #   supported MIN          exit 0 when hacs.json's minimum Home Assistant is MIN (YEAR.MONTH) or newer
 #   list [TERM]            print the categories whose id or name contains TERM
 #   check INPUT            print INPUT normalised to space-separated ids, or the problems and exit 1
-#   write MANIFEST ID...   set the categories in MANIFEST, keeping hassfest's key order
+#   write MANIFEST [ID...] set the categories in MANIFEST, keeping hassfest's key order; no ID removes the key
 category_tool() {
     python3 - "$@" <<'PY'
 import json
@@ -649,7 +649,10 @@ elif mode == "check":
 elif mode == "write":
     path = Path(args[0])
     manifest = json.loads(path.read_text(encoding="utf-8"))
-    manifest["categories"] = args[1:]
+    if args[1:]:
+        manifest["categories"] = args[1:]
+    else:
+        manifest.pop("categories", None)
     head = {key: manifest.pop(key) for key in ("domain", "name")}
     path.write_text(json.dumps(head | dict(sorted(manifest.items())), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 PY
@@ -692,16 +695,16 @@ ask_categories() {
     done
 }
 
-# Write the chosen categories into the integration's manifest
+# Write the chosen categories into the integration's manifest; none removes the template's placeholder
 write_categories() {
     local manifest=$1
     shift
 
     if $DRY_RUN; then
-        print_dryrun "Would set categories in $manifest: $*"
+        print_dryrun "Would set categories in $manifest: ${*:-none}"
     else
         category_tool write "$manifest" "$@"
-        print_success "Categories set in $manifest: $*"
+        print_success "Categories set in $manifest: ${*:-none}"
     fi
 }
 
@@ -1751,10 +1754,8 @@ main() {
     # Declare this repository as an initialized integration (must follow the replacements above)
     rewrite_repo_role
     record_identity "$domain" "$title" "$namespace" "$github_username" "$github_repo_name" "$author_name"
-    if [[ -n "$categories" ]]; then
-        # shellcheck disable=SC2086 # One argument per category
-        write_categories "custom_components/$domain/manifest.json" $categories
-    fi
+    # shellcheck disable=SC2086 # One argument per category
+    write_categories "custom_components/$domain/manifest.json" $categories
     format_after_rename
 
     # Show statistics

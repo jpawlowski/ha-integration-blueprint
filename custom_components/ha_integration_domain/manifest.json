@@ -1,6 +1,9 @@
 {
   "domain": "ha_integration_domain",
   "name": "Integration Blueprint",
+  "categories": [
+    "diy_makers.boards_hardware"
+  ],
   "codeowners": [
     "@jpawlowski"
   ],

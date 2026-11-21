@@ -252,3 +252,14 @@ def test_categories_are_written_in_hassfest_key_order(tmp_path: Path) -> None:
     assert checked.stdout.strip() == "energy.ev_charging climate"
     assert list(json.loads(manifest.read_text("utf-8"))) == ["domain", "name", "categories", "codeowners", "version"]
     assert json.loads(manifest.read_text("utf-8"))["categories"] == ["energy.ev_charging", "climate"]
+
+
+@pytest.mark.unit
+def test_writing_no_categories_removes_the_template_placeholder(tmp_path: Path) -> None:
+    """Skipping the question must not leave the blueprint's placeholder category in a real integration."""
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({"domain": "x", "name": "X", "categories": ["diy_makers.boards_hardware"]}), "utf-8")
+
+    _initialize_function(tmp_path, "2026.11.0", "category_tool", "write", str(manifest))
+
+    assert "categories" not in json.loads(manifest.read_text("utf-8"))
