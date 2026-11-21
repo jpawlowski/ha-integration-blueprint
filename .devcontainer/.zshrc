@@ -40,11 +40,11 @@ if [ -n "$WORKSPACE_ROOT" ]; then
     set +a
 fi
 
-# The active Home Assistant environment; the prompt hook below shows it instead of activate's own prefix.
+# The active Home Assistant environment through the venv root, whose links follow script/ha-env use; activate would
+# pin the resolved version, which VS Code then takes for another venv and activates again.
 if [ -f "$HOME/ha-venv/bin/activate" ]; then
-    export VIRTUAL_ENV_DISABLE_PROMPT=1
-    # shellcheck source=/dev/null
-    . "$HOME/ha-venv/bin/activate"
+    export VIRTUAL_ENV="$HOME/ha-venv" VIRTUAL_ENV_DISABLE_PROMPT=1
+    export PATH="$VIRTUAL_ENV/bin:$PATH"
 fi
 
 # Home Assistant development aliases (work from anywhere!)
