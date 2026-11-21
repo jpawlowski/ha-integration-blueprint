@@ -1,6 +1,6 @@
 ---
-description: "Show or switch the Home Assistant environment: minimum, latest or beta."
-argument-hint: "[list | use <slot> | add <slot> | refresh [slot] | remove <slot>]"
+description: "Show or switch the Home Assistant environment: minimum, latest, beta or a pinned custom version."
+argument-hint: "[list | use <slot> | add <slot> | add custom <version> | refresh [slot] | remove <slot>]"
 allowed-tools: Bash(script/ha-env:*), Bash(script/ha status:*)
 disable-model-invocation: true
 ---

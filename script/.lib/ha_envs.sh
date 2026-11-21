@@ -8,7 +8,7 @@ source "${BASH_SOURCE[0]%/*}/download.sh"
 source "${BASH_SOURCE[0]%/*}/ha_version.sh"
 
 # shellcheck disable=SC2034 # Read by the scripts that source this file
-HA_ENVS_SLOTS=(minimum latest beta)
+HA_ENVS_SLOTS=(minimum latest beta custom)
 HA_ENVS_ROOT_LINKS=(bin lib lib64 include pyvenv.cfg)
 HA_ENVS_REQUIREMENTS=(requirements_dev.txt requirements_test.txt requirements.txt requirements.local.txt)
 
@@ -16,7 +16,8 @@ ha_envs_is_prerelease() {
     [[ $1 =~ [0-9](a|b|rc)[0-9]+$ ]]
 }
 
-# ha_envs_resolve SLOT RESULT_VAR — the version a slot should hold now; fails when it breaks the slot's kind.
+# ha_envs_resolve SLOT RESULT_VAR — the version a slot should hold now; fails when it breaks the slot's kind. custom
+# holds a fixed point: HA_ENVS_CUSTOM_VERSION when given, otherwise the version it holds already.
 ha_envs_resolve() {
     local slot="$1"
     # shellcheck disable=SC2178 # Intentional nameref assignment
@@ -25,7 +26,15 @@ ha_envs_resolve() {
     case "$slot" in
     minimum) HA_VERSION="" target_ha_version _her_version || return 1 ;;
     latest | beta) resolve_ha_version _her_version "$slot" || return 1 ;;
-    custom) resolve_ha_version _her_version "${HA_VERSION:?custom needs HA_VERSION}" || return 1 ;;
+    custom)
+        local _her_spec="${HA_ENVS_CUSTOM_VERSION:-$(ha_envs_version_of custom)}"
+        if [[ -z $_her_spec ]]; then
+            log_error "custom needs a version — run: script/ha-env add custom <version>"
+            return 1
+        fi
+        resolve_ha_version _her_version "$_her_spec" || return 1
+        ha_envs_check_custom "$_her_version" || return 1
+        ;;
     *)
         log_error "Unknown Home Assistant environment: $slot (use ${HA_ENVS_SLOTS[*]})"
         return 1
@@ -40,6 +49,24 @@ ha_envs_resolve() {
         return 1
     fi
     _her_result="$_her_version"
+}
+
+# ha_envs_check_custom VERSION — a version custom may hold: released on PyPI, and no older than hacs.json promises.
+ha_envs_check_custom() {
+    local minimum
+    minimum=$(hacs_min_ha_version 2>/dev/null) || minimum=""
+    if [[ -n $minimum ]] && ha_version_newer "$minimum" "$1"; then
+        log_error "Home Assistant $1 is older than $minimum, the minimum hacs.json promises"
+        return 1
+    fi
+    if ! _pypi_populate_cache >/dev/null 2>&1; then
+        log_error "Could not reach PyPI to check Home Assistant $1"
+        return 1
+    fi
+    if ! printf '%s' "$_PYPI_JSON_CACHE" | python3 -c 'import json, sys; sys.exit(sys.argv[1] not in json.load(sys.stdin)["releases"])' "$1"; then
+        log_error "Home Assistant $1 is not a release on PyPI"
+        return 1
+    fi
 }
 
 # Print the version a slot points at, or nothing when it is not installed.
@@ -236,7 +263,11 @@ for name in os.listdir(sys.argv[1]) if os.path.isdir(sys.argv[1]) else ():
     except OSError:
         continue
     homes |= {os.path.realpath(line.split("=", 1)[1].strip()) for line in cfg.splitlines() if line.startswith("home")}
-for build in json.load(sys.stdin):
+try:
+    builds = json.load(sys.stdin)
+except ValueError:
+    builds = []
+for build in builds:
     if os.path.realpath(os.path.dirname(build["path"])) not in homes:
         print(build["key"])
 ' "$root/versions" | while read -r build; do
@@ -299,10 +330,10 @@ ha_envs_guard_config() {
     return 0
 }
 
-# Print what is stale, without the network: a latest or beta not refreshed for a week, or a minimum on another
-# release than hacs.json.
+# Print what is stale, without the network: a latest or beta not refreshed for a week, a minimum on another release
+# than hacs.json, or a custom older than it.
 ha_envs_notice() {
-    local root slot stamp minimum hacs
+    local root slot stamp minimum custom hacs
     root="$(ha_venv_preferred_path)"
     for slot in latest beta; do
         stamp="$root/slots/.$slot.refreshed"
@@ -311,7 +342,11 @@ ha_envs_notice() {
         fi
     done
     minimum=$(ha_envs_version_of minimum)
+    custom=$(ha_envs_version_of custom)
     hacs=$(hacs_min_ha_version 2>/dev/null) || return 0
+    if [[ -n $custom ]] && ha_version_newer "$hacs" "$custom"; then
+        log_warning "custom holds Home Assistant $custom, older than $hacs from hacs.json — run: script/ha-env add custom <version>"
+    fi
     hacs="${hacs%.*}"
     if [[ -n $minimum && -n $hacs && $minimum != "$hacs".* ]]; then
         log_warning "minimum runs Home Assistant $minimum, but hacs.json asks for $hacs — run: script/ha-env refresh minimum"

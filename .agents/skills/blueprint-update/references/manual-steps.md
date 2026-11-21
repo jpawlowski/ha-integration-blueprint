@@ -26,7 +26,8 @@ hook; `minimum` stays the default and `latest` or `beta` are added on demand
    directory per Home Assistant version inside the same volume, the second brings the `ha-env` alias and the prompt
    hook into `.bashrc` and `.zshrc` — no container rebuild.
 2. Copy the blueprint's `Run Home Assistant (Environment)`, `Switch`, `Add` and `Refresh Home Assistant
-Environment(s)` tasks and the `inputs` block into `.vscode/tasks.json`, which the sync leaves alone.
+Environment(s)` and `Pin Home Assistant Version (custom Environment)` tasks and the `inputs` block into
+   `.vscode/tasks.json`, which the sync leaves alone.
 
 ## `pytest-homeassistant` — 2026-11-21
 

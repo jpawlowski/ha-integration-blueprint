@@ -7,7 +7,7 @@
 # config/configuration.yaml. Cleans up accidental package installations and loads custom_components/.
 #
 # Usage:
-#   ./script/develop [--env minimum|latest|beta [--force]]
+#   ./script/develop [--env minimum|latest|beta|custom [--force]]
 #
 # Examples:
 #   ./script/develop
@@ -28,7 +28,7 @@ USE_ARGS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
     --env)
-        ENV_SLOT="${2:?--env needs minimum, latest or beta}"
+        ENV_SLOT="${2:?--env needs minimum, latest, beta or custom}"
         shift 2
         ;;
     --force)
@@ -36,7 +36,7 @@ while [[ $# -gt 0 ]]; do
         shift
         ;;
     *)
-        log_error "Unknown option: $1 (usage: script/develop [--env minimum|latest|beta [--force]])"
+        log_error "Unknown option: $1 (usage: script/develop [--env minimum|latest|beta|custom [--force]])"
         exit 2
         ;;
     esac
@@ -45,6 +45,7 @@ done
 # Switch before stopping anything: script/ha-env use refuses while Home Assistant runs, unless --force.
 if [[ -n $ENV_SLOT ]]; then
     if [[ -z $(ha_envs_version_of "$ENV_SLOT") ]]; then
+        [[ $ENV_SLOT != custom ]] || die "custom holds no version yet — run: script/ha-env add custom <version>"
         "$SCRIPT_DIR/ha-env" add "$ENV_SLOT"
     fi
     "$SCRIPT_DIR/ha-env" use "${USE_ARGS[@]}" "$ENV_SLOT"

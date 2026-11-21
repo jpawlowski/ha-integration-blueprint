@@ -46,6 +46,16 @@
       "problemMatcher": []
     },
     {
+      "label": "Pin Home Assistant Version (custom Environment)",
+      "type": "shell",
+      "command": "./script/ha-env add custom ${input:haCustomVersion}",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Refresh Home Assistant Environments",
       "type": "shell",
       "command": "./script/ha-env refresh",
@@ -232,7 +242,7 @@
       "id": "haEnvironment",
       "type": "pickString",
       "description": "Home Assistant environment to switch to",
-      "options": ["minimum", "latest", "beta"],
+      "options": ["minimum", "latest", "beta", "custom"],
       "default": "minimum"
     },
     {
@@ -241,6 +251,11 @@
       "description": "Home Assistant environment to install",
       "options": ["latest", "beta"],
       "default": "beta"
+    },
+    {
+      "id": "haCustomVersion",
+      "type": "promptString",
+      "description": "Home Assistant version for the custom environment, from the hacs.json minimum on (e.g. 2026.11.1 or 2026.12.0b3)"
     }
   ]
 }

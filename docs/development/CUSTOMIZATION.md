@@ -207,7 +207,7 @@ The devcontainer setup can be customized through environment variable files with
 Values in `.env.local` always win over `.env`. Both files use standard shell variable syntax:
 
 ```bash
-HA_VERSION=2026.10
+HA_VERSION=beta
 HA_INSTALL_HACS=1
 APT_UPDATE=0
 ```
@@ -217,12 +217,12 @@ such as `HA_VERSION` and `HA_ENVS`, take effect with the next `script/setup/boot
 
 ### Available variables
 
-| Variable          | Default                  | Description                                                                                                                                                         |
-| ----------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `HA_VERSION`      | version from `hacs.json` | Home Assistant version to install. Accepts `latest`, `beta`, `YEAR.MONTH`, or an exact version like `2026.10.1`.                                                    |
-| `HA_ENVS`         | `minimum`                | Home Assistant environments bootstrap installs, e.g. `minimum latest beta` — see [Testing against a newer Home Assistant](#testing-against-a-newer-home-assistant). |
-| `HA_INSTALL_HACS` | `1`                      | Set to `0` to skip HACS installation (speeds up first-time setup). Ignored from Home Assistant 2026.11, which ships HACS as the built-in Marketplace.               |
-| `APT_UPDATE`      | `0`                      | Set to `1` to run `apt-get update && apt-get upgrade` during setup.                                                                                                 |
+| Variable          | Default   | Description                                                                                                                                                         |
+| ----------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HA_VERSION`      | `minimum` | `latest` or `beta`: the environment bootstrap builds and activates instead of `minimum`. One particular release is pinned by hand: `script/ha-env add custom`.      |
+| `HA_ENVS`         | `minimum` | Home Assistant environments bootstrap installs, e.g. `minimum latest beta` — see [Testing against a newer Home Assistant](#testing-against-a-newer-home-assistant). |
+| `HA_INSTALL_HACS` | `1`       | Set to `0` to skip HACS installation (speeds up first-time setup). Ignored from Home Assistant 2026.11, which ships HACS as the built-in Marketplace.               |
+| `APT_UPDATE`      | `0`       | Set to `1` to run `apt-get update && apt-get upgrade` during setup.                                                                                                 |
 
 ### Scope limitations
 
@@ -306,8 +306,22 @@ To have `latest` and `beta` installed on every container create, set `HA_ENVS` i
 HA_ENVS="minimum latest beta"
 ```
 
-`HA_VERSION=<version> script/setup/bootstrap` still builds one specific version, as the environment `custom`; a plain
-`script/setup/bootstrap` afterwards returns to `minimum`.
+To reproduce a problem in one particular release, pin it as the environment `custom`. Unlike `latest` and `beta` it
+is a fixed point: `refresh` keeps its version and only reinstalls when the requirements files change, and bootstrap
+leaves it alone.
+
+```bash
+script/ha-env add custom 2026.11.1     # build and pin; any release from the hacs.json minimum on, pre-releases too
+script/ha-env use custom
+script/ha-env add custom 2026.12.0b3   # move the pin, up or down
+script/ha-env remove custom
+```
+
+Each version is built in its own venv on the Python its release asks for, so moving the pin down to a release that
+needs an older Python works, and the version it replaces is removed once no other environment uses it. Its config directory is
+`.local/ha-config/custom/`; when a lower version starts on state a higher one already migrated, `script/develop` moves
+`.storage` and the database aside first. `custom` is for one investigation at a time, so it is only pinned by hand:
+neither `HA_ENVS` nor `HA_VERSION` sets it.
 
 Code written this way must still run on the minimum: use only what the minimum version offers, and let the newer one
 show you the deprecations coming. The _Newer Home Assistant_ workflow does the same in CI — against the newest stable

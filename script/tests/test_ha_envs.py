@@ -466,3 +466,94 @@ def test_reset_starts_the_active_environment_over_and_leaves_config_alone(workdi
     assert [path.name for path in beta.iterdir()] == [".storage"]
     assert not any((beta / ".storage").iterdir())
     assert (workdir / "config" / ".storage" / "core.config_entries").is_file()
+
+
+CUSTOM_PYPI = json.dumps(
+    {
+        "releases": {
+            version: [{"requires_python": f">={python}"}]
+            for version, python in {
+                "2026.10.4": "3.13.2",
+                "2026.11.0b6": "3.14.2",
+                "2026.11.1": "3.14.2",
+                "2026.12.1": "3.15.0",
+                "2027.1.0": "3.15.0",
+            }.items()
+        }
+    }
+)
+
+
+def _custom(workdir: Path, commands: str) -> subprocess.CompletedProcess[str]:
+    """Run commands with the real venv creation, uv stubbed to record its calls, and the releases above on PyPI."""
+    script = f"""
+source {LIB / "ha_envs.sh"}
+ha_envs_install() {{ echo "$2" >"$1/bin/version"; }}
+_PYPI_JSON_CACHE='{CUSTOM_PYPI}'
+uv() {{
+    echo "uv $*" >>"$PWD/uv-calls"
+    if [[ $1 == venv ]]; then mkdir -p "${{@: -1}}/bin" && touch "${{@: -1}}/bin/activate"; fi
+}}
+{commands}
+"""
+    return _bash(workdir, script)
+
+
+@pytest.mark.unit
+def test_custom_is_a_fixed_point_that_moves_down_onto_an_older_python(workdir: Path) -> None:
+    """A refresh keeps the pin; a lower pin gets its own venv on its own Python, and the higher one goes."""
+    result = _custom(
+        workdir,
+        "HA_ENVS_CUSTOM_VERSION=2026.12.1 ha_envs_refresh custom\n"
+        "STUB_LATEST=2027.1.0 ha_envs_refresh custom\n"
+        "HA_ENVS_CUSTOM_VERSION=2026.11.1 ha_envs_refresh custom\n"
+        "ha_envs_prune",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert _slot(workdir, "custom") == "2026.11.1"
+    assert _versions(workdir) == ["2026.11.1"]
+    venvs = [line for line in (workdir / "uv-calls").read_text(encoding="utf-8").splitlines() if " venv " in line]
+    assert len(venvs) == 2
+    assert "--python 3.15" in venvs[0]
+    assert venvs[0].endswith("/versions/2026.12.1")
+    assert "--python 3.14" in venvs[1]
+    assert venvs[1].endswith("/versions/2026.11.1")
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("version", "problem"),
+    [
+        ("2026.10.4", "older than 2026.11.0"),
+        ("2026.11.0b6", "older than 2026.11.0"),
+        ("2026.11.9", "not a release on PyPI"),
+    ],
+)
+def test_custom_refuses_a_version_below_hacs_json_or_unreleased(workdir: Path, version: str, problem: str) -> None:
+    """hacs.json's minimum is the floor, a pre-release of it included, and the version has to exist."""
+    result = _custom(workdir, f"HA_ENVS_CUSTOM_VERSION={version} ha_envs_refresh custom")
+
+    assert result.returncode == 1
+    assert problem in result.stderr
+    assert not (_root(workdir) / "slots" / "custom").exists()
+
+
+@pytest.mark.unit
+def test_custom_without_a_pin_says_how_to_set_one(workdir: Path) -> None:
+    """A refresh of a custom that holds nothing names the command instead of guessing a version."""
+    result = _custom(workdir, "ha_envs_refresh custom")
+
+    assert result.returncode == 1
+    assert "script/ha-env add custom <version>" in result.stderr
+
+
+@pytest.mark.unit
+def test_notice_names_a_custom_left_below_a_raised_minimum(workdir: Path) -> None:
+    """After hacs.json moves up, a custom pinned below it is pointed out without the network."""
+    assert _custom(workdir, "HA_ENVS_CUSTOM_VERSION=2026.11.1 ha_envs_refresh custom").returncode == 0
+    (workdir / "hacs.json").write_text('{"homeassistant": "2026.12.0"}\n', encoding="utf-8")
+
+    result = _bash(workdir, "ha_envs_notice")
+
+    assert "custom holds Home Assistant 2026.11.1, older than 2026.12.0" in result.stdout

@@ -5,12 +5,14 @@
 # Usage:
 #   ./script/ha-env list                  installed environments, versions, the active one
 #   ./script/ha-env add <slot>            install latest or beta
+#   ./script/ha-env add custom <version>  install, or move to, one fixed version, from hacs.json's minimum on
 #   ./script/ha-env use [--force] <slot>  switch the active environment; --force while Home Assistant runs
 #   ./script/ha-env refresh [slot]        move one or every installed environment to its newest version
-#   ./script/ha-env remove <slot>         uninstall latest or beta
+#   ./script/ha-env remove <slot>         uninstall latest, beta or custom
 #
 # Examples:
 #   ./script/ha-env add beta && ./script/ha-env use beta
+#   ./script/ha-env add custom 2026.11.1
 #   ./script/ha-env refresh
 
 set -euo pipefail
@@ -52,7 +54,7 @@ refresh_slots() {
 cmd_list() {
     local slot version active
     active=$(ha_current_slot)
-    for slot in "${HA_ENVS_SLOTS[@]}" custom; do
+    for slot in "${HA_ENVS_SLOTS[@]}"; do
         version=$(ha_envs_version_of "$slot")
         [[ -n $version || $slot != custom ]] || continue
         printf '%s %-8s %s\n' "$([[ $slot == "$active" ]] && echo '*' || echo ' ')" "$slot" "${version:-not installed}"
@@ -66,6 +68,13 @@ cmd_list() {
 
 cmd_add() {
     require_slot "$1"
+    if [[ $1 == custom ]]; then
+        [[ -n ${2:-} ]] || usage
+        HA_ENVS_CUSTOM_VERSION="$2" refresh_slots custom
+        [[ $(ha_current_slot) == custom ]] || log_step "Switch to it with: script/ha-env use custom"
+        return 0
+    fi
+    [[ -z ${2:-} ]] || usage
     if [[ -n $(ha_envs_version_of "$1") ]]; then
         log_info "$1 is installed already — script/ha-env refresh $1 moves it to the newest version"
         return 0
@@ -82,7 +91,7 @@ cmd_use() {
         force=true
         shift
     fi
-    [[ ${1:-} == custom ]] || require_slot "${1:-}"
+    require_slot "${1:-}"
     if [[ $1 == "$(ha_current_slot)" ]]; then
         log_info "$1 is active already"
         return 0
@@ -127,7 +136,7 @@ cmd_remove() {
 
 case "${1:-}" in
 list) cmd_list ;;
-add) cmd_add "${2:-}" ;;
+add) cmd_add "${2:-}" "${3:-}" ;;
 use) cmd_use "${@:2}" ;;
 refresh) cmd_refresh "${2:-}" ;;
 remove) cmd_remove "${2:-}" ;;
