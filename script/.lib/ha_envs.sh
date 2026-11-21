@@ -260,17 +260,17 @@ ha_envs_guard_config() {
     return 0
 }
 
-ha_envs_mark_refreshed() {
-    touch "$(ha_venv_preferred_path)/.refreshed"
-}
-
-# Print what is stale, without the network: a refresh over a week ago, or a minimum on another release than hacs.json.
+# Print what is stale, without the network: a latest or beta not refreshed for a week, or a minimum on another
+# release than hacs.json. A refresh re-creates the slot's link even when the version stays, so its age is the check's.
 ha_envs_notice() {
-    local root minimum hacs
+    local root slot link minimum hacs
     root="$(ha_venv_preferred_path)"
-    if [[ -f $root/.refreshed && -n $(find "$root/.refreshed" -mtime +7 2>/dev/null) ]]; then
-        log_warning "Home Assistant environments last refreshed over 7 days ago — run: script/ha-env refresh"
-    fi
+    for slot in latest beta; do
+        link="$root/slots/$slot"
+        if [[ -L $link && -n $(find "$link" -maxdepth 0 -mtime +7 2>/dev/null) ]]; then
+            log_warning "$slot ($(ha_envs_version_of "$slot")) was last refreshed over 7 days ago — run: script/ha-env refresh $slot"
+        fi
+    done
     minimum=$(ha_envs_version_of minimum)
     hacs=$(hacs_min_ha_version 2>/dev/null) || return 0
     hacs="${hacs%.*}"

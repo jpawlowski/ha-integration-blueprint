@@ -111,7 +111,6 @@ cmd_refresh() {
         exit 1
     fi
     refresh_slots "${slots[@]}"
-    [[ -n ${1:-} ]] || ha_envs_mark_refreshed
 }
 
 cmd_remove() {

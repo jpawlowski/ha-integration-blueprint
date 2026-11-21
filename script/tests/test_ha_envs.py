@@ -195,18 +195,25 @@ def test_migrate_clears_the_single_venv_of_the_old_layout(workdir: Path) -> None
 
 
 @pytest.mark.unit
-def test_notice_names_a_stale_refresh_and_a_minimum_off_the_hacs_release(workdir: Path) -> None:
-    """Both notices need no network; a fresh refresh on the hacs.json release prints nothing."""
-    _bash(workdir, "ha_envs_refresh minimum; ha_envs_mark_refreshed")
-    assert _bash(workdir, "ha_envs_notice").stdout + _bash(workdir, "ha_envs_notice").stderr == ""
+def test_notice_names_a_stale_latest_or_beta_and_a_minimum_off_the_hacs_release(workdir: Path) -> None:
+    """Both notices need no network; a fresh beta, an old minimum and the hacs.json release print nothing."""
+    _bash(workdir, "for s in minimum beta; do ha_envs_refresh $s; done")
+    slots = _root(workdir) / "slots"
+    os.utime(slots / "minimum", (0, 0), follow_symlinks=False)
+    result = _bash(workdir, "ha_envs_notice")
+    assert result.stdout + result.stderr == ""
 
-    os.utime(_root(workdir) / ".refreshed", (0, 0))
+    os.utime(slots / "beta", (0, 0), follow_symlinks=False)
     (workdir / "hacs.json").write_text('{"homeassistant": "2026.12.0"}\n', encoding="utf-8")
     result = _bash(workdir, "ha_envs_notice")
     output = result.stdout + result.stderr
 
-    assert "last refreshed over 7 days ago" in output
+    assert "beta (2026.12.0b1) was last refreshed over 7 days ago" in output
+    assert "minimum (" not in output
     assert "hacs.json asks for 2026.12" in output
+
+    _bash(workdir, "ha_envs_refresh beta")
+    assert "beta (" not in _bash(workdir, "ha_envs_notice").stderr
 
 
 def _config(workdir: Path, ran: str) -> None:

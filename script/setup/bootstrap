@@ -134,7 +134,6 @@ done
 ha_envs_use "$ACTIVE"
 [[ $ACTIVE == custom ]] || ha_envs_remove custom
 ha_envs_prune
-ha_envs_mark_refreshed
 log_success "Active Home Assistant environment: $ACTIVE ($(ha_envs_version_of "$ACTIVE"))"
 
 # shellcheck source=/dev/null
