@@ -51,24 +51,24 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          fetch-depth: ${{ github.event_name == 'pull_request' && '0' || '1' }}
+          fetch-depth: 2
 
-      # The workflow-level path filter lets a change through that matters to one language only.
+      # The `paths` filter above lets through a change that matters to one language only; keep the patterns in line.
+      # A pull request is checked out as a merge commit, so its first parent is the base it is compared with.
       - name: Check whether this language is affected
         id: scope
         env:
           EVENT: ${{ github.event_name }}
           LANGUAGE: ${{ matrix.language }}
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           [[ "${EVENT}" == "pull_request" ]] || exit 0
           case "${LANGUAGE}" in
             python) pattern='\.py$|^\.github/workflows/codeql\.yml$' ;;
             actions) pattern='^\.github/(workflows|actions)/' ;;
+            *) exit 0 ;;
           esac
-          if ! changed=$(git diff --name-only "${BASE}...${HEAD}"); then
-            echo "Cannot compare ${BASE} with ${HEAD} — analysing anyway"
+          if ! changed=$(git diff --name-only HEAD^1 HEAD); then
+            echo "Cannot compare the pull request with its base — analysing anyway"
             exit 0
           fi
           if ! grep -qE "${pattern}" <<<"${changed}"; then
