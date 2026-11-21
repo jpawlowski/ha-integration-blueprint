@@ -30,6 +30,16 @@ for dir in /workspaces/* /workspace; do
     fi
 done
 
+# DevContainer environment overrides (.env, then .env.local, which wins); set -a exports them to hass, pytest and uv.
+if [ -n "$WORKSPACE_ROOT" ]; then
+    set -a
+    # shellcheck source=/dev/null
+    [ -f "$WORKSPACE_ROOT/.devcontainer/.env" ] && . "$WORKSPACE_ROOT/.devcontainer/.env"
+    # shellcheck source=/dev/null
+    [ -f "$WORKSPACE_ROOT/.devcontainer/.env.local" ] && . "$WORKSPACE_ROOT/.devcontainer/.env.local"
+    set +a
+fi
+
 # Home Assistant development aliases (work from anywhere!)
 if [ -n "$WORKSPACE_ROOT" ]; then
     if [ -d "$WORKSPACE_ROOT/node_modules/.bin" ]; then
