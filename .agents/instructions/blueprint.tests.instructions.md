@@ -79,8 +79,8 @@ from `pytest-freezer`; advance it with `freezer.tick()` plus `async_fire_time_ch
 - No `if` in a test body — split the test, or parametrize with `pytest.param(..., id="...")` so a failure names its
   case
 - No network — sockets are blocked except to `127.0.0.1`; a test that needs one is missing a mock
-- Recorded payloads go in a `fixtures/` folder beside the test, loaded with `load_fixture(name)` — never with `DOMAIN`
-  as the second argument, which points at Core's tree
+- Recorded payloads go in `tests/fixtures/`, loaded with `load_fixture(name)` from a test file at any depth — never
+  with a second argument, which points at Core's tree
 
 ## Core Interface Testing
 

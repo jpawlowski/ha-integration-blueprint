@@ -14,8 +14,5 @@ Only what differs per platform — read your platform's row; the general rules a
 
 ## Climate and water heater temperatures
 
-Code uses `native_current_temperature`, `native_target_temperature`, `native_target_temperature_high`,
-`native_target_temperature_low` and `native_temperature_unit` (with their `_attr_` forms), in the device's unit — the
-base class converts to the user's unit system. The names without the prefix are deprecated
-([`deprecations.md`](../../ha-modern-apis/references/deprecations.md)); `min_temp`, `max_temp` and
-`target_temperature_step` keep theirs.
+Code uses the `native_` temperature names, in the device's unit — the base class converts to the user's unit system.
+Which names carry the prefix: [`deprecations.md`](../../ha-modern-apis/references/deprecations.md).

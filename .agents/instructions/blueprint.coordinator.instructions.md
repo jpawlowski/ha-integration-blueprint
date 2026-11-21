@@ -102,9 +102,8 @@ Translate API exceptions into Home Assistant ones here, and only here:
 | `RateLimitError`      | `UpdateFailed(retry_after=err.retry_after)` | Next poll waits that long   |
 | `CommunicationError`  | `UpdateFailed("message")`                   | Retry at the usual interval |
 
-Catch `RateLimitError` before the communication error it subclasses. Home Assistant honours `retry_after` during
-`async_config_entry_first_refresh()` too.
-Bound the wait before passing it on — at least a few seconds, at most the update interval — so `Retry-After: 0` does
+Catch `RateLimitError` before the communication error it subclasses; Home Assistant honours `retry_after` during
+`async_config_entry_first_refresh()` too. Bound the wait before passing it on — at least a few seconds, at most the update interval — so `Retry-After: 0` does
 not poll in a loop and a huge value does not stop polling.
 
 **Import from:** `homeassistant.exceptions.ConfigEntryAuthFailed`,
@@ -151,8 +150,7 @@ See [HA Data Update Patterns](https://contributors.home-assistant.io/core/integr
 **In `async_setup_entry()` in `__init__.py`:** Call `await coordinator.async_config_entry_first_refresh()`
 
 **Automatic handling:** If `_async_update_data()` raises `UpdateFailed`, coordinator raises `ConfigEntryNotReady`
-automatically; for what happens to `retry_after` there, see
-[Error Handling](#error-handling-in-_async_update_data).
+automatically.
 
 **When setup should not be retried at all**, use `await coordinator.async_refresh()` instead — it does not raise, so
 the entry loads with entities in an unavailable state rather than going into the retry loop.

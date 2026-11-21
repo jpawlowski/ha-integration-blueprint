@@ -131,6 +131,3 @@ the name to `probatio`, and only the type checker complains.
 | -------------------------------------------------------------------------------------------------------- | ------------------------------- | ----------------- |
 | `async_import_statistics` / `async_add_external_statistics` metadata without `mean_type` or `unit_class` | Set both in `StatisticMetaData` | overdue (2026.11) |
 | `async_update_statistics_metadata(new_unit_of_measurement=…)` without `new_unit_class`                   | Pass `new_unit_class` as well   | overdue (2026.11) |
-
-`ConfigEntryNotReady(retry_after=seconds)` and `UpdateFailed(retry_after=…)` are honoured during the first refresh
-too, and `DeviceInfo` is a dataclass — see [`device-registry.md`](device-registry.md#deviceinfo-and-childdeviceinfo-are-dataclasses).

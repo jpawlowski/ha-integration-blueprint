@@ -40,10 +40,7 @@ Use these by name instead of defining a variant per file — every existing test
 - `init_integration` — adds `config_entry`, sets it up with `mock_api` active, and returns the loaded entry.
 
 A library client instead of our own needs a different `mock_api` — see
-[`references/recipes.md`](references/recipes.md#mock_api-for-a-third-party-library-client). Recorded payloads go in
-`tests/fixtures/`: `load_fixture("device.json")` and `load_json_object_fixture("device.json")` resolve against it from
-any test file, however deep. Leave out their second argument — it names a Core `tests/components/<domain>/` folder,
-which does not exist here.
+[`references/recipes.md`](references/recipes.md#mock_api-for-a-third-party-library-client).
 
 ## Layout
 
