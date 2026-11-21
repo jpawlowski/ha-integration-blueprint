@@ -296,7 +296,8 @@ version its Home Assistant release ships with, so a beta that already needs the 
   `--force`. The VS Code task passes it, since you start it yourself, like plain `script/develop`. Neither a refresh
   nor `script/setup/bootstrap` changes the environment a running instance uses.
 - **Reset:** `script/setup/reset` starts the active environment over: `config/` for `minimum`, otherwise its own
-  directory, which then starts empty instead of from `config/`.
+  directory, which then starts empty instead of from `config/`; `--full` restores `configuration.yaml` from git only
+  for `minimum`, since the others share it.
 - **Staleness:** `script/ha-env list`, `script/develop` and `script/test` remind you when `latest` or `beta` was last
   refreshed over a week ago — Home Assistant ships a beta a week — or when `minimum` no longer matches `hacs.json`.
 

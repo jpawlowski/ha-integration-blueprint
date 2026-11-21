@@ -34,13 +34,14 @@ require_slot() {
     [[ " ${HA_ENVS_SLOTS[*]} " == *" ${1:-} "* ]] || usage
 }
 
-# Build each slot, then drop what no slot needs any more; ha_envs_refresh leaves the one Home Assistant runs on alone.
+# Build each slot, then drop what no slot needs any more. The one Home Assistant runs on is left alone, which only
+# fails a request to move custom's pin.
 refresh_slots() {
     local slot failed=0
     use_mise_env
     for slot in "$@"; do
         log_header "Home Assistant environment: $slot"
-        ha_envs_refresh "$slot" || failed=1
+        ha_envs_refresh "$slot" || [[ $? -eq 2 && -z ${HA_ENVS_CUSTOM_VERSION:-} ]] || failed=1
     done
     ha_envs_prune
     uv cache prune --quiet

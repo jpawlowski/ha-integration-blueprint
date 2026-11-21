@@ -13,8 +13,7 @@ HA_ENVS_ROOT_LINKS=(bin lib lib64 include pyvenv.cfg)
 HA_ENVS_REQUIREMENTS=(requirements_dev.txt requirements_test.txt requirements.txt requirements.local.txt)
 
 # ha_envs_resolve SLOT RESULT_VAR — the version a slot should hold now; fails when it breaks the slot's kind. custom
-# holds a fixed point: HA_ENVS_CUSTOM_VERSION when given, otherwise the version it holds already, and never below
-# hacs.json's minimum.
+# keeps its pin unless HA_ENVS_CUSTOM_VERSION moves it, never below hacs.json's minimum.
 ha_envs_resolve() {
     local slot="$1"
     # shellcheck disable=SC2178 # Intentional nameref assignment
@@ -185,7 +184,7 @@ ha_envs_build() {
 ha_envs_refresh() {
     local slot="$1" version="" root
     if [[ $slot == "$(ha_running_slot)" && -n $(ha_envs_version_of "$slot") ]]; then
-        log_warning "$slot: left as it is while Home Assistant runs on it — stop it, then refresh"
+        log_warning "$slot: left as it is while Home Assistant runs on it — stop it first, then run this again"
         return 2
     fi
     ha_envs_resolve "$slot" version || return 1
@@ -292,9 +291,8 @@ ha_envs_migrate() {
     hash -r
 }
 
-# ha_envs_prepare_config DIR VERSION — give a slot's own config directory the files it shares with config/; its
-# .storage, database and log stay its own. One this creates starts from config/'s state when VERSION can migrate it
-# forward; an existing one, even emptied by script/setup/reset, never does.
+# ha_envs_prepare_config DIR VERSION — link the files a slot's config directory shares with config/. Only a directory
+# this creates starts from config/'s .storage, and only when VERSION can migrate it forward.
 ha_envs_prepare_config() {
     local dir="$1" version="$2" item ran config new=false
     [[ -d $dir ]] || new=true

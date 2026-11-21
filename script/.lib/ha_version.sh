@@ -73,14 +73,12 @@ _pypi_populate_cache() {
 _PYPI_SORT_KEY_PY='
 import sys, re
 def key(v):
-    m = re.match(r"^(\d+)\.(\d+)\.(\d+)((?:a|b|rc)\d+)?$", v)
+    m = re.match(r"^(\d+)\.(\d+)(?:\.(\d+))?(?:(a|b|rc|\.dev)(\d+))?$", v)
     if not m:
-        return (0, 0, 0, 3, 0)
-    year, month, patch = int(m.group(1)), int(m.group(2)), int(m.group(3))
-    pre = m.group(4) or ""
-    pm = re.match(r"^(a|b|rc)(\d+)$", pre) if pre else None
-    prank = {"a": 0, "b": 1, "rc": 2}.get(pm.group(1), 3) if pm else 3
-    pnum  = int(pm.group(2)) if pm else 0
+        return (0, 0, 0, 4, 0)
+    year, month, patch = int(m.group(1)), int(m.group(2)), int(m.group(3) or 0)
+    prank = {".dev": 0, "a": 1, "b": 2, "rc": 3}.get(m.group(4), 4)
+    pnum = int(m.group(5) or 0)
     return (year, month, patch, prank, pnum)
 versions = [v.strip() for v in sys.stdin]
 print(sorted(versions, key=key)[-1] if versions else "")
@@ -175,18 +173,19 @@ hacs_min_ha_version() {
     [[ -n $version ]] && printf '%s\n' "$version"
 }
 
-# Print the Home Assistant version the pytest-homeassistant pin in requirements_test.txt matches: the pin without
-# the plugin's own repackaging suffix (.post1, .dev1). Prints nothing for another test package.
+# Print the Home Assistant version the pytest-homeassistant pin names: without the plugin's repackaging suffix (.post1,
+# .dev1), but with a Home Assistant nightly's dated .dev. Prints nothing for another test package.
 ha_test_pin_version() {
     local pin
     pin=$(sed -n 's/^pytest-homeassistant==\([^[:space:]#]*\).*/\1/p' requirements_test.txt 2>/dev/null)
-    pin="${pin%.post*}"
-    printf '%s\n' "${pin%.dev*}"
+    if [[ $pin =~ ^(.+)\.(post[0-9]+|dev[0-9]{1,7})$ ]]; then
+        pin=${BASH_REMATCH[1]}
+    fi
+    printf '%s\n' "$pin"
 }
 
-# Print the test package requirements_test.txt pins, its version, and the Home Assistant version that names:
-# "pytest-homeassistant 2026.11.2.post1 2026.11.2". pytest-homeassistant-custom-component names its Home Assistant
-# only on PyPI, so the third field is empty when PyPI cannot say. Prints nothing for neither package.
+# Print "<test package> <pin> <Home Assistant version it names>"; for pytest-homeassistant-custom-component that comes
+# from PyPI and stays empty when PyPI cannot say. Prints nothing for neither package.
 ha_test_pin() {
     local package pin ha=""
     read -r package pin < <(sed -En 's/^(pytest-homeassistant(-custom-component)?)==([^[:space:]#]+).*/\1 \3/p' \
@@ -194,7 +193,7 @@ ha_test_pin() {
     if [[ $package == pytest-homeassistant ]]; then
         ha=$(ha_test_pin_version)
     else
-        ha=$(curl -sf --retry 2 "https://pypi.org/pypi/$package/$pin/json" | python3 -c '
+        ha=$(curl -sf --retry 2 --connect-timeout 10 --max-time 30 "https://pypi.org/pypi/$package/$pin/json" | python3 -c '
 import json, sys
 for req in json.load(sys.stdin)["info"].get("requires_dist") or []:
     if req.startswith("homeassistant=="):
@@ -213,7 +212,7 @@ ha_release_train() {
 }
 
 ha_version_is_prerelease() {
-    [[ $1 =~ [0-9](a|b|rc)[0-9]+$ ]]
+    [[ $1 =~ [0-9](a|b|rc)[0-9]+$|\.dev[0-9]+$ ]]
 }
 
 # Whether VERSION is a Home Assistant release on PyPI.

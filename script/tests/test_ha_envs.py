@@ -594,3 +594,54 @@ def test_notice_names_a_custom_left_below_a_raised_minimum(workdir: Path) -> Non
     result = _bash(workdir, "ha_envs_notice")
 
     assert "custom holds Home Assistant 2026.11.1, older than 2026.12.0" in result.stdout
+
+
+@pytest.mark.unit
+def test_full_reset_of_another_environment_leaves_the_shared_configuration(workdir: Path) -> None:
+    """configuration.yaml belongs to config/; resetting beta's directory never restores or removes it there."""
+    _config(workdir, "2026.11.2")
+    _copy_scripts(workdir, "setup/reset")
+    (workdir / "script" / "setup" / "setup").write_text("#!/bin/bash\n", encoding="utf-8")
+    (workdir / "script" / "setup" / "setup").chmod(0o755)
+    assert _bash(workdir, "ha_envs_refresh beta; ha_envs_use beta").returncode == 0
+
+    missing = _run_script(workdir, "setup/reset", "--full", "--yes")
+    assert _bash(workdir, f"ha_envs_prepare_config {workdir}/.local/ha-config/beta 2026.12.0b1").returncode == 0
+    full = _run_script(workdir, "setup/reset", "--full", "--yes")
+
+    assert missing.returncode == 0, missing.stderr
+    assert "does not exist yet" in missing.stdout
+    assert full.returncode == 0, full.stderr
+    assert not any((workdir / ".local" / "ha-config" / "beta").iterdir())
+    assert (workdir / "config" / "configuration.yaml").read_text(encoding="utf-8") == "default_config:\n"
+
+
+@pytest.mark.unit
+def test_versions_compare_with_a_two_part_minimum_and_a_nightly(workdir: Path) -> None:
+    """A hacs.json minimum like 2026.12 still floors custom, and a nightly sorts before its alpha."""
+    script = """
+for pair in "2026.12 2026.11.4" "2026.11.4 2026.12" "2026.12.0a1 2026.12.0.dev20261120"; do
+    set -- $pair
+    ha_version_newer "$1" "$2" && echo yes || echo no
+done
+ha_version_is_prerelease 2026.12.0.dev20261120 && echo nightly-pre
+"""
+    result = _bash(workdir, script)
+
+    assert result.stdout.splitlines() == ["yes", "no", "yes", "nightly-pre"]
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("pin", "named"),
+    [
+        ("2026.11.2.post1", "2026.11.2"),
+        ("2026.11.2.dev1", "2026.11.2"),
+        ("2026.12.0.dev20261120", "2026.12.0.dev20261120"),
+    ],
+)
+def test_the_test_pin_keeps_a_nightly_and_drops_a_repackaging(workdir: Path, pin: str, named: str) -> None:
+    """A short .devN is the plugin's own; Home Assistant's nightly .dev carries a date and stays a pre-release."""
+    (workdir / "requirements_test.txt").write_text(f"pytest-homeassistant=={pin}\n", encoding="utf-8")
+
+    assert _bash(workdir, "ha_test_pin_version").stdout == f"{named}\n"
