@@ -140,6 +140,9 @@ jobs:
       # Lint, types and tests share one job: each would otherwise install the same venv and Home Assistant again.
       - name: Lint check
         if: steps.tested.outputs.done != 'true' && steps.docs.outputs.only != 'true'
+        env:
+          # Lets zizmor run its online audits, such as pins that do not match their version comment.
+          GH_TOKEN: ${{ github.token }}
         run: script/lint-check
 
       - name: Type check

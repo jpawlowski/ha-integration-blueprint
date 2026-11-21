@@ -1,0 +1,8 @@
+rules:
+  # hassfest-dev follows the master branch on purpose, as an early warning of rules the next release brings.
+  ref-version-mismatch:
+    ignore:
+      - validate.yml:90
+  stale-action-refs:
+    ignore:
+      - validate.yml:90
