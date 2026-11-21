@@ -97,7 +97,7 @@ else
 fi
 
 # .devcontainer/.bashrc and .zshrc activate the venv and load .devcontainer/.env*; drop the lines an older bootstrap
-# appended for both, the second of which never ran because WORKSPACE_ROOT was not set yet.
+# appended to the rc files for both.
 if [[ "$VENV_IS_EXTERNAL" == "true" ]]; then
     LEGACY_ACTIVATE="source $VENV_PATH/bin/activate"
     LEGACY_ENV_BLOCK="# DevContainer environment overrides (.env → .env.local, later wins)"

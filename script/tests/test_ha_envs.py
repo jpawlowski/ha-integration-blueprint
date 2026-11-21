@@ -1,5 +1,6 @@
 """Tests for script/.lib/ha_envs.sh, with stubbed version resolution and venv builds."""
 
+import json
 import os
 from pathlib import Path
 import shutil
@@ -175,7 +176,7 @@ def test_remove_keeps_minimum_and_the_active_slot(workdir: Path) -> None:
     result = _bash(workdir, "ha_envs_remove beta; ha_envs_prune")
 
     assert result.returncode == 0, result.stderr
-    assert sorted(path.name for path in (_root(workdir) / "slots").iterdir()) == ["latest", "minimum"]
+    assert sorted(p.name for p in (_root(workdir) / "slots").iterdir() if p.is_symlink()) == ["latest", "minimum"]
     assert _versions(workdir) == ["2026.11.2"]
 
 
@@ -199,11 +200,11 @@ def test_notice_names_a_stale_latest_or_beta_and_a_minimum_off_the_hacs_release(
     """Both notices need no network; a fresh beta, an old minimum and the hacs.json release print nothing."""
     _bash(workdir, "for s in minimum beta; do ha_envs_refresh $s; done")
     slots = _root(workdir) / "slots"
-    os.utime(slots / "minimum", (0, 0), follow_symlinks=False)
     result = _bash(workdir, "ha_envs_notice")
     assert result.stdout + result.stderr == ""
 
-    os.utime(slots / "beta", (0, 0), follow_symlinks=False)
+    os.utime(slots / ".beta.refreshed", (0, 0))
+    os.utime(slots / ".minimum.refreshed", (0, 0))
     (workdir / "hacs.json").write_text('{"homeassistant": "2026.12.0"}\n', encoding="utf-8")
     result = _bash(workdir, "ha_envs_notice")
     output = result.stdout + result.stderr
@@ -283,17 +284,15 @@ def test_the_guard_moves_aside_state_a_newer_version_wrote(workdir: Path) -> Non
 
 @pytest.mark.unit
 @pytest.mark.parametrize("shell", ["bash", "zsh"])
-def test_the_prompt_names_the_active_environment_and_follows_a_switch(tmp_path: Path, shell: str) -> None:
-    """Before each prompt the hook renews a stale activation and shows the slot and version now active."""
+def test_a_shell_runs_the_venv_root_and_its_prompt_follows_a_switch(tmp_path: Path, shell: str) -> None:
+    """The shell points at the venv root, so it follows a switch; the prompt names the slot and who switched."""
     if shutil.which(shell) is None:
         pytest.skip(f"{shell} is not installed")
     root = tmp_path / "root"
     for version in ("2026.11.2", "2026.12.0b1"):
         (root / "versions" / version / "bin").mkdir(parents=True)
+        (root / "versions" / version / "bin" / "activate").touch()
         (root / "versions" / version / ".ha-version").write_text(f"{version}\n", encoding="utf-8")
-        (root / "versions" / version / "bin" / "activate").write_text(
-            f'VIRTUAL_ENV="{root}/versions/{version}"; export VIRTUAL_ENV\n', encoding="utf-8"
-        )
     (root / "slots").mkdir()
     (root / "slots" / "minimum").symlink_to("../versions/2026.11.2")
     (root / "slots" / "beta").symlink_to("../versions/2026.12.0b1")
@@ -301,20 +300,15 @@ def test_the_prompt_names_the_active_environment_and_follows_a_switch(tmp_path: 
     (root / "bin").symlink_to("current/bin")
     (root / ".switched").write_text("minimum\tbeta\tagent (claude-code)\t14:03\n", encoding="utf-8")
     script = (
-        f"PS1='$ '; source {LIB / 'ha_env_prompt.sh'}; _ha_env_prompt; echo \"$PS1|${{VIRTUAL_ENV##*/}}\"; "
-        f'ln -sfn slots/beta {root}/current; _ha_env_prompt; echo "$PS1|${{VIRTUAL_ENV##*/}}"'
+        f"PS1='$ '; source {LIB / 'ha_env_shell.sh'}; _ha_env_prompt; echo \"$PS1\"; "
+        f'ln -sfn slots/beta {root}/current; _ha_env_prompt; echo "$PS1"; echo "$VIRTUAL_ENV"'
     )
-    env = {
-        **os.environ,
-        "HA_ENV_ROOT": str(root),
-        "VIRTUAL_ENV": f"{root}/versions/2026.11.2",
-        "WORKSPACE_ROOT": str(LIB.parents[1]),
-    }
+    env = {**{k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}, "HA_ENV_ROOT": str(root)}
 
     result = subprocess.run([shell, "-c", script], env=env, capture_output=True, text=True, check=False)
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout.splitlines() == ["(ha-minimum 2026.11.2) $ |2026.11.2", "(ha-beta 2026.12.0b1) $ |2026.12.0b1"]
+    assert result.stdout.splitlines() == ["(ha-minimum 2026.11.2) $ ", "(ha-beta 2026.12.0b1) $ ", str(root)]
     assert "switched: minimum → beta (by agent (claude-code) at 14:03)" in result.stderr
 
 
@@ -344,29 +338,26 @@ ha_envs_create_venv "$PWD/.local/ha-venv/versions/2099.1.0" 2099.1.0
 
 
 @pytest.mark.unit
-def test_prune_drops_downloaded_pythons_no_environment_uses(workdir: Path) -> None:
-    """A downloaded Python stays while a venv's home points at it, through uv's minor-version link."""
+def test_prune_uninstalls_downloaded_pythons_no_environment_uses(workdir: Path) -> None:
+    """Uv lists its builds; one stays while a venv's home points at it, through uv's minor-version link."""
     python = _root(workdir) / "python"
     for build in ("3.15.2", "3.16.0"):
-        (python / f"cpython-{build}-linux").mkdir(parents=True)
+        (python / f"cpython-{build}-linux" / "bin").mkdir(parents=True)
         (python / f"cpython-{build[:4]}-linux").symlink_to(python / f"cpython-{build}-linux")
     _bash(workdir, "ha_envs_refresh beta")
     cfg = _root(workdir) / "versions" / "2026.12.0b1" / "pyvenv.cfg"
     cfg.write_text(f"home = {python}/cpython-3.15-linux/bin\n", encoding="utf-8")
+    listing = [
+        {"key": f"cpython-{b}-linux", "path": f"{python}/cpython-{b[:4]}-linux/bin/python3"}
+        for b in ("3.15.2", "3.16.0")
+    ]
+    stub = f"""uv() {{
+    if [[ $1 == python && $2 == list ]]; then echo '{json.dumps(listing)}'; else echo "uv $*" >>"$PWD/uv-calls"; fi
+}}"""
 
-    result = _bash(workdir, "ha_envs_prune")
+    result = _bash(workdir, stub + "\nha_envs_prune")
 
     assert result.returncode == 0, result.stderr
-    assert sorted(path.name for path in python.iterdir()) == ["cpython-3.15-linux", "cpython-3.15.2-linux"]
-
-
-@pytest.mark.unit
-def test_uv_keeps_its_hardlinks_where_cache_and_venvs_share_a_filesystem(tmp_path: Path) -> None:
-    """Only a hardlink-hostile setup gets a link mode; on one filesystem uv's own default stays, and no probe remains."""
-    (tmp_path / "cache").mkdir()
-    (tmp_path / "venv").mkdir()
-
-    result = _bash(tmp_path, f"ha_envs_link_mode {tmp_path / 'cache'} {tmp_path / 'venv'} || echo default")
-
-    assert result.stdout.strip() == "default"
-    assert not [path for path in tmp_path.rglob("*") if "probe" in path.name]
+    assert (workdir / "uv-calls").read_text(encoding="utf-8") == (
+        f"uv python uninstall --quiet --install-dir {python} cpython-3.16.0-linux\n"
+    )

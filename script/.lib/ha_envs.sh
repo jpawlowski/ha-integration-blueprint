@@ -51,16 +51,22 @@ ha_envs_version_of() {
     printf '%s\n' "${target##*/}"
 }
 
-# ha_envs_create_venv DIR VERSION — a venv on the Python that Home Assistant VERSION asks for, always a uv-managed
-# build in python/ beside the venvs: one from the OS image or mise could vanish while the venv survives in the volume.
+# Where uv keeps the Python builds the venvs use: beside them, so the volume that keeps a venv keeps its interpreter.
+ha_envs_python_dir() {
+    printf '%s/python' "$(ha_venv_preferred_path)"
+}
+
+# ha_envs_create_venv DIR VERSION — a venv on the Python that Home Assistant VERSION asks for. Only uv-managed builds:
+# one from the OS image or mise could vanish while the venv survives in the volume.
 ha_envs_create_venv() {
     local dir="$1" python args=(--python-preference only-managed)
+    _pypi_populate_cache >/dev/null 2>&1 || true
     python=$(ha_python_for "$2" 2>/dev/null) || python=""
     if [[ -n $python ]]; then
         log_info "Python $python for Home Assistant $2"
         args+=(--python "$python")
     fi
-    UV_PYTHON_INSTALL_DIR="$(ha_venv_preferred_path)/python" uv venv --quiet --prompt "ha-${dir##*/}" "${args[@]}" "$dir"
+    UV_PYTHON_INSTALL_DIR="$(ha_envs_python_dir)" uv venv --quiet --prompt "ha-${dir##*/}" "${args[@]}" "$dir"
 }
 
 # Print what an environment is built from — its version and the requirements files — so an unchanged one is skipped.
@@ -73,33 +79,14 @@ ha_envs_inputs() {
     return 0
 }
 
-# ha_envs_link_mode CACHE DIR — the uv link mode that shares files from CACHE into the venv DIR: nothing to print
-# where uv's default works (a hardlink on one filesystem; macOS clones already), "clone" across volumes of a
-# copy-on-write filesystem such as btrfs or XFS, and "copy" where neither works, which uv would fall back to anyway.
-ha_envs_link_mode() {
-    local cache="$1" dir="$2" probe mode=copy
-    [[ $(uname) != Darwin && -d $cache && -d $dir ]] || return 1
-    probe=$(mktemp "$cache/.ha-envs-probe.XXXXXX") || return 1
-    if ln "$probe" "$dir/.ha-envs-probe" 2>/dev/null; then
-        mode=""
-    elif cp --reflink=always "$probe" "$dir/.ha-envs-probe" 2>/dev/null; then
-        mode=clone
-    fi
-    rm -f "$probe" "$dir/.ha-envs-probe"
-    [[ -n $mode ]] && printf '%s\n' "$mode"
-}
-
 # ha_envs_install DIR VERSION — install the project, its tests and Home Assistant VERSION into the venv DIR.
 ha_envs_install() {
     local dir="$1" version="$2" base="https://raw.githubusercontent.com/home-assistant/core/$2"
-    local tmp pinned link_mode status=0
+    local tmp pinned status=0
     tmp=$(mktemp -d)
     pinned=$(ha_test_pin_version)
     (
         set -euo pipefail
-        if [[ -z ${UV_LINK_MODE:-} ]] && link_mode=$(ha_envs_link_mode "$(uv cache dir)" "$dir"); then
-            export UV_LINK_MODE="$link_mode"
-        fi
         # shellcheck source=/dev/null
         source "$dir/bin/activate"
         log_header "Installing development dependencies into Home Assistant $version"
@@ -182,6 +169,7 @@ ha_envs_refresh() {
     root="$(ha_venv_preferred_path)"
     mkdir -p "$root/slots"
     ln -sfn "../versions/$version" "$root/slots/$slot"
+    touch "$root/slots/.$slot.refreshed"
     log_success "$slot: Home Assistant $version"
 }
 
@@ -218,14 +206,14 @@ ha_envs_remove() {
         log_error "$slot is the active environment — run: script/ha-env use minimum"
         return 1
     fi
-    rm -f "$(ha_venv_preferred_path)/slots/$slot"
+    rm -f "$(ha_venv_preferred_path)/slots/$slot" "$(ha_venv_preferred_path)/slots/.$slot.refreshed"
 }
 
 # Delete every version no slot points at, unfinished builds included, then every downloaded Python no venv uses.
 ha_envs_prune() {
-    local root dir link target cfg home build
+    local root dir link target
     root="$(ha_venv_preferred_path)"
-    local -A keep=() used=()
+    local -A keep=()
     for link in "$root"/slots/*; do
         [[ -L $link ]] || continue
         target="$(readlink "$link")"
@@ -236,17 +224,24 @@ ha_envs_prune() {
         log_step "Removing the unused Home Assistant ${dir##*/} environment"
         rm -rf "$dir"
     done
-    for cfg in "$root"/versions/*/pyvenv.cfg; do
-        [[ -f $cfg ]] || continue
-        home="$(sed -n 's/^home = //p' "$cfg")"
-        [[ $home == "$root"/python/* ]] && used[$(realpath -m "${home%/bin}")]=1
+    [[ -d $(ha_envs_python_dir) ]] || return 0
+    UV_PYTHON_INSTALL_DIR="$(ha_envs_python_dir)" uv python list --only-installed --python-preference only-managed \
+        --output-format json 2>/dev/null | python3 -c '
+import json, os, sys
+homes = set()
+for name in os.listdir(sys.argv[1]):
+    try:
+        cfg = open(os.path.join(sys.argv[1], name, "pyvenv.cfg"), encoding="utf-8").read()
+    except OSError:
+        continue
+    homes |= {os.path.realpath(line.split("=", 1)[1].strip()) for line in cfg.splitlines() if line.startswith("home")}
+for build in json.load(sys.stdin):
+    if os.path.realpath(os.path.dirname(build["path"])) not in homes:
+        print(build["key"])
+' "$root/versions" | while read -r build; do
+        log_step "Removing the unused Python $build"
+        uv python uninstall --quiet --install-dir "$(ha_envs_python_dir)" "$build"
     done
-    for build in "$root"/python/cpython-*; do
-        [[ -d $build && ! -L $build && -z ${used[$(realpath -m "$build")]:-} ]] || continue
-        log_step "Removing the unused Python ${build##*/}"
-        rm -rf "$build"
-    done
-    [[ -d $root/python ]] && find "$root/python" -maxdepth 1 -xtype l -delete
     return 0
 }
 
@@ -260,7 +255,8 @@ ha_envs_migrate() {
         deactivate
     fi
     # The root can be a Docker volume mount point, which only lets its contents be deleted.
-    find "$root" -mindepth 1 -maxdepth 1 ! -name versions ! -name slots ! -name python -exec rm -rf {} +
+    find "$root" -mindepth 1 -maxdepth 1 ! -name versions ! -name slots ! -name python ! -name .uv-cache \
+        -exec rm -rf {} +
     hash -r
 }
 
@@ -299,13 +295,13 @@ ha_envs_guard_config() {
 }
 
 # Print what is stale, without the network: a latest or beta not refreshed for a week, or a minimum on another
-# release than hacs.json. A refresh re-creates the slot's link even when the version stays, so its age is the check's.
+# release than hacs.json.
 ha_envs_notice() {
-    local root slot link minimum hacs
+    local root slot stamp minimum hacs
     root="$(ha_venv_preferred_path)"
     for slot in latest beta; do
-        link="$root/slots/$slot"
-        if [[ -L $link && -n $(find "$link" -maxdepth 0 -mtime +7 2>/dev/null) ]]; then
+        stamp="$root/slots/.$slot.refreshed"
+        if [[ -L $root/slots/$slot && -f $stamp && -n $(find "$stamp" -mtime +7 2>/dev/null) ]]; then
             log_warning "$slot ($(ha_envs_version_of "$slot")) was last refreshed over 7 days ago — run: script/ha-env refresh $slot"
         fi
     done

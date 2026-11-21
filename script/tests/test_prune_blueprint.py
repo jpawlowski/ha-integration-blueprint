@@ -26,7 +26,6 @@ def repo(tmp_path: Path) -> Path:
     (tmp_path / "script" / ".lib").mkdir(parents=True)
     shutil.copy(SCRIPT_DIR / "prune-blueprint", tmp_path / "script" / "prune-blueprint")
     shutil.copy(SCRIPT_DIR / ".lib" / "output.sh", tmp_path / "script" / ".lib" / "output.sh")
-    shutil.copy(SCRIPT_DIR / ".lib" / "ha_env_renew.sh", tmp_path / "script" / ".lib" / "ha_env_renew.sh")
     for name in (*PRUNED, PROJECT_OWNED, "docs/user/GUIDE.md"):
         (tmp_path / name).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / name).write_text("x\n", encoding="utf-8")

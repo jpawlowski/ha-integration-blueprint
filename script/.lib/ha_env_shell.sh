@@ -1,19 +1,18 @@
 # shellcheck shell=bash
-# Prompt hook for interactive bash and zsh in the dev container: the active Home Assistant environment, kept current.
+# Interactive bash and zsh in the dev container: the active Home Assistant environment, kept current in the prompt.
 
 HA_ENV_ROOT="${HA_ENV_ROOT:-$HOME/ha-venv}"
-# shellcheck source=script/.lib/ha_env_renew.sh
-[ -n "${WORKSPACE_ROOT:-}" ] && . "$WORKSPACE_ROOT/script/.lib/ha_env_renew.sh"
-export VIRTUAL_ENV_DISABLE_PROMPT=1
+# Through the venv root, whose links follow script/ha-env use: bin/activate would pin the version behind them, which
+# VS Code then takes for another venv.
+if [[ -f $HA_ENV_ROOT/bin/activate ]]; then
+    export VIRTUAL_ENV="$HA_ENV_ROOT" PATH="$HA_ENV_ROOT/bin:$PATH" VIRTUAL_ENV_DISABLE_PROMPT=1
+fi
 _HA_ENV_BASE_PS1="$PS1"
 
 _ha_env_prompt() {
     local link slot version="" to="" who="" at=""
     HA_ENV_PROMPT=""
     if link="$(readlink "$HA_ENV_ROOT/current" 2>/dev/null)"; then
-        if command -v ha_env_renew >/dev/null; then
-            ha_env_renew "$HA_ENV_ROOT"
-        fi
         slot="${link##*/}"
         read -r version 2>/dev/null <"$HA_ENV_ROOT/current/.ha-version" || true
         HA_ENV_PROMPT="(ha-${slot}${version:+ $version}) "

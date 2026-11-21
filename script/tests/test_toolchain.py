@@ -17,7 +17,7 @@ def test_own_machine_without_mise_falls_back_to_path(tmp_path: Path) -> None:
     (repo / "script" / "setup").mkdir(parents=True)
     (repo / "script" / ".lib").mkdir()
     shutil.copy(SCRIPT_DIR / "setup" / "toolchain", repo / "script" / "setup" / "toolchain")
-    for library in ("output.sh", "ha_env_renew.sh", "download.sh"):
+    for library in ("output.sh", "download.sh"):
         shutil.copy(SCRIPT_DIR / ".lib" / library, repo / "script" / ".lib" / library)
     (repo / "mise.toml").write_text('min_version = "2026.10.22"\n', encoding="utf-8")
     env = {key: value for key, value in os.environ.items() if key not in {"REMOTE_CONTAINERS", "CODESPACES"}}

@@ -40,13 +40,6 @@ if [ -n "$WORKSPACE_ROOT" ]; then
     set +a
 fi
 
-# The active Home Assistant environment through the venv root, whose links follow script/ha-env use; activate would
-# pin the resolved version, which VS Code then takes for another venv and activates again.
-if [ -f "$HOME/ha-venv/bin/activate" ]; then
-    export VIRTUAL_ENV="$HOME/ha-venv" VIRTUAL_ENV_DISABLE_PROMPT=1
-    export PATH="$VIRTUAL_ENV/bin:$PATH"
-fi
-
 # Home Assistant development aliases (work from anywhere!)
 if [ -n "$WORKSPACE_ROOT" ]; then
     if [ -d "$WORKSPACE_ROOT/node_modules/.bin" ]; then
@@ -69,8 +62,8 @@ if [ -n "$WORKSPACE_ROOT" ]; then
     alias ha-d="$WORKSPACE_ROOT/script/develop"
     alias ha-e="$WORKSPACE_ROOT/script/ha-env"
 
-    # The active Home Assistant environment in the prompt, followed after script/ha-env use
-    [ -f "$WORKSPACE_ROOT/script/.lib/ha_env_prompt.sh" ] && . "$WORKSPACE_ROOT/script/.lib/ha_env_prompt.sh"
+    # shellcheck source=/dev/null
+    [ -f "$WORKSPACE_ROOT/script/.lib/ha_env_shell.sh" ] && . "$WORKSPACE_ROOT/script/.lib/ha_env_shell.sh"
 
     # Copilot CLI wrapper (project-managed defaults).
     if command -v copilot-safe >/dev/null 2>&1; then

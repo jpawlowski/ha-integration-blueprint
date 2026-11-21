@@ -3,9 +3,6 @@
 # Source this file in your scripts with: source "$(dirname "$0")/../.lib/output.sh"
 # shellcheck disable=SC2034  # All variables in this library are used by sourcing scripts
 
-# shellcheck source=script/.lib/ha_env_renew.sh
-source "${BASH_SOURCE[0]%/*}/ha_env_renew.sh"
-
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
 readonly YELLOW='\033[1;33m'
@@ -174,13 +171,19 @@ ha_config_dir() {
     esac
 }
 
+# Point VIRTUAL_ENV and PATH at the venv root, whose links follow script/ha-env use; bin/activate would pin the
+# version directory behind them, and an activation that names one is moved back to the root.
+_use_venv() {
+    export VIRTUAL_ENV="$1" PATH="$1/bin:$PATH" VIRTUAL_ENV_DISABLE_PROMPT=1
+    unset PYTHONHOME
+    hash -r
+}
+
 # Activate the Home Assistant virtual environment if not already active, and export HA_CONFIG_DIR for it.
-# An activation that still names an environment `script/ha-env use` has switched away from is renewed.
 activate_venv() {
     export HA_CONFIG_DIR
     HA_CONFIG_DIR="$(ha_config_dir)"
-    if [[ -n ${VIRTUAL_ENV:-} ]]; then
-        ha_env_renew "$(resolve_venv_path 2>/dev/null)"
+    if [[ -n ${VIRTUAL_ENV:-} && $VIRTUAL_ENV != */versions/* ]]; then
         return 0
     fi
     local venv_path
@@ -193,20 +196,17 @@ activate_venv() {
         exit 1
     fi
     log_header "Activating virtual environment"
-    # shellcheck source=/dev/null
-    source "$venv_path/bin/activate"
+    _use_venv "$venv_path"
 }
 
 # Like activate_venv, for a script that needs the venv only for optional extras: carries on without one.
 activate_venv_if_present() {
-    if [[ -n ${VIRTUAL_ENV:-} ]]; then
-        ha_env_renew "$(resolve_venv_path 2>/dev/null)"
+    if [[ -n ${VIRTUAL_ENV:-} && $VIRTUAL_ENV != */versions/* ]]; then
         return 0
     fi
     local venv_path
     venv_path="$(resolve_venv_path)" || return 0
-    # shellcheck source=/dev/null
-    source "$venv_path/bin/activate"
+    _use_venv "$venv_path"
 }
 
 # Run a user-defined hook script if it exists.
