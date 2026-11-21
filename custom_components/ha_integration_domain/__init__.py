@@ -51,14 +51,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: IntegrationBlueprintConfigEntry,
-) -> bool:
-    """
-    Set up a config entry.
-
-    Returns:
-        True once the coordinator has data and every platform is forwarded.
-
-    """
+) -> None:
+    """Set up a config entry: fetch the first data, then forward every platform."""
     client = IntegrationBlueprintApiClient(
         username=entry.data[CONF_USERNAME],
         password=entry.data[CONF_PASSWORD],
@@ -77,18 +71,10 @@ async def async_setup_entry(
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    return True
-
 
 async def async_unload_entry(
     hass: HomeAssistant,
     entry: IntegrationBlueprintConfigEntry,
-) -> bool:
-    """
-    Unload a config entry.
-
-    Returns:
-        True if every platform unloaded cleanly.
-
-    """
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+) -> None:
+    """Unload a config entry, raising when a platform does not unload cleanly."""
+    await hass.config_entries.async_unload_platforms_or_raise(entry, PLATFORMS)
