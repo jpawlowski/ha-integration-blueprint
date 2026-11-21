@@ -242,6 +242,15 @@ uv pip install --requirement "/tmp/requirements_test.txt"
 log_header "Installing Home Assistant ${HA_VERSION} core"
 uv pip install "homeassistant==${HA_VERSION}"
 
+# requirements_test.txt pins the plugin release of the minimum version; another HA_VERSION needs its own release.
+PINNED_PLUGIN=$(sed -n 's/^pytest-homeassistant==\([^[:space:]#]*\).*/\1/p' requirements_test.txt)
+if [[ -n $PINNED_PLUGIN && ${PINNED_PLUGIN%.post*} != "$HA_VERSION" ]]; then
+    log_header "Installing pytest-homeassistant ${HA_VERSION} to match"
+    if ! uv pip install "pytest-homeassistant==${HA_VERSION}"; then
+        log_warning "No pytest-homeassistant release for Home Assistant ${HA_VERSION} — script/test runs the ${PINNED_PLUGIN} fixtures against it"
+    fi
+fi
+
 # Record the installed HA version so bootstrap can detect version changes on subsequent runs.
 echo "$HA_VERSION" >"$HA_VERSION_MARKER"
 
