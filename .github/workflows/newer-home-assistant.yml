@@ -54,14 +54,13 @@ jobs:
         env:
           HA_VERSION: ${{ matrix.ha }}
         run: |
+          source script/.lib/output.sh
+          source script/.lib/ha_version.sh
           version=$(bash script/.lib/ha_version.sh)
-          pinned=$(sed -n 's/^pytest-homeassistant==\([^[:space:]#]*\).*/\1/p' requirements_test.txt)
-          pinned=${pinned%.post*}
+          pinned=$(ha_test_pin_version)
           echo "HA_VERSION=${version}" >> "${GITHUB_OUTPUT}"
-          # A tilde sorts a pre-release before its release; a beta older than the pin, as between trains, is skipped.
-          key() { sed -E 's/(a|b|rc)([0-9]+)$/~\1\2/' <<<"$1"; }
-          newest=$(printf '%s\n' "$(key "${pinned}")" "$(key "${version}")" | sort -V | tail -1)
-          if [[ "${version}" == "${pinned}" || "${newest}" != "$(key "${version}")" ]]; then
+          # A beta older than the pin, as between two release trains, is skipped.
+          if ! ha_version_newer "${version}" "${pinned}"; then
             echo "Home Assistant ${version} is not newer than the pinned ${pinned}, which the Lint workflow tests" \
               >> "${GITHUB_STEP_SUMMARY}"
             echo "skip=true" >> "${GITHUB_OUTPUT}"
