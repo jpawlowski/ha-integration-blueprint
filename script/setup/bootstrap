@@ -96,16 +96,16 @@ else
     ln -sfn ha-venv .local/venv
 fi
 
-# Auto-activate venv in shell RC files (only in DevContainer/Codespaces where venv is external)
+# .devcontainer/.bashrc and .zshrc activate the venv and load .devcontainer/.env*; drop the lines an older bootstrap
+# appended for both, the second of which never ran because WORKSPACE_ROOT was not set yet.
 if [[ "$VENV_IS_EXTERNAL" == "true" ]]; then
+    LEGACY_ACTIVATE="source $VENV_PATH/bin/activate"
     LEGACY_ENV_BLOCK="# DevContainer environment overrides (.env → .env.local, later wins)"
     for RC_FILE in "$HOME/.bashrc" "$HOME/.zshrc"; do
         [[ -f $RC_FILE ]] || continue
-        if ! grep -qF "source $VENV_PATH/bin/activate" "$RC_FILE"; then
-            log_step "Configuring ${RC_FILE##*/} to auto-activate the virtual environment"
-            echo "source $VENV_PATH/bin/activate" >>"$RC_FILE" || log_warning "Failed to update $RC_FILE"
+        if grep -qxF "$LEGACY_ACTIVATE" "$RC_FILE"; then
+            sed -i "\|^${LEGACY_ACTIVATE}\$|d" "$RC_FILE"
         fi
-        # .devcontainer/.bashrc loads .devcontainer/.env*; this older copy ran before WORKSPACE_ROOT was set.
         if grep -qxF "$LEGACY_ENV_BLOCK" "$RC_FILE"; then
             sed -i "/^${LEGACY_ENV_BLOCK//./\\.}\$/,/^fi\$/d" "$RC_FILE"
         fi

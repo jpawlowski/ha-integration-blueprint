@@ -40,6 +40,13 @@ if [ -n "$WORKSPACE_ROOT" ]; then
     set +a
 fi
 
+# The active Home Assistant environment; the prompt hook below shows it instead of activate's own prefix.
+if [ -f "$HOME/ha-venv/bin/activate" ]; then
+    export VIRTUAL_ENV_DISABLE_PROMPT=1
+    # shellcheck source=/dev/null
+    . "$HOME/ha-venv/bin/activate"
+fi
+
 # Home Assistant development aliases (work from anywhere!)
 if [ -n "$WORKSPACE_ROOT" ]; then
     if [ -d "$WORKSPACE_ROOT/node_modules/.bin" ]; then

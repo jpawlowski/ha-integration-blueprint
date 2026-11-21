@@ -187,8 +187,7 @@ ha_test_pin_version() {
 # ha_version_newer A B — whether Home Assistant version A is newer than B, pre-releases included.
 ha_version_newer() {
     [[ $1 != "$2" ]] || return 1
-    python3 -c 'import sys; from packaging.version import Version; sys.exit(Version(sys.argv[1]) <= Version(sys.argv[2]))' \
-        "$1" "$2"
+    [[ $(printf '%s\n%s\n' "$1" "$2" | python3 -c "$_PYPI_SORT_KEY_PY") == "$1" ]]
 }
 
 # target_ha_version RESULT_VAR

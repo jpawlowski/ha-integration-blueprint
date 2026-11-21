@@ -5,10 +5,6 @@ HA_ENV_ROOT="${HA_ENV_ROOT:-$HOME/ha-venv}"
 # shellcheck source=script/.lib/ha_env_renew.sh
 [ -n "${WORKSPACE_ROOT:-}" ] && . "$WORKSPACE_ROOT/script/.lib/ha_env_renew.sh"
 export VIRTUAL_ENV_DISABLE_PROMPT=1
-# The activation earlier in the rc file has already prefixed the prompt; start again from the one it saved.
-if [[ -n ${_OLD_VIRTUAL_PS1+x} ]]; then
-    PS1="$_OLD_VIRTUAL_PS1"
-fi
 _HA_ENV_BASE_PS1="$PS1"
 
 _ha_env_prompt() {
