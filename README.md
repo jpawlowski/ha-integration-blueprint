@@ -210,6 +210,7 @@ Creating a custom integration from scratch means figuring out config flows, coor
 - ✅ **Careful with dependencies**: Dependabot and Renovate share the updates, new releases wait a few days before they are proposed, and a template sync never lowers a version your bots already raised — see [Dependency updates](docs/development/DEPENDENCY_UPDATES.md)
 - ✅ **Fast rebuilds**: Named Docker volumes keep the Python venv _and_ uv's package cache alive across container rebuilds — no re-downloading on every `Rebuild Container`
 - ✅ **Complete test setup**: Includes `pytest-homeassistant` for proper testing
+- ✅ **Several Home Assistant versions side by side**: Develop and test on the minimum your `hacs.json` promises, the latest release, the current beta or one release you pin, and switch between them in seconds with `script/ha-env`. Each gets its own Python, matching test fixtures and its own Home Assistant state, and CI also runs the tests against newer releases without blocking a pull request — see [Testing against a newer Home Assistant](docs/development/CUSTOMIZATION.md#testing-against-a-newer-home-assistant)
 - ✅ **Developer-friendly**: Comprehensive scripts for development, testing, and maintenance
 - ✅ **Stays current**: Weekly automated PRs keep your project in sync with blueprint improvements, and `script/blueprint-update` walks you through the changes a sync cannot deliver — see [Customization Guide](docs/development/CUSTOMIZATION.md)
 - ✅ **Sparing with CI minutes**: Draft pull requests run nothing, fork pull requests wait for your approval, and a merge does not repeat checks the pull request already passed
@@ -320,7 +321,8 @@ This repository uses the [Scripts to Rule Them All](https://github.com/github/sc
 
 #### Development
 
-- **`script/develop`** - Start Home Assistant in development mode with your integration loaded
+- **`script/develop`** - Start Home Assistant in development mode with your integration loaded (`--env beta` switches first)
+- **`script/ha-env`** - Install, switch, refresh and remove Home Assistant environments: `minimum`, `latest`, `beta` or a pinned `custom` release
 - **`script/test`** - Run project tests with pytest
   - Add `--cov` for coverage report, `--cov-html` for HTML report in `htmlcov/`
   - Pass any pytest options: `script/test -v -k test_name`
@@ -902,6 +904,7 @@ While this blueprint is inspired by the original, it includes significant enhanc
 | **Container rebuild speed** | Named Docker volumes keep venv + uv cache alive across rebuilds — near-instant re-attach | Fresh install on every rebuild |
 | **Development scripts**     | Comprehensive Scripts to Rule Them All                                                   | Basic scripts                  |
 | **Test infrastructure**     | Preconfigured `pytest-homeassistant`                                                     | Manual test setup needed       |
+| **Home Assistant versions** | Minimum, latest, beta or a pinned release side by side, switched with `script/ha-env`    | One version                    |
 | **Type checking**           | Pyright configured                                                                       | Not included                   |
 | **Marketplace / HACS**      | Built in from 2026.11, HACS auto-installed before                                        | Manual setup                   |
 | **VS Code tasks**           | Pre-configured tasks for common operations                                               | Not included                   |
