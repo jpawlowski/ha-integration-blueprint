@@ -12,8 +12,9 @@ The sync brings `script/ha-env`, the environment-aware `script/setup/bootstrap` 
 hook; `minimum` stays the default and `latest` or `beta` are added on demand
 ([`CUSTOMIZATION.md`](../../../../docs/development/CUSTOMIZATION.md#testing-against-a-newer-home-assistant)).
 
-1. Run `script/setup/bootstrap` once. It moves the venv to one directory per Home Assistant version inside the same
-   volume and adds the prompt hook to `.bashrc` and `.zshrc` — no container rebuild.
+1. Run `script/setup/bootstrap` once, then `bash .devcontainer/setup-shell.sh`. The first moves the venv to one
+   directory per Home Assistant version inside the same volume, the second brings the `ha-env` alias and the prompt
+   hook into `.bashrc` and `.zshrc` — no container rebuild.
 2. Copy the blueprint's `Run Home Assistant (Latest)`, `(Beta)`, `Switch`, `Add` and `Refresh Home Assistant
 Environment(s)` tasks and the `inputs` block into `.vscode/tasks.json`, which the sync leaves alone.
 3. In `AGENTS.md`, under the `config/.storage/` rule, add the sentence that the same holds for

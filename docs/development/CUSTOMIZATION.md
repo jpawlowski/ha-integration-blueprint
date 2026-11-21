@@ -278,7 +278,8 @@ script/ha-env remove beta    # free the disk again
 script/ha-env list           # what is installed and active, and who started a running instance
 ```
 
-`script/develop --env beta` switches and starts in one step, and VS Code has the same as tasks. Each environment keeps
+In dev container terminals `ha-env` (or `ha-e`) runs `script/ha-env` from anywhere. `script/develop --env beta`
+switches and starts in one step, and VS Code has the same as tasks. Each environment keeps
 its kind: `beta` only ever holds a pre-release, even while the newest one is older than `latest`, and `latest` only a
 stable release. Each one gets the `pytest-homeassistant` release of its version, so the test fixtures always match
 the Home Assistant they run against; `requirements_test.txt` and `hacs.json` stay as they are.

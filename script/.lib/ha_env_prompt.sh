@@ -1,9 +1,9 @@
 # shellcheck shell=bash
 # ha_env_prompt.sh: Show the active Home Assistant environment in the prompt, and follow `script/ha-env use`.
 #
-# Sourced by interactive bash and zsh in the dev container, from the lines script/setup/bootstrap adds to
-# ~/.bashrc and ~/.zshrc after the venv activation. Before every prompt it renews an activation that still
-# names an environment the user switched away from, so terminals opened earlier follow the switch.
+# Sourced by interactive bash and zsh in the dev container, from .devcontainer/.bashrc and .zshrc, which
+# .devcontainer/setup-shell.sh installs. Before every prompt it renews an activation that still names an
+# environment the user switched away from, so terminals opened earlier follow the switch.
 
 HA_ENV_ROOT="${HA_ENV_ROOT:-$HOME/ha-venv}"
 export VIRTUAL_ENV_DISABLE_PROMPT=1

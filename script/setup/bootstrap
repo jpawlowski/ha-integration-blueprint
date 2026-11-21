@@ -148,14 +148,6 @@ fi
 EOF
         fi
     fi
-    # The active Home Assistant environment in the prompt, followed after script/ha-env use.
-    for RC_FILE in "$HOME/.bashrc" "$HOME/.zshrc"; do
-        if [[ -f $RC_FILE ]] && ! grep -q "ha_env_prompt.sh" "$RC_FILE"; then
-            log_step "Showing the active Home Assistant environment in the $(basename "$RC_FILE") prompt"
-            printf '[ -f "%s" ] && source "%s"\n' "$PWD/script/.lib/ha_env_prompt.sh" "$PWD/script/.lib/ha_env_prompt.sh" \
-                >>"$RC_FILE" || log_warning "Failed to update $RC_FILE"
-        fi
-    done
     set -e
 fi
 

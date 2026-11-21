@@ -44,11 +44,16 @@ if [ -n "$WORKSPACE_ROOT" ]; then
     alias ha-clean="$WORKSPACE_ROOT/script/clean"
     alias ha-type-check="$WORKSPACE_ROOT/script/type-check"
     alias ha-help="$WORKSPACE_ROOT/script/help"
+    alias ha-env="$WORKSPACE_ROOT/script/ha-env"
 
     # Shorthand for common tasks
     alias ha-t="$WORKSPACE_ROOT/script/test"
     alias ha-l="$WORKSPACE_ROOT/script/lint"
     alias ha-d="$WORKSPACE_ROOT/script/develop"
+    alias ha-e="$WORKSPACE_ROOT/script/ha-env"
+
+    # The active Home Assistant environment in the prompt, followed after script/ha-env use
+    [ -f "$WORKSPACE_ROOT/script/.lib/ha_env_prompt.sh" ] && . "$WORKSPACE_ROOT/script/.lib/ha_env_prompt.sh"
 
     # Copilot CLI wrapper (project-managed defaults).
     if command -v copilot-safe >/dev/null 2>&1; then
