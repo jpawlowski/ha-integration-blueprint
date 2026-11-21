@@ -184,6 +184,19 @@ ha_test_pin_version() {
     printf '%s\n' "${pin%.dev*}"
 }
 
+# Print the Python minor version a Home Assistant release asks for — the lower bound of its requires-python, which
+# is what Home Assistant ships it with — or nothing when PyPI does not say.
+ha_python_for() {
+    _pypi_populate_cache || return 1
+    printf '%s' "$_PYPI_JSON_CACHE" | python3 -c '
+import json, re, sys
+files = json.load(sys.stdin)["releases"].get(sys.argv[1]) or []
+spec = next((f["requires_python"] for f in files if f.get("requires_python")), "")
+match = re.search(r">=\s*(\d+)\.(\d+)", spec)
+print(f"{match[1]}.{match[2]}" if match else "")
+' "$1"
+}
+
 # ha_version_newer A B — whether Home Assistant version A is newer than B, pre-releases included.
 ha_version_newer() {
     [[ $1 != "$2" ]] || return 1

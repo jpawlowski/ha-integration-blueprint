@@ -51,8 +51,16 @@ ha_envs_version_of() {
     printf '%s\n' "${target##*/}"
 }
 
+# ha_envs_create_venv DIR VERSION — a venv on the Python that Home Assistant VERSION asks for; uv takes mise's when it
+# matches and otherwise downloads a build into python/ beside the venvs, so it survives with them in the same volume.
 ha_envs_create_venv() {
-    uv venv --quiet --prompt "ha-${1##*/}" "$1"
+    local dir="$1" python args=()
+    python=$(ha_python_for "$2" 2>/dev/null) || python=""
+    if [[ -n $python ]]; then
+        log_info "Python $python for Home Assistant $2"
+        args=(--python "$python")
+    fi
+    UV_PYTHON_INSTALL_DIR="$(ha_venv_preferred_path)/python" uv venv --quiet --prompt "ha-${dir##*/}" "${args[@]}" "$dir"
 }
 
 # Print what an environment is built from — its version and the requirements files — so an unchanged one is skipped.
@@ -137,7 +145,7 @@ ha_envs_build() {
         rm -rf "$dir"
         mkdir -p "${dir%/*}"
         log_info "Creating the Home Assistant $version environment"
-        if ! ha_envs_create_venv "$dir" || ! ha_envs_install "$dir" "$version"; then
+        if ! ha_envs_create_venv "$dir" "$version" || ! ha_envs_install "$dir" "$version"; then
             rm -rf "$dir"
             log_error "Could not build the Home Assistant $version environment"
             return 1
@@ -194,11 +202,11 @@ ha_envs_remove() {
     rm -f "$(ha_venv_preferred_path)/slots/$slot"
 }
 
-# Delete every version no slot points at, unfinished builds included.
+# Delete every version no slot points at, unfinished builds included, then every downloaded Python no venv uses.
 ha_envs_prune() {
-    local root dir link target
+    local root dir link target cfg home build
     root="$(ha_venv_preferred_path)"
-    local -A keep=()
+    local -A keep=() used=()
     for link in "$root"/slots/*; do
         [[ -L $link ]] || continue
         target="$(readlink "$link")"
@@ -209,6 +217,17 @@ ha_envs_prune() {
         log_step "Removing the unused Home Assistant ${dir##*/} environment"
         rm -rf "$dir"
     done
+    for cfg in "$root"/versions/*/pyvenv.cfg; do
+        [[ -f $cfg ]] || continue
+        home="$(sed -n 's/^home = //p' "$cfg")"
+        [[ $home == "$root"/python/* ]] && used[$(realpath -m "${home%/bin}")]=1
+    done
+    for build in "$root"/python/cpython-*; do
+        [[ -d $build && ! -L $build && -z ${used[$(realpath -m "$build")]:-} ]] || continue
+        log_step "Removing the unused Python ${build##*/}"
+        rm -rf "$build"
+    done
+    [[ -d $root/python ]] && find "$root/python" -maxdepth 1 -xtype l -delete
     return 0
 }
 
@@ -222,7 +241,7 @@ ha_envs_migrate() {
         deactivate
     fi
     # The root can be a Docker volume mount point, which only lets its contents be deleted.
-    find "$root" -mindepth 1 -maxdepth 1 ! -name versions ! -name slots -exec rm -rf {} +
+    find "$root" -mindepth 1 -maxdepth 1 ! -name versions ! -name slots ! -name python -exec rm -rf {} +
     hash -r
 }
 

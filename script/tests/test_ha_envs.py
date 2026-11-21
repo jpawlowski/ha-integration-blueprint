@@ -316,3 +316,44 @@ def test_the_prompt_names_the_active_environment_and_follows_a_switch(tmp_path: 
     assert result.returncode == 0, result.stderr
     assert result.stdout.splitlines() == ["(ha-minimum 2026.11.2) $ |2026.11.2", "(ha-beta 2026.12.0b1) $ |2026.12.0b1"]
     assert "switched: minimum → beta (by agent (claude-code) at 14:03)" in result.stderr
+
+
+PYPI = (
+    '{"releases": {"2026.11.2": [{"requires_python": ">=3.14.2"}], "2026.12.0b1": [{"requires_python": ">=3.15.0"}]}}'
+)
+
+
+@pytest.mark.unit
+def test_each_environment_gets_the_python_its_release_asks_for(workdir: Path) -> None:
+    """The lower bound of requires-python picks the interpreter; downloads land beside the venvs."""
+    script = f"""
+source {LIB / "ha_envs.sh"}
+_PYPI_JSON_CACHE='{PYPI}'
+uv() {{ echo "UV_PYTHON_INSTALL_DIR=$UV_PYTHON_INSTALL_DIR $*"; }}
+ha_envs_create_venv "$PWD/.local/ha-venv/versions/2026.12.0b1" 2026.12.0b1
+ha_envs_create_venv "$PWD/.local/ha-venv/versions/2099.1.0" 2099.1.0
+"""
+    result = _bash(workdir, script)
+
+    assert result.returncode == 0, result.stderr
+    with_python, without = [line for line in result.stdout.splitlines() if line.startswith("UV_PYTHON_INSTALL_DIR")]
+    assert with_python.startswith(f"UV_PYTHON_INSTALL_DIR={_root(workdir)}/python venv")
+    assert "--python 3.15" in with_python
+    assert "--python" not in without
+
+
+@pytest.mark.unit
+def test_prune_drops_downloaded_pythons_no_environment_uses(workdir: Path) -> None:
+    """A downloaded Python stays while a venv's home points at it, through uv's minor-version link."""
+    python = _root(workdir) / "python"
+    for build in ("3.15.2", "3.16.0"):
+        (python / f"cpython-{build}-linux").mkdir(parents=True)
+        (python / f"cpython-{build[:4]}-linux").symlink_to(python / f"cpython-{build}-linux")
+    _bash(workdir, "ha_envs_refresh beta")
+    cfg = _root(workdir) / "versions" / "2026.12.0b1" / "pyvenv.cfg"
+    cfg.write_text(f"home = {python}/cpython-3.15-linux/bin\n", encoding="utf-8")
+
+    result = _bash(workdir, "ha_envs_prune")
+
+    assert result.returncode == 0, result.stderr
+    assert sorted(path.name for path in python.iterdir()) == ["cpython-3.15-linux", "cpython-3.15.2-linux"]
