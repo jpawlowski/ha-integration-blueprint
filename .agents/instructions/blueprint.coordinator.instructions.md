@@ -103,8 +103,9 @@ Translate API exceptions into Home Assistant ones here, and only here:
 | `CommunicationError`  | `UpdateFailed("message")`                   | Retry at the usual interval |
 
 Catch `RateLimitError` before the communication error it subclasses; Home Assistant honours `retry_after` during
-`async_config_entry_first_refresh()` too. Bound the wait before passing it on — at least a few seconds, at most the update interval — so `Retry-After: 0` does
-not poll in a loop and a huge value does not stop polling.
+`async_config_entry_first_refresh()` too. A rate limit outside the coordinator during setup raises
+`ConfigEntryNotReady(retry_after=seconds)` instead. Bound the wait before passing it on — at least a few seconds, at
+most the update interval — so `Retry-After: 0` does not poll in a loop and a huge value does not stop polling.
 
 **Import from:** `homeassistant.exceptions.ConfigEntryAuthFailed`,
 `homeassistant.helpers.update_coordinator.UpdateFailed`

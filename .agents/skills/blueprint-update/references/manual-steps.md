@@ -23,7 +23,7 @@ The sync replaces `pytest-homeassistant-custom-component` in `requirements_test.
 
 To stay below 2026.11 instead, record this step as skipped and keep the old pin as
 [`CUSTOMIZATION.md`](../../../../docs/development/CUSTOMIZATION.md#staying-on-an-older-home-assistant-version)
-describes.
+describes — including the 2026.11 APIs from the synced skills that such a repository must not adopt.
 
 ## `upstream-rename` — 2026-11-02
 

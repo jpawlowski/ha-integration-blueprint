@@ -59,6 +59,8 @@ Click the button below to open the integration in the Marketplace:
 
 Then click "Download" to install the integration. The Marketplace loads it right away, without a restart.
 
+On a Home Assistant version before 2026.11, if this integration still supports it, install [HACS](https://hacs.xyz/) (Home Assistant Community Store) first, add this repository there as a custom repository, download it, and restart Home Assistant.
+
 > [!NOTE]
 > The My Home Assistant redirect will first take you to a landing page. Click the button there to open your Home Assistant instance.
 

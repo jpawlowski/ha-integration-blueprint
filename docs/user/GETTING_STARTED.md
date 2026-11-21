@@ -17,6 +17,17 @@ This guide will help you install and set up the Integration Blueprint custom int
 
 A restart is not needed for the first installation; updates and removal ask for one.
 
+### Via HACS (only if this integration supports Home Assistant before 2026.11)
+
+1. Open HACS in your Home Assistant instance
+2. Click the three dots in the top right corner
+3. Select "Custom repositories"
+4. Add this repository URL: `https://github.com/jpawlowski/ha-integration-blueprint`
+5. Set category to "Integration"
+6. Click "Add"
+7. Find "Integration Blueprint" in the list and click "Download"
+8. Restart Home Assistant
+
 ### Manual Installation
 
 1. Download the latest release from the [releases page](https://github.com/jpawlowski/ha-integration-blueprint/releases)

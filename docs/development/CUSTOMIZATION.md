@@ -136,7 +136,7 @@ The blueprint tracks the current Home Assistant release, so a sync PR can raise 
 requirements_test.txt
 ```
 
-`pytest-homeassistant` starts at Home Assistant 2026.11. Below that, keep its predecessor `pytest-homeassistant-custom-component` (its last release, 0.13.375, matches 2026.10) and the `pytest_homeassistant_custom_component` imports in your tests; `script/ha-version-sync` checks either.
+`pytest-homeassistant` starts at Home Assistant 2026.11. Below that, keep its predecessor `pytest-homeassistant-custom-component` (its last release, 0.13.375, matches 2026.10) and the `pytest_homeassistant_custom_component` imports in your tests; `script/ha-version-sync` checks either. The synced skills and instructions describe the 2026.11 APIs, and some of them break an older Home Assistant: return `True` from `async_setup_entry`, `async_unload_entry` and `async_migrate_entry` instead of nothing, unload with `async_unload_platforms`, and keep the climate and water heater temperature names without the `native_` prefix. The installed Home Assistant source decides ([`ha-modern-apis`](../../.agents/skills/ha-modern-apis/SKILL.md)).
 
 Moving up later needs the minimum in `hacs.json` and the plugin pin raised together. Since Home Assistant 2026.9, schemas use `probatio` instead of `voluptuous`. Existing `import voluptuous as vol` code keeps working at runtime because Home Assistant aliases it, and only the type checker complains. Switching to `import probatio` is optional, and it is only needed for probatio-only features such as dataclass schemas.
 
