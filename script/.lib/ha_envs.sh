@@ -81,6 +81,9 @@ ha_envs_install() {
     pinned=$(ha_test_pin_version)
     (
         set -euo pipefail
+        # The uv cache and the venvs sit on separate volumes, so hardlinks fail and uv would copy every file; a
+        # copy-on-write clone shares the data instead, and uv copies where the filesystem cannot clone.
+        export UV_LINK_MODE="${UV_LINK_MODE:-clone}"
         # shellcheck source=/dev/null
         source "$dir/bin/activate"
         log_header "Installing development dependencies into Home Assistant $version"
