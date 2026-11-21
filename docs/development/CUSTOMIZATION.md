@@ -130,11 +130,13 @@ Files already excluded by default:
 
 The blueprint tracks the current Home Assistant release, so a sync PR can raise the version your tooling targets. Your integration code and `hacs.json` are never synced, which means your minimum Home Assistant version only changes when you change it.
 
-`requirements_test.txt` is synced, and `pytest-homeassistant-custom-component` in it is tied to one Home Assistant release. If your integration stays on an older release, the pinned plugin no longer matches your `hacs.json`, tests fail, and `script/ha-version-sync` reports a mismatch. To keep control of the pin, add the file to `.templatesyncignore` and set the plugin to the release matching your minimum version:
+`requirements_test.txt` is synced, and `pytest-homeassistant` in it is tied to one Home Assistant release. If your integration stays on an older release, the pinned plugin no longer matches your `hacs.json`, tests fail, and `script/ha-version-sync` reports a mismatch. To keep control of the pin, add the file to `.templatesyncignore` and set the plugin to the release matching your minimum version:
 
 ```text
 requirements_test.txt
 ```
+
+`pytest-homeassistant` starts at Home Assistant 2026.11. Below that, keep its predecessor `pytest-homeassistant-custom-component` (its last release, 0.13.375, matches 2026.10) and the `pytest_homeassistant_custom_component` imports in your tests; `script/ha-version-sync` checks either.
 
 Moving up later needs the minimum in `hacs.json` and the plugin pin raised together. Since Home Assistant 2026.9, schemas use `probatio` instead of `voluptuous`. Existing `import voluptuous as vol` code keeps working at runtime because Home Assistant aliases it, and only the type checker complains. Switching to `import probatio` is optional, and it is only needed for probatio-only features such as dataclass schemas.
 

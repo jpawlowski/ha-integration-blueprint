@@ -68,10 +68,27 @@ def assert_no_hardcoded_ha_version(path: str) -> None:
 # ── pytest-homeassistant ─────────────────────────────────────────────────────
 # Each release carries the version of the Home Assistant release it pins, so the pin names the version itself.
 req_text = Path("requirements_test.txt").read_text(encoding="utf-8")
-m = re.search(r"^pytest-homeassistant==([^\s#]+)", req_text, re.MULTILINE)
-if not m:
+pytest_ha: str | None = None
+if m := re.search(r"^pytest-homeassistant==([^\s#]+)", req_text, re.MULTILINE):
+    pytest_ha = m.group(1)
+    pin = f"pytest-homeassistant=={pytest_ha}"
+elif m := re.search(r"^pytest-homeassistant-custom-component==([^\s#]+)", req_text, re.MULTILINE):
+    # The predecessor, which a project below Home Assistant 2026.11 keeps; only PyPI knows which release it pins.
+    pin = f"pytest-homeassistant-custom-component=={m.group(1)}"
+    try:
+        with urllib.request.urlopen(
+            f"https://pypi.org/pypi/pytest-homeassistant-custom-component/{m.group(1)}/json", timeout=15
+        ) as resp:
+            requires = json.loads(resp.read().decode("utf-8")).get("info", {}).get("requires_dist") or []
+    except (OSError, ValueError) as err:  # URLError/HTTPError/timeout are OSError, JSON errors are ValueError
+        warn(f"Could not reach PyPI for {pin} ({err}) - skipping that source")
+    else:
+        ha_req = next((r for r in requires if r.startswith("homeassistant==")), None)
+        if ha_req is None:
+            fail(f"Could not determine the Home Assistant dependency of {pin}")
+        pytest_ha = ha_req.split("==", 1)[1].strip()
+else:
     fail("pytest-homeassistant pin not found in requirements_test.txt")
-pytest_ha = m.group(1)
 
 # ── hacs.json ────────────────────────────────────────────────────────────────
 hacs = json.loads(Path("hacs.json").read_text(encoding="utf-8"))
@@ -98,7 +115,8 @@ if env_file.exists():
 # ── Compare all sources ───────────────────────────────────────────────────────
 # Map: display-name → (full version, release train)
 sources: dict[str, tuple[str, str]] = {}
-sources[f"pytest-homeassistant=={pytest_ha}"] = (pytest_ha, release_train(pytest_ha))
+if pytest_ha is not None:
+    sources[pin] = (pytest_ha, release_train(pytest_ha))
 sources["hacs.json homeassistant"] = (hacs_ha, hacs_train)
 if env_ha is not None:
     sources[".devcontainer/.env HA_VERSION"] = (env_ha, release_train(env_ha))
@@ -121,15 +139,15 @@ if rm:
     python_minimums["pyproject.toml requires-python"] = rm.group(1).strip()
 # An unreachable PyPI says nothing about whether this repository's versions agree, so it skips this one source rather
 # than blocking a commit.
-try:
-    with urllib.request.urlopen(f"https://pypi.org/pypi/homeassistant/{pytest_ha}/json", timeout=15) as resp:
-        ha_requires = (json.loads(resp.read().decode("utf-8")).get("info", {}).get("requires_python") or "")
-except (OSError, ValueError) as err:  # URLError/HTTPError/timeout are OSError, JSON errors are ValueError
-    warn(f"Could not reach PyPI for homeassistant=={pytest_ha} ({err}) - skipping its Python requirement")
-else:
-    hm = re.search(r">=\s*([0-9.]+)", ha_requires)
-    if hm:
-        python_minimums[f"homeassistant=={pytest_ha} requires-python"] = hm.group(1)
+if pytest_ha is not None:
+    try:
+        with urllib.request.urlopen(f"https://pypi.org/pypi/homeassistant/{pytest_ha}/json", timeout=15) as resp:
+            ha_requires = json.loads(resp.read().decode("utf-8")).get("info", {}).get("requires_python") or ""
+    except (OSError, ValueError) as err:  # URLError/HTTPError/timeout are OSError, JSON errors are ValueError
+        warn(f"Could not reach PyPI for homeassistant=={pytest_ha} ({err}) - skipping its Python requirement")
+    else:
+        if hm := re.search(r">=\s*([0-9.]+)", ha_requires):
+            python_minimums[f"homeassistant=={pytest_ha} requires-python"] = hm.group(1)
 
 if mise_python is not None:
     pinned = version_tuple(mise_python)
