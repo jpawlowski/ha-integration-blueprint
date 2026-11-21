@@ -212,7 +212,8 @@ HA_INSTALL_HACS=1
 APT_UPDATE=0
 ```
 
-After changing either file, run **Dev Containers: Rebuild Container** to apply.
+A new terminal picks up a change, since the shell setup loads both files. Variables that steer the setup itself,
+such as `HA_VERSION` and `HA_ENVS`, take effect with the next `script/setup/bootstrap`.
 
 ### Available variables
 
@@ -269,7 +270,7 @@ the minimum works. To develop and test on a newer release without raising it, ad
 next to it — `latest` (the newest stable release) or `beta` (the newest pre-release) — and switch between them:
 
 ```bash
-script/ha-env add beta       # install it once; minutes, about 2.4 GB
+script/ha-env add beta       # install it once; a few minutes, and disk for its own packages
 script/ha-env use beta       # switch; seconds
 script/test                  # runs against the beta now, as does script/develop
 script/ha-env use minimum    # back
