@@ -4,6 +4,16 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `branch-and-pr-rules` — 2026-11-22
+
+**Check:** `grep -q 'Commits, branches and pull requests' AGENTS.md`
+
+The blueprint now has rules for branches and pull requests: branch names, one logical change per pull request,
+force push only with a lease, and pushing only when asked. The procedures — updating a branch from `main`, conflicts,
+splitting mixed work, stacked pull requests — arrive through the sync in `ha-release`. `AGENTS.md` is not synced:
+replace its _Commits_ section with the blueprint's _Commits, branches and pull requests_, keeping anything this
+repository added there.
+
 ## `translation-test` — 2026-11-22
 
 **Check:** `test -f tests/test_translations.py`

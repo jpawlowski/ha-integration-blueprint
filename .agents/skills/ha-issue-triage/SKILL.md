@@ -141,7 +141,9 @@ For a feature request, "Fix" means "implement," and scope is more often unsettle
 8. **Wait for CI:** `gh pr checks --watch --fail-fast`.
    - Red → do not merge. Fix it and push again, watch again — or stop and report if it isn't yours to fix.
    - Green → continue.
-9. **Merge**, per the autonomy rule at the top of this file. `gh pr merge <nr> --squash --delete-branch`.
+9. **Merge**, per the autonomy rule at the top of this file. `gh pr merge <nr> --squash --delete-branch`. If another
+   pull request is stacked on this one, retarget it to `main` first — deleting the branch closes it
+   ([stacked pull requests](../ha-release/references/branches-and-pull-requests.md#stacked-pull-requests)).
 10. **Branch cleanup — every time, not optional.** `gh pr merge --delete-branch` normally removes both copies of the
     branch. Refresh `main`, prune, and delete the local branch only if it still exists:
 

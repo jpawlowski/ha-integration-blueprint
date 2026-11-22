@@ -369,17 +369,26 @@ bot or app speaks as itself on the developer's behalf instead of pretending that
 The Community AI policy's restriction on posting to Open Home Foundation repositories still applies; see
 [`AI_POLICY.md`](AI_POLICY.md) for the disclosure policy this section operationalizes.
 
-### Commits
+### Commits, branches and pull requests
 
 - **Never commit automatically** — only on an explicit request. A previous request is not standing permission; each
   commit needs a fresh instruction.
-- **Never ask about pushing** — the developer handles `git push` themselves.
+- **Push only when asked** — for a push or a pull request. Otherwise never ask about pushing; the developer handles
+  `git push`.
+- **One branch per change**, named `<type>/<short-kebab>` (`feat/release-zip-asset`), branched from current `main`;
+  never commit on `main`. Do not rename a branch whose pull request is open, and do not reuse one after it was merged.
+- **One logical change per pull request.** An unrelated fix, a drive-by refactor or a dependency bump is a pull request
+  of its own: a squash merge makes each pull request one changelog line and one unit to revert.
+- **Force push only with `--force-with-lease`**, only on your own branch that nobody else has pulled, and only when
+  the developer asked for the push.
 - **Work reaches `main` through a pull request**, where `script/setup/github` applied the `main` ruleset. Squash is
   the default, and the pull request's title becomes the commit, so it follows the same format as a commit subject.
   Rebase only a pull request whose commits each pass the _Check each commit_ step, and only when the developer asks.
 - **A pull request still being worked on is a draft** (`gh pr create --draft`). CI skips drafts, so pushes to it cost
   no Actions minutes; mark it ready (`gh pr ready`) once `script/lint`, `script/type-check` and `script/test` pass
   locally — that is what starts the checks.
+- Updating a branch from `main`, conflicts, splitting mixed work and stacked pull requests:
+  [`ha-release/references/branches-and-pull-requests.md`](.agents/skills/ha-release/references/branches-and-pull-requests.md).
 - When a task completes and the developer moves on, offer a commit message based on the work done.
 - Format: [Conventional Commits](https://www.conventionalcommits.org/), enforced by the commitlint hook — see
   `.agents/instructions/blueprint.commit-message.instructions.md`.
