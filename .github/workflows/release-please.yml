@@ -4,6 +4,13 @@ on:
   push:
     branches:
       - main
+  # Re-runs the asset job for a release whose upload failed; "Re-run all jobs" would create no release and skip it.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to attach the ZIP asset to and publish (e.g. v1.2.3)
+        required: true
+        type: string
 
 permissions: {}
 
@@ -15,7 +22,7 @@ jobs:
   release-please:
     name: Release Please
     # Skip when running inside the template repository itself
-    if: github.repository != 'jpawlowski/ha-integration-blueprint'
+    if: github.repository != 'jpawlowski/ha-integration-blueprint' && github.event_name == 'push'
     runs-on: ubuntu-26.04
     # "Allow GitHub Actions to create and approve pull requests" must also be enabled
     # under Settings > Actions > General.
@@ -23,9 +30,50 @@ jobs:
     permissions:
       contents: write # create tags and releases
       pull-requests: write # open and update the release pull request
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - name: Run release-please
+        id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  release-asset:
+    name: Attach ZIP asset and publish
+    needs: release-please
+    if: >-
+      !cancelled() && github.repository != 'jpawlowski/ha-integration-blueprint'
+      && (needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    permissions:
+      contents: write # upload the asset and publish the draft release
+    steps:
+      - name: Checkout the release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
+          persist-credentials: false
+
+      # The release stays a draft until its asset is attached, so no install ever finds it missing.
+      - name: Build and upload the ZIP asset, then publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
+        run: |
+          if jq -e '.zip_release == true' hacs.json >/dev/null; then
+            filename=$(jq -er '.filename' hacs.json) ||
+              { echo "::error::hacs.json sets zip_release without a filename"; exit 1; }
+            source script/.lib/integration.sh
+            git archive --format=zip -o "${filename}" "HEAD:${INTEGRATION_PATH}"
+            # The Marketplace unpacks the zip root into the integration folder: a wrong layout breaks every install.
+            [[ "$(unzip -p "${filename}" manifest.json | jq -r .version)" == "${TAG#v}" ]] ||
+              { echo "::error::${filename} has no manifest.json at its root with version ${TAG#v}"; exit 1; }
+            gh release upload "${TAG}" "${filename}" --clobber --repo "${GITHUB_REPOSITORY}"
+          else
+            echo "::notice::hacs.json does not set zip_release - no ZIP asset attached"
+          fi
+          gh release edit "${TAG}" --draft=false --repo "${GITHUB_REPOSITORY}"

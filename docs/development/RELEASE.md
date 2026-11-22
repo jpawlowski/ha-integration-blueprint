@@ -27,14 +27,20 @@ Releases are managed with [release-please](https://github.com/googleapis/release
         ↓
 4. Developer merges the PR (intentionally, when ready)
         ↓
-5. release-please creates the GitHub Release + Git tag
+5. release-please creates the Git tag and the GitHub Release as a draft
    manifest.json version is already updated in the merged PR
+        ↓
+6. The release-asset job zips custom_components/<domain>/, attaches it as the
+   file named by `filename` in hacs.json (zip_release: true), and publishes the
+   release — users install from that asset
 ```
 
 The Home Assistant Marketplace offers users the tag of the latest **published** GitHub Release —
 a bare tag is not enough — and refuses an integration whose `manifest.json` has no `version`. Its update entity shows
-the release body as the release notes. Release-please covers all three; a pre-release only reaches users who switched
-on pre-releases for the repository. Details: [Releases and updates](https://contributors.home-assistant.io/marketplace/guides/releases/).
+the release body as the release notes. Release-please writes the version and the body; the release-asset job publishes
+the release once its ZIP is attached. A failed job leaves a draft no user sees — run the workflow by hand with that
+tag (**Actions** → **Release Please** → **Run workflow**). A pre-release only reaches users who switched on
+pre-releases for the repository. Details: [Releases and updates](https://contributors.home-assistant.io/marketplace/guides/releases/).
 
 ### The Release PR
 
