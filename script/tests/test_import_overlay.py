@@ -87,7 +87,7 @@ def _staged(target: Path, change: str) -> set[str]:
 
 @pytest.mark.unit
 def test_overlay_keeps_the_integration_and_sorts_the_rest(blueprint: Path, initialised: Path, target: Path) -> None:
-    """The integration stays byte-identical, nothing is committed, and every other file lands in one of three groups."""
+    """The integration stays byte-identical, nothing is committed, and every other file lands in one of the groups."""
     head = _git(target, "rev-parse", "HEAD")
 
     result = _overlay(blueprint, "--target", str(target), "--from", str(initialised))
@@ -183,3 +183,24 @@ def test_two_integrations_are_refused(blueprint: Path, initialised: Path, target
 
     assert result.returncode != 0
     assert "more than one integration" in result.stdout + result.stderr
+
+
+@pytest.mark.unit
+def test_agent_instructions_get_a_group_of_their_own(blueprint: Path, initialised: Path, target: Path) -> None:
+    """Old agent instructions are sorted rule by rule, never restored or merged like an ordinary file."""
+    _write(target, {"CLAUDE.md": "# Rules\n", ".github/copilot-instructions.md": "# Rules\n", "AGENTS.md": "# Old\n"})
+    _git(target, "add", "-A")
+    _git(target, "commit", "-qm", "agents")
+    _write(initialised, {"AGENTS.md": "# Blueprint\n"})
+    _git(initialised, "add", "-A")
+
+    result = _overlay(blueprint, "--target", str(target), "--from", str(initialised))
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = (target / ".agents" / "scratch" / "import-overlay.md").read_text(encoding="utf-8")
+    groups = dict(part.split("\n", 1) for part in report.split("\n## ")[1:])
+    agent_group = next(body for title, body in groups.items() if title.startswith("Agent instructions"))
+    for path in ("CLAUDE.md", ".github/copilot-instructions.md", "AGENTS.md"):
+        assert f"- {path}\n" in agent_group
+        assert all(f"- {path}\n" not in body for title, body in groups.items() if body is not agent_group)
+    assert (target / "AGENTS.md").read_text(encoding="utf-8") == "# Blueprint\n"

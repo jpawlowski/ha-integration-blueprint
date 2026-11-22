@@ -5,8 +5,8 @@
 # Runs from the blueprint itself. Initialises a temporary copy of it with the target's domain, then, on a new branch in
 # the target, replaces every tracked file except custom_components/<domain>/ with the initialised blueprint and stages
 # the result. The branch starts from the target's current branch, so run it on an up-to-date main. Nothing is
-# committed; the target's history stays. Prints the three groups an agent works through next: files only in the old
-# repository, files in both, files only in the blueprint.
+# committed; the target's history stays. Prints the groups an agent works through next: files only in the old
+# repository, files in both, the old agent instructions, files only in the blueprint.
 # The procedure around it: .agents/skills/blueprint-import/references/git-strategy.md (option A).
 #
 # Usage:
@@ -131,8 +131,17 @@ git -C "$TARGET" add -A
 staged() {
     git -C "$TARGET" diff --cached --no-renames --name-only --diff-filter="$1" HEAD
 }
-ONLY_OLD="$(staged D)"
-BOTH="$(staged MT)"
+AGENT_FILES='(^|/)(AGENTS|CLAUDE|GEMINI)\.md$|^\.(cursorrules|windsurfrules|clinerules)|^\.(agents|claude|codex|opencode|cursor)/|^\.github/(copilot-instructions\.md|instructions/|prompts/|chatmodes/|agents/)'
+agent_only() { grep -E "$AGENT_FILES" <<<"$1" || true; }
+non_agent() { grep -Ev "$AGENT_FILES" <<<"$1" || true; }
+
+ONLY_OLD_ALL="$(staged D)"
+BOTH_ALL="$(staged MT)"
+ONLY_OLD="$(non_agent "$ONLY_OLD_ALL")"
+BOTH="$(non_agent "$BOTH_ALL")"
+AGENT_OLD="$(agent_only "$ONLY_OLD_ALL")"
+AGENT_BOTH="$(agent_only "$BOTH_ALL")"
+AGENT="$(printf '%s\n%s\n' "$AGENT_OLD" "$AGENT_BOTH" | sed '/^$/d')"
 ONLY_BLUEPRINT="$(staged A)"
 
 section() {
@@ -154,6 +163,7 @@ mkdir -p "$(dirname "$REPORT")"
     echo "Staged on \`$BRANCH\`, nothing committed. Procedure: blueprint-import, references/git-strategy.md, option A."
     section "Only in the old repository — restore with git checkout HEAD -- <path>, or leave out" "$ONLY_OLD"
     section "In both — the blueprint's version is staged; merge what the project added (git show HEAD:<path>)" "$BOTH"
+    section "Agent instructions — the blueprint's version stays; sort the old content (references/agent-knowledge.md)" "$AGENT"
     section "Only in the blueprint — keep" "$ONLY_BLUEPRINT"
 } >"$REPORT"
 
@@ -167,4 +177,4 @@ count() {
 
 log_success "Overlay staged on $BRANCH in $TARGET"
 log_info "The files to decide are listed in ${REPORT#"$TARGET"/} (gitignored)"
-log_info "Only in the old repository: $(count "$ONLY_OLD") · in both: $(count "$BOTH") · only in the blueprint: $(count "$ONLY_BLUEPRINT")"
+log_info "Only in the old repository: $(count "$ONLY_OLD") · in both: $(count "$BOTH") · agent instructions: $(count "$AGENT") · only in the blueprint: $(count "$ONLY_BLUEPRINT")"
