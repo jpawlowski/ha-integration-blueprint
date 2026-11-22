@@ -5,12 +5,11 @@ description: >-
   breaking the installations already running it. Use when asked to "import my integration", "migrate my existing
   integration into the blueprint", "adopt the blueprint in my repository", "move my custom component over",
   "restructure my integration to match this layout", or when switching from another template such as the upstream
-  ludeeus one. Covers what must stay byte-identical, the git and repository strategy, the phase order that keeps
-  every step revertable, the stock-taking audit that produces the backlog, and how to apply this project's rules
-  to legacy code. SYMPTOMS — load this if you are about to: change the integration's domain during the move; run
+  ludeeus one. Covers what must stay byte-identical, the git strategy, the phase order that keeps every step
+  revertable, the stock-taking audit, and applying this project's rules to legacy code. SYMPTOMS — load this if you are about to: change the integration's domain during the move; run
   the whole migration as one commit; restructure packages before the imported code is green; let an automated
-  rename touch unique IDs or translation keys; let the import become a rewrite; or start editing without a
-  record of the current entity IDs.
+  rename touch unique IDs or translation keys; let the import become a rewrite; start editing without a
+  record of the current entity IDs; or merge old agent instructions into `AGENTS.md`.
 ---
 
 # Import an existing integration
@@ -119,6 +118,10 @@ Turn the result into a phased plan in `.agents/scratch/` ([`ha-planning`](../ha-
 then execute it. Weigh it against what the interview established: an integration with thousands of installations whose
 maintainer does not want a major release has a Free-only backlog, and that is a legitimate outcome, not a failed
 import.
+
+**Take stock of the agent knowledge too.** Old `AGENTS.md`, `CLAUDE.md`, Copilot and Cursor instructions are sorted
+rule by rule into what the blueprint already ships, what is stale, the project's own rules, and its decisions — never
+merged as a file ([`references/agent-knowledge.md`](references/agent-knowledge.md)).
 
 **This phase changes no code.** A finding you fixed while cataloguing is a finding nobody reviewed, and it spends the
 phase 2 checkpoint you may still need to fall back to.

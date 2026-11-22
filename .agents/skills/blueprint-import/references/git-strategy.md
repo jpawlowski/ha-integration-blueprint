@@ -18,7 +18,7 @@ mechanics; only the files around it change. Everything up to the classification 
 starts at step 5.
 
 **`script/import-overlay` does steps 1 to 4** from a clone of the blueprint, before its `initialize.sh` runs — it
-initialises a temporary copy itself, takes the domain from the target, and writes the three groups to the target's
+initialises a temporary copy itself, takes the domain from the target, and writes the groups to the target's
 `.agents/scratch/import-overlay.md`:
 
 ```bash
@@ -59,7 +59,7 @@ The steps below are what it runs, for reading its result and for doing it by han
    git add -A
    ```
 
-4. **List the three groups** against the old `main`:
+4. **List the groups** against the old `main` — the script also sets the agent instructions apart (step 5):
 
    ```bash
    git diff --cached --no-renames --name-only --diff-filter=D HEAD    # only in the old repository
@@ -73,8 +73,9 @@ The steps below are what it runs, for reading its result and for doing it by han
      replaces: old CI that `validate.yml` and `lint.yml` cover, old release scripts, a second linter configuration.
    - **In both** — merge: start from the blueprint's version and carry over what the project added
      (`git show HEAD:<path>`). Typical: `README.md`, `.gitignore`, `hacs.json`, `pyproject.toml`,
-     `requirements*.txt`, `AGENTS.md`. A file `.templatesyncignore` lists as project-owned keeps the project's
-     content.
+     `requirements*.txt`. A file `.templatesyncignore` lists as project-owned keeps the project's content.
+   - **Agent instructions** — `script/import-overlay` lists them apart. The blueprint's version stays; the old content
+     is sorted in phase 3 ([`agent-knowledge.md`](agent-knowledge.md)), not restored or merged here.
    - **Only in the blueprint** — keep.
 
 6. Continue with phase 2 of the skill: the code is already in place, so "get it green" starts right away.

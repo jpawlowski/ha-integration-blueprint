@@ -71,7 +71,10 @@ keeping its git history. Do not commit, push or open anything until I say so.
    it, or leave it out, and keep a list of each decision with its reason.
 6. Run script/setup/bootstrap, then script/lint, script/type-check, script/hassfest and script/test until they
    pass, changing the integration code as little as possible — phase 2 of the skill.
-7. Stop and report: your decisions, what passes, what does not, and what you need from me.
+7. Sort the old agent instructions listed in the report as references/agent-knowledge.md describes, into
+   .agents/scratch/import-agent-knowledge.md. Write no rule, skill or decision record yet.
+8. Stop and report: your decisions, what passes, what does not, every conflict and decision from step 7, and
+   what you need from me.
 ```
 
 From then on the blueprint's agent instructions and skills are in your project, so the later phases — modernising
