@@ -145,7 +145,8 @@ Assistant design constraint, not a repository quirk.
 3. `script/setup/bootstrap` (or a container rebuild) to install it.
 
 Pin versions in both, and keep them identical. Renovate raises the two files in one pull request; Dependabot skips
-`requirements.txt` on purpose, because it cannot see `manifest.json` and would split the pair.
+`requirements.txt` on purpose, because it cannot see `manifest.json` and would split the pair. The commit type for such
+an update is `build`, which puts it into the changelog; Renovate uses it already.
 
 | File                     | Template sync  | Contents                                         |
 | ------------------------ | -------------- | ------------------------------------------------ |

@@ -61,8 +61,9 @@
       "enabled": false
     },
     {
-      "description": "Runtime: what Home Assistant installs for users. One pull request per package; a routine bump stays `chore`, only a security fix is worth a release of its own.",
+      "description": "Runtime: what Home Assistant installs for users. One pull request per package, committed as `build` so it reaches the changelog; a security fix stays `fix`.",
       "matchFileNames": ["requirements.txt", "custom_components/*/manifest.json"],
+      "semanticCommitType": "build",
       "addLabels": ["runtime"]
     },
     {

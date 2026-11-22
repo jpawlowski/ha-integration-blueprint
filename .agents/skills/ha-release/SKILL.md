@@ -49,13 +49,14 @@ and never ships a release" — don't just name the type and cite the instruction
 
 ## What each type does to the release
 
-| Type                                      | Changelog section | Version effect (pre-1.0)           |
-| ----------------------------------------- | ----------------- | ---------------------------------- |
-| `feat`                                    | Features          | patch bump (`0.1.0` → `0.1.1`)     |
-| `fix`                                     | Bug Fixes         | patch bump                         |
-| `perf`                                    | Performance       | patch bump                         |
-| `feat!` / `BREAKING CHANGE:`              | Features + notice | **minor** bump (`0.1.0` → `0.2.0`) |
-| `refactor`, `chore`, `docs`, `test`, `ci` | hidden            | no release                         |
+| Type                                      | Changelog section       | Version effect (pre-1.0)           |
+| ----------------------------------------- | ----------------------- | ---------------------------------- |
+| `feat`                                    | 🎉 What's New           | patch bump (`0.1.0` → `0.1.1`)     |
+| `fix`                                     | 🐛 Fixed                | patch bump                         |
+| `perf`                                    | ⚡ More Reliable        | patch bump                         |
+| `build`                                   | 📦 Updated Dependencies | patch bump                         |
+| `feat!` / `BREAKING CHANGE:`              | What's New + notice     | **minor** bump (`0.1.0` → `0.2.0`) |
+| `refactor`, `chore`, `docs`, `test`, `ci` | hidden                  | no release                         |
 
 After `1.0.0`, standard SemVer applies: `feat` → minor, `fix` → patch, breaking → major.
 
