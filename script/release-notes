@@ -374,10 +374,13 @@ Output ONLY the markdown body, nothing else.
 
 PROMPT_RULES
 
-    if [[ -s "$PROJECT_PROMPT" ]]; then
+    local project_text=""
+    [[ -f "$PROJECT_PROMPT" ]] && project_text="$(<"$PROJECT_PROMPT")"
+    if [[ -n "${project_text//[[:space:]]/}" ]]; then
         printf '## ABOUT THIS INTEGRATION — FROM ITS MAINTAINER\n'
-        printf 'On wording and content this section wins over the rules above; the output format stays as given.\n\n'
-        printf '%s\n\n' "$(<"$PROJECT_PROMPT")"
+        printf 'On wording and content this section wins over the rules above. The output format stays as given,\n'
+        printf 'apart from one # title line at the top when this section asks for it.\n\n'
+        printf '%s\n\n' "$project_text"
     fi
 
     # Dynamic context section
