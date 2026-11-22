@@ -4,6 +4,41 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `translation-test` — 2026-11-22
+
+**Check:** `test -f tests/test_translations.py`
+
+Optional. The blueprint now ships `tests/test_translations.py`: every option of an enum sensor or a select has its
+`state` translation in `en.json`, every attribute the integration adds has a display name
+(`state_attributes.<attr>.name`), and every language file carries exactly the keys of `en.json`. Neither hassfest nor
+`pytest-homeassistant` checks any of it. The attribute test finds the attributes Home Assistant's platforms name
+themselves on its own; a failure after copying lists the display names this integration still lacks. `tests/` is never synced, so copy the file from the blueprint and replace the
+blueprint's domain in its `const` import with this repository's. It needs no other change — it reads the entities
+through the registry and finds the translation files next to the integration. If the integration has no entity with
+options yet, it fails on purpose; delete the first test until one exists, or record this step as skipped.
+
+## `ux-skill-routing` — 2026-11-22
+
+**Check:** `grep -q 'ha-user-experience' AGENTS.md`
+
+The sync brings the new skill `ha-user-experience` — deciding what users see: states, attributes, icons, options,
+help in the UI, and actions shaped for automations — and the corrected entity rules in `blueprint.entities` (the icon
+property exception, entity versus attribute, `EntityCategory.CONFIG` for settings automations change). `AGENTS.md` is
+not synced, so carry over two changes from the blueprint's `AGENTS.md`: the routing row above the `tests` row —
+agents that only read the routing table otherwise never load the skill — and the `icon` property exception in the
+_Entity metadata_ contract, which otherwise contradicts `blueprint.entities`.
+
+## `readme-marketplace-markers` — 2026-11-22
+
+**Check:** `grep -q 'ha-marketplace:exclude-start' README.md`
+
+The Marketplace shows the README on the repository page, next to its own install button. Put what is only for GitHub —
+the install badge and its fallbacks, a Codespaces blurb, the contributing section — between
+`<!-- ha-marketplace:exclude-start -->` and `<!-- ha-marketplace:exclude-end -->`; GitHub renders nothing for them.
+`README.md` is never synced, so copy the placement from the blueprint's `README.template.md`, and copy
+`tests/test_readme_markers.py`, which checks that the markers pair up. Optional, and the reasoning is in
+[`ha-marketplace`](../../ha-marketplace/SKILL.md#6-the-readme-is-read-in-two-places).
+
 ## `release-zip-asset` — 2026-11-22
 
 **Check:** `jq -e '.zip_release == true and (.filename | type == "string")' hacs.json`

@@ -29,6 +29,25 @@ Translation files define user-facing text for config flows, options, entities, a
 
 **Language codes:** BCP47 format (e.g., `en`, `de`, `fr-CA`)
 
+## Language-aware from the first line
+
+An integration may ship in one language for years; it is still written so that adding the second one is a new file,
+not a refactoring.
+
+- **No user-facing text in Python.** Entity, attribute and device names, state values, select options, errors, repair
+  issues, notifications, units that are words, config flow text — all of it comes from a translation key. Log messages
+  stay English: they are for developers.
+- **States, attribute values and select options are `snake_case` codes**; the prose lives in the translation. A
+  display string as a state breaks every automation the day it is translated.
+- **Every value of an `ENUM` sensor, an enum attribute and a `select` has its `state` translation** — hassfest checks
+  the file format, not that each option is covered.
+- **Placeholders carry values** — a number, a name, a time — never a sentence or a word in one language.
+- **Text Home Assistant has no translation slot for** (a notification body, generated dashboard text, an entity
+  description) comes from the integration's own per-language files, loaded for `hass.config.language` — never from a
+  string literal.
+- **`en.json` is the base, whatever language the author works in.** Home Assistant falls back to English for every key
+  a language lacks, so `en.json` is always complete; the author's own language is a second file with the same keys.
+
 ## Critical Instructions
 
 ### Translation Placeholders

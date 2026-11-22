@@ -123,16 +123,19 @@ blocks apply rather than forcing the integration into one of them.
 
 ## 2. A new platform or entity in an existing integration
 
-| Decision                                                       | Why it earns a turn                                            |
-| -------------------------------------------------------------- | -------------------------------------------------------------- |
-| Which coordinator field backs it, exactly                      | If none does, this is a coordinator change first               |
-| Entity, attribute of an existing entity, or diagnostic         | Decides `entity_category` and whether it belongs at all        |
-| Enabled by default, or `entity_registry_enabled_default=False` | Ten noisy diagnostics per device is a complaint, not a feature |
-| Device class, state class, unit                                | Wrong ones break statistics and are breaking to correct        |
-| Which device does it belong to, in a multi-device setup        | Every device has exactly one owning config entry               |
-| What its state is before the first successful refresh          | `unknown` versus `unavailable` is user-visible                 |
-| For a writable entity: what the API does with an invalid value | Validation and the error the user gets                         |
-| Does the value exist on every model, firmware or plan tier     | Whether the entity is created conditionally                    |
+| Decision                                                             | Why it earns a turn                                                                                                                                  |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Which coordinator field backs it, exactly                            | If none does, this is a coordinator change first                                                                                                     |
+| Entity, attribute of an existing entity, or diagnostic               | Decides `entity_category` and whether it belongs at all                                                                                              |
+| Enabled by default, or `entity_registry_enabled_default=False`       | Ten noisy diagnostics per device is a complaint, not a feature                                                                                       |
+| Device class, state class, unit                                      | Wrong ones break statistics and are breaking to correct                                                                                              |
+| Which device does it belong to, in a multi-device setup              | Every device has exactly one owning config entry                                                                                                     |
+| What its state is before the first successful refresh                | `unknown` versus `unavailable` is user-visible                                                                                                       |
+| For a writable entity: what the API does with an invalid value       | Validation and the error the user gets                                                                                                               |
+| Does the value exist on every model, firmware or plan tier           | Whether the entity is created conditionally                                                                                                          |
+| Will people show it on a dashboard, use it in an automation, or both | State versus attribute, and what goes beside the state ([`ha-user-experience`](../../ha-user-experience/SKILL.md#reading-and-automating-pull-apart)) |
+| Would anyone want an automation to start when this changes           | Then it is a state, not an attribute                                                                                                                 |
+| For a fixed set of values: is there an order ("low" < "high")        | An ordinal beside the state lets automations compare                                                                                                 |
 
 ## 3. A new service action
 
@@ -151,6 +154,8 @@ blocks apply rather than forcing the integration into one of them.
 | --------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | The minimum needed to connect — everything else is options                        | Every extra setup field is a user who gives up          |
 | Which settings must be changeable afterwards without re-adding                    | Options flow scope                                      |
+| How many settings will there be in a year, not today                              | One form, sections, or a menu                           |
+| Should an automation be able to change any of them                                | A config entity beside the option, and its cost         |
 | Is the device discoverable — mDNS, DHCP, SSDP, Bluetooth, USB                     | A manifest matcher without a flow step fails `hassfest` |
 | What the flow does when the credentials are right but the device is not reachable | Abort reason versus a form error                        |
 | Does this change the shape of `entry.data`                                        | `VERSION`/`MINOR_VERSION` and `async_migrate_entry()`   |
