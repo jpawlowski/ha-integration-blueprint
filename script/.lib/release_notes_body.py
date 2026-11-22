@@ -46,16 +46,15 @@ def version_of(body: str) -> str | None:
 def merge(pr_body: str, notes: str) -> str:
     """Return ``pr_body`` with the notes under its version heading replaced by ``notes``."""
     header, content, footer = _split(pr_body)
-    heading = next((line for line in content if VERSION_HEADING.match(line)), None)
-    if heading is None:
+    heading = "\n".join(content).strip().split("\n", 1)[0]
+    if not VERSION_HEADING.match(heading):
         raise BodyError("the body names no version, so release-please would publish a release without notes")
-    own = [line for line in notes.strip().replace("\r\n", "\n").split("\n") if not VERSION_HEADING.match(line)]
-    own = [line for line in own if line != DELIMITER]
-    parts = ["\n".join(header), DELIMITER, "", heading, "", "\n".join(own).strip(), "", DELIMITER]
-    body = "\n".join(parts) + ("\n" + "\n".join(footer) if footer else "") + "\n"
-    if version_of(body) != version_of(pr_body):
-        raise BodyError("the new body would not name the same version")
-    return body
+    lines = notes.strip().replace("\r\n", "\n").split("\n")
+    own = "\n".join(line for line in lines if line != DELIMITER and not VERSION_HEADING.match(line)).strip()
+    if not own:
+        raise BodyError("the rewritten notes are empty, so the release would have no notes")
+    parts = ["\n".join(header), DELIMITER, "", heading, "", own, "", DELIMITER]
+    return "\n".join(parts) + ("\n" + "\n".join(footer) if footer else "") + "\n"
 
 
 def main(argv: list[str]) -> int:

@@ -19,6 +19,7 @@ case "$name $1 $2" in
 "opencode auth list") [[ $signed_in == 1 ]] && echo "anthropic oauth" || echo "No authenticated integrations"; exit 0 ;;
 esac
 echo "$name $*"
+echo "cwd: $PWD"
 for arg in "$@"; do
     case "$prev" in --output-last-message) echo "codex answer" >"$arg" ;; esac
     prev="$arg"
@@ -127,8 +128,12 @@ def test_a_named_cli_never_falls_back_to_another(tmp_path: Path, cli: str, signe
     ("cli", "expected"),
     [
         pytest.param("claude", "claude --print --tools  --model m1", id="claude"),
-        pytest.param("copilot", "copilot --silent --deny-tool=write --deny-tool=shell --model m1", id="copilot"),
-        pytest.param("opencode", "opencode run --agent plan --archived --model m1 --file prompt.md", id="opencode"),
+        pytest.param(
+            "copilot",
+            "copilot --silent --no-custom-instructions --deny-tool=write --deny-tool=shell --model m1",
+            id="copilot",
+        ),
+        pytest.param("opencode", "opencode run --agent plan --archived --model m1 --file /", id="opencode"),
     ],
 )
 @pytest.mark.unit
@@ -164,3 +169,52 @@ def test_no_model_leaves_the_clis_default(tmp_path: Path) -> None:
 
     assert "--model" not in result.stdout
     assert "stdin: Write the notes" in result.stdout
+
+
+@pytest.mark.unit
+def test_prompt_runs_outside_the_repository(tmp_path: Path) -> None:
+    """The CLI starts in an empty directory, so it loads none of the repository's agent instructions or hooks."""
+    folder = _bin(tmp_path, "claude")
+
+    result = _run(tmp_path, folder, "agent_resolve && agent_prompt prompt.md", STUB_SIGNED_IN="claude")
+
+    assert result.returncode == 0, result.stderr
+    assert f"cwd: {tmp_path}\n" not in result.stdout
+    assert "stdin: Write the notes" in result.stdout
+
+
+@pytest.mark.unit
+def test_a_github_token_alone_does_not_count_as_copilot_sign_in(tmp_path: Path) -> None:
+    """GH_TOKEN is set for gh or CI without Copilot access, so a CLI that reports its sign-in goes first."""
+    folder = _bin(tmp_path, "copilot", "opencode")
+
+    result = _run(tmp_path, folder, 'agent_resolve && echo "$AGENT_NAME"', GH_TOKEN="x", STUB_SIGNED_IN="opencode")
+
+    assert result.stdout.strip() == "opencode"
+
+
+@pytest.mark.parametrize(
+    ("env", "expected"),
+    [
+        pytest.param({"AI_AGENT": "codex_cli"}, "codex", id="ai-agent-names-the-session"),
+        pytest.param({"COPILOT_GITHUB_TOKEN": "t"}, "copilot", id="a-key-wins-before-any-probe"),
+    ],
+)
+@pytest.mark.unit
+def test_cheap_signals_come_before_sign_in_probes(tmp_path: Path, env: dict[str, str], expected: str) -> None:
+    """The session marker and a key in the environment decide without starting any CLI."""
+    folder = _bin(tmp_path, "claude", "codex", "copilot")
+
+    result = _run(tmp_path, folder, 'agent_resolve && echo "$AGENT_NAME"', STUB_SIGNED_IN="claude", **env)
+
+    assert result.stdout.strip() == expected
+
+
+@pytest.mark.unit
+def test_copilot_model_still_applies_to_copilot(tmp_path: Path) -> None:
+    """COPILOT_MODEL keeps working for copilot when AGENT_MODEL is unset, and for no other CLI."""
+    folder = _bin(tmp_path, "copilot")
+
+    result = _run(tmp_path, folder, 'agent_resolve && echo "$AGENT_MODEL"', AGENT_CLI="copilot", COPILOT_MODEL="m2")
+
+    assert result.stdout.strip() == "m2"

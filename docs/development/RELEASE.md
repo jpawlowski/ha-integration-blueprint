@@ -99,7 +99,7 @@ Reads the canonical version from `manifest.json`.
 
 ### `script/release-notes`
 
-Generates AI-enhanced release notes with a coding agent CLI — Claude Code, Codex, GitHub Copilot or OpenCode. The dev container installs all four; the script takes the one it runs inside, otherwise the first one you are signed in to, unless `AGENT_CLI` names one. When none is signed in, it prints each one's sign-in command. It also needs `gh auth login`.
+Generates AI-enhanced release notes with a coding agent CLI — Claude Code, Codex, GitHub Copilot or OpenCode. The dev container installs all four; the script takes Claude Code when it runs inside it, otherwise the first one you are signed in to, unless `AGENT_CLI` names one. When none is signed in, it prints each one's sign-in command. It also needs `gh auth login`.
 
 ```bash
 # Preview enhanced notes on stdout

@@ -8,7 +8,7 @@
 #
 # Variables read:
 #   AGENT_CLI    claude, codex, copilot or opencode; unset or "auto" picks one (see agent_resolve)
-#   AGENT_MODEL  model passed to the CLI; unset leaves the CLI's own default
+#   AGENT_MODEL  model passed to the CLI; unset leaves the CLI's own default (for copilot: COPILOT_MODEL)
 #
 # Set after agent_resolve:
 #   AGENT_NAME   the chosen CLI's name
@@ -35,37 +35,68 @@ _agent_login() {
     esac
 }
 
+# _agent_has_key NAME: succeed when the environment holds a key the CLI signs in with — no process needed.
+_agent_has_key() {
+    case "$1" in
+    claude) [[ -n "${ANTHROPIC_API_KEY:-}" ]] ;;
+    codex) [[ -n "${CODEX_API_KEY:-}${OPENAI_API_KEY:-}" ]] ;;
+    # GH_TOKEN and GITHUB_TOKEN are often set for gh or CI without Copilot access, so they prove nothing.
+    copilot) [[ -n "${COPILOT_GITHUB_TOKEN:-}" ]] ;;
+    *) return 1 ;;
+    esac
+}
+
 # _agent_signed_in NAME BIN: 0 when signed in, 1 when not, 2 when the CLI cannot tell without sending a request.
 # Every check is local and bounded, so a CLI that waits for input cannot hang the caller.
 _agent_signed_in() {
     local out
+    _agent_has_key "$1" && return 0
     case "$1" in
     claude)
-        [[ -n "${ANTHROPIC_API_KEY:-}" ]] && return 0
-        timeout 20 "$2" auth status --json </dev/null 2>/dev/null | jq -e '.loggedIn == true' >/dev/null 2>&1
+        timeout 10 "$2" auth status --json </dev/null 2>/dev/null | jq -e '.loggedIn == true' >/dev/null 2>&1
         ;;
     codex)
-        [[ -n "${CODEX_API_KEY:-}${OPENAI_API_KEY:-}" ]] && return 0
-        timeout 20 "$2" login status </dev/null >/dev/null 2>&1
+        timeout 10 "$2" login status </dev/null >/dev/null 2>&1
         ;;
     opencode)
-        out="$(timeout 20 "$2" auth list </dev/null 2>/dev/null)" || return 1
+        out="$(timeout 10 "$2" auth list </dev/null 2>/dev/null)" || return 1
         [[ -n "$out" && "$out" != *"No authenticated"* ]]
         ;;
     copilot)
-        [[ -n "${COPILOT_GITHUB_TOKEN:-}${GH_TOKEN:-}${GITHUB_TOKEN:-}" ]] && return 0
         return 2
         ;;
     esac
 }
 
+# _agent_session_cli: print the CLI of the agent session this runs in, as ha_actor in output.sh recognises it.
+_agent_session_cli() {
+    local agent="${AI_AGENT:-}"
+    agent="${agent%%_*}"
+    agent="$(printf '%s' "$agent" | tr '[:upper:]' '[:lower:]')"
+    if [[ " ${AGENT_CLIS[*]} " == *" $agent "* ]]; then
+        echo "$agent"
+    elif [[ -n "${CLAUDECODE:-}" ]]; then
+        echo claude
+    fi
+}
+
+# _agent_use NAME BIN: make NAME the chosen CLI.
+_agent_use() {
+    AGENT_NAME="$1"
+    AGENT_BIN="$2"
+    if [[ "$1" == copilot && -z "${AGENT_MODEL:-}" ]]; then
+        AGENT_MODEL="${COPILOT_MODEL:-}"
+    fi
+}
+
 # agent_resolve [--any]: set AGENT_NAME and AGENT_BIN, or fail saying what is missing.
 #
 # AGENT_CLI names one CLI, which must be installed and, unless --any, not known to be signed out. Otherwise, in order:
-# the CLI of the agent session this runs in, then the first CLI that is signed in, then one that cannot tell. --any
-# takes the first installed CLI without asking: an interactive session lets the user sign in there.
+# the CLI of the agent session this runs in, then the first CLI with a key in the environment, then the first that
+# reports being signed in, then one that cannot tell. --any takes the first installed CLI without asking: an
+# interactive session lets the user sign in there.
 agent_resolve() {
-    local any="" name bin status unknown="" installed=()
+    local any="" i name bin status unknown="" unknown_bin="" installed=() bins=()
     [[ "${1:-}" == --any ]] && any=1
 
     if [[ -n "${AGENT_CLI:-}" && "$AGENT_CLI" != auto ]]; then
@@ -86,39 +117,42 @@ agent_resolve() {
                 return 1
             fi
         fi
-        AGENT_NAME="$AGENT_CLI"
-        AGENT_BIN="$bin"
+        _agent_use "$AGENT_CLI" "$bin"
         return 0
     fi
 
-    if [[ -n "${CLAUDECODE:-}" ]] && bin="$(_agent_bin claude)" && [[ -n "$bin" ]]; then
-        AGENT_NAME=claude
-        AGENT_BIN="$bin"
+    name="$(_agent_session_cli)"
+    if [[ -n "$name" ]] && bin="$(_agent_bin "$name")" && [[ -n "$bin" ]]; then
+        _agent_use "$name" "$bin"
         return 0
     fi
 
     for name in "${AGENT_CLIS[@]}"; do
         bin="$(_agent_bin "$name")"
         [[ -n "$bin" ]] || continue
+        if [[ -n "$any" ]] || _agent_has_key "$name"; then
+            _agent_use "$name" "$bin"
+            return 0
+        fi
         installed+=("$name")
-        if [[ -n "$any" ]]; then
-            AGENT_NAME="$name"
-            AGENT_BIN="$bin"
-            return 0
-        fi
+        bins+=("$bin")
+    done
+
+    for ((i = 0; i < ${#installed[@]}; i++)); do
         status=0
-        _agent_signed_in "$name" "$bin" || status=$?
+        _agent_signed_in "${installed[$i]}" "${bins[$i]}" || status=$?
         if [[ $status -eq 0 ]]; then
-            AGENT_NAME="$name"
-            AGENT_BIN="$bin"
+            _agent_use "${installed[$i]}" "${bins[$i]}"
             return 0
         fi
-        [[ $status -eq 2 && -z "$unknown" ]] && unknown="$name"
+        if [[ $status -eq 2 && -z "$unknown" ]]; then
+            unknown="${installed[$i]}"
+            unknown_bin="${bins[$i]}"
+        fi
     done
 
     if [[ -n "$unknown" ]]; then
-        AGENT_NAME="$unknown"
-        AGENT_BIN="$(_agent_bin "$unknown")"
+        _agent_use "$unknown" "$unknown_bin"
         return 0
     fi
     if [[ ${#installed[@]} -eq 0 ]]; then
@@ -133,34 +167,46 @@ agent_resolve() {
 }
 
 # agent_prompt FILE: send the prompt in FILE and print only the agent's answer.
+#
+# The CLI runs in an empty directory (Copilot, which would ask to trust it, with --no-custom-instructions instead), so
+# it loads none of this repository's agent instructions or session hooks: the answer comes from the prompt alone.
 agent_prompt() {
-    local prompt_file="$1" model=() answer status=0
-    [[ -n "${AGENT_MODEL:-}" ]] && model=(--model "$AGENT_MODEL")
+    local prompt_file work answer status=0
+    prompt_file="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+    set --
+    if [[ -n "${AGENT_MODEL:-}" ]]; then
+        set -- --model "$AGENT_MODEL"
+    fi
+    work="$(mktemp -d)"
     case "$AGENT_NAME" in
     claude)
-        "$AGENT_BIN" --print --tools "" "${model[@]}" <"$prompt_file"
+        (cd "$work" && "$AGENT_BIN" --print --tools "" "$@") <"$prompt_file" || status=$?
         ;;
     codex)
-        answer="$(mktemp)"
-        "$AGENT_BIN" exec --sandbox read-only --skip-git-repo-check "${model[@]}" \
-            --output-last-message "$answer" - <"$prompt_file" >/dev/null || status=$?
-        [[ $status -eq 0 ]] && cat "$answer"
-        rm -f "$answer"
-        return "$status"
+        answer="$work/answer.md"
+        (cd "$work" && "$AGENT_BIN" exec --sandbox read-only --skip-git-repo-check "$@" \
+            --output-last-message "$answer" -) <"$prompt_file" >/dev/null || status=$?
+        if [[ $status -eq 0 ]]; then
+            cat "$answer"
+        fi
         ;;
     copilot)
-        "$AGENT_BIN" --silent --deny-tool='write' --deny-tool='shell' "${model[@]}" <"$prompt_file"
+        "$AGENT_BIN" --silent --no-custom-instructions --deny-tool='write' --deny-tool='shell' "$@" \
+            <"$prompt_file" || status=$?
         ;;
     opencode)
-        "$AGENT_BIN" run --agent plan --archived "${model[@]}" --file "$prompt_file" \
-            "Follow the instructions in the attached file and reply with nothing else."
+        (cd "$work" && "$AGENT_BIN" run --agent plan --archived "$@" --file "$prompt_file" \
+            "Follow the instructions in the attached file and reply with nothing else.") || status=$?
         ;;
     esac
+    rm -rf "$work"
+    return "$status"
 }
 
 # agent_session: replace the shell with an interactive session of the chosen CLI.
 agent_session() {
-    local model=()
-    [[ -n "${AGENT_MODEL:-}" ]] && model=(--model "$AGENT_MODEL")
-    exec "$AGENT_BIN" "${model[@]}"
+    if [[ -n "${AGENT_MODEL:-}" ]]; then
+        exec "$AGENT_BIN" --model "$AGENT_MODEL"
+    fi
+    exec "$AGENT_BIN"
 }

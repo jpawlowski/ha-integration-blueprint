@@ -78,6 +78,13 @@ def test_a_body_release_please_cannot_read_is_refused(pr_body: str, message: str
 
 
 @pytest.mark.unit
+def test_notes_with_nothing_but_a_heading_are_refused() -> None:
+    """Notes that are empty once the heading and delimiters are dropped would publish a release without notes."""
+    with pytest.raises(BodyError, match="notes are empty"):
+        merge(PR_BODY, "## [0.2.0]\n\n---\n")
+
+
+@pytest.mark.unit
 def test_command_line_prints_the_body(tmp_path: Path) -> None:
     """The script calls the module with two files and takes the new body from stdout."""
     (tmp_path / "pr.md").write_text(PR_BODY.replace("\n", "\r\n"), encoding="utf-8")

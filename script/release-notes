@@ -9,25 +9,26 @@
 # can translate technical changes into user-friendly descriptions.
 #
 # Usage:
-#   ./script/release-notes [--apply|--interactive]
+#   ./script/release-notes [--prompt|--apply|--apply-file NOTES|--interactive]
 #
 # Examples:
 #   ./script/release-notes               # Print enhanced notes to stdout
 #   ./script/release-notes --apply       # Rewrite the notes in the open release-please PR
 #   ./script/release-notes --interactive # Open an agent session with the context
 #
-# From inside an agent session, without a second agent CLI:
-#   ./script/release-notes --prompt            # Write the prompt for a fresh subagent; prints its path
+# From inside an agent session, for a fresh subagent:
+#   ./script/release-notes --prompt            # Write the prompt; prints only its path on stdout
 #   ./script/release-notes --apply-file NOTES  # Put that subagent's notes into the release PR
 #
 # Environment:
-#   AGENT_CLI                claude, codex, copilot or opencode (default: the first one installed)
+#   AGENT_CLI                claude, codex, copilot or opencode (default: see agent_resolve in agent_cli.sh)
 #   AGENT_MODEL              Model for that CLI (default: the CLI's own; for copilot, COPILOT_MODEL)
 #   RELEASE_NOTES_DIFF_MAX   Max bytes for code diff context (default: 8000)
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CALLER_DIR="$PWD"
 cd "$SCRIPT_DIR/.."
 
 # shellcheck source=script/.lib/output.sh
@@ -68,13 +69,31 @@ USER_FACING_PATHS=(
 # shellcheck source=script/.lib/agent_cli.sh
 source "$SCRIPT_DIR/.lib/agent_cli.sh"
 
-# Only the modes that call an agent need one; --prompt and --apply-file do not.
-require_agent() {
-    agent_resolve "$@" || die "No agent CLI to use — see above, or set AGENT_CLI"
-    if [[ "$AGENT_NAME" == copilot && -z "${AGENT_MODEL:-}" ]]; then
-        AGENT_MODEL="${COPILOT_MODEL:-}"
+USAGE="Usage: script/release-notes [--prompt|--apply|--apply-file NOTES|--interactive]"
+case "$MODE" in
+--prompt)
+    # stdout carries only the prompt's path, so a caller can take it with $(...).
+    exec 3>&1 1>&2
+    ;;
+--apply-file)
+    NOTES_PATH="${2:-}"
+    [[ -z "$NOTES_PATH" || "$NOTES_PATH" == /* ]] || NOTES_PATH="$CALLER_DIR/$NOTES_PATH"
+    if [[ -z "$NOTES_PATH" || ! -s "$NOTES_PATH" ]]; then
+        die "$USAGE — NOTES holds the rewritten notes"
     fi
-}
+    ;;
+--interactive)
+    agent_resolve --any || die "No agent CLI to use — see above, or set AGENT_CLI"
+    ;;
+--apply | stdout)
+    agent_resolve || die "No agent CLI to use — see above, or set AGENT_CLI"
+    ;;
+*)
+    log_error "Unknown option: $MODE"
+    echo "$USAGE"
+    exit 1
+    ;;
+esac
 
 require_command jq "apt-get install jq"
 require_command gh "https://cli.github.com/"
@@ -193,75 +212,93 @@ build_sections() {
 # Gather context
 # ---------------------------------------------------------------------------
 
+gather_git_context() {
+    # Current version from manifest
+    CURRENT_VERSION=$("$SCRIPT_DIR/version")
+    log_info "Current version: $CURRENT_VERSION"
+
+    # Integration display name from manifest
+    INTEGRATION_TITLE=$(jq -r --arg d "$DOMAIN" '.name // $d' "$COMPONENT_DIR/manifest.json" 2>/dev/null || echo "$DOMAIN")
+    log_info "Integration title: $INTEGRATION_TITLE"
+
+    # Find last tag (fallback to initial commit if none exists)
+    LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+    if [[ -n "$LAST_TAG" ]]; then
+        RANGE="$LAST_TAG..HEAD"
+        log_info "Changes since tag: $LAST_TAG"
+    else
+        FIRST_COMMIT=$(git rev-list --max-parents=0 HEAD)
+        RANGE="$FIRST_COMMIT..HEAD"
+        log_info "No previous tag found — using all commits"
+    fi
+
+    # Rich commit log (subject + body + file stats)
+    log_step "Collecting commit details..."
+    COMMIT_CONTEXT=$(build_commit_context "$RANGE")
+    COMMIT_COUNT=$(git rev-list --count "$RANGE" 2>/dev/null || echo "0")
+    log_info "Commits in range: $COMMIT_COUNT"
+
+    # Final net file changes (source of truth when commits revert each other)
+    FINAL_FILE_CHANGES=$(git diff --name-status "$RANGE" 2>/dev/null || echo "(none)")
+
+    # Revert commits (chronology hints for the AI)
+    REVERT_COMMITS=$(git log --reverse --pretty=format:"%h | %s" "$RANGE" 2>/dev/null |
+        grep -Ei '\|[[:space:]]*revert\b' || echo "(none)")
+
+    # User-facing code diff (token-limited)
+    log_step "Building code diff for user-facing paths..."
+    USER_DIFF=$(build_user_facing_diff "$RANGE")
+    if [[ -z "$USER_DIFF" ]]; then
+        USER_DIFF="(no user-facing code changes)"
+    fi
+
+}
+
+# The open release-please PR, if any
+find_release_pr() {
+    PR_JSON=""
+    PR_BODY=""
+    PR_NUMBER=""
+    if gh auth status >/dev/null 2>&1; then
+        PR_JSON=$(gh pr list --label "autorelease: pending" --json number,body --limit 1 2>/dev/null || echo "[]")
+        PR_NUMBER=$(echo "$PR_JSON" | jq -r '.[0].number // empty' 2>/dev/null || true)
+        if [[ -n "$PR_NUMBER" ]]; then
+            PR_BODY=$(echo "$PR_JSON" | jq -r '.[0].body // empty' 2>/dev/null || true)
+            log_info "Found release-please PR: #$PR_NUMBER"
+        else
+            log_info "No open release-please PR found"
+        fi
+    else
+        log_warning "GitHub CLI not authenticated — skipping PR lookup"
+    fi
+
+}
+
+# Commits whose trailer keeps them out of the notes
+gather_skipped_commits() {
+    SKIPPED_COMMITS=""
+    while IFS= read -r commit_hash; do
+        if commit_should_skip "$commit_hash"; then
+            SKIPPED_COMMITS+="$(git show -s --format='%h | %s' "$commit_hash")"$'\n'
+        fi
+    done < <(git rev-list --reverse "$RANGE")
+    if [[ -z "$SKIPPED_COMMITS" ]]; then
+        SKIPPED_COMMITS="(none)"
+    fi
+
+}
+
 log_header "Gathering release context"
-
-# Current version from manifest
-CURRENT_VERSION=$("$SCRIPT_DIR/version")
-log_info "Current version: $CURRENT_VERSION"
-
-# Integration display name from manifest
-INTEGRATION_TITLE=$(jq -r --arg d "$DOMAIN" '.name // $d' "$COMPONENT_DIR/manifest.json" 2>/dev/null || echo "$DOMAIN")
-log_info "Integration title: $INTEGRATION_TITLE"
-
-# Find last tag (fallback to initial commit if none exists)
-LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
-if [[ -n "$LAST_TAG" ]]; then
-    RANGE="$LAST_TAG..HEAD"
-    log_info "Changes since tag: $LAST_TAG"
-else
-    FIRST_COMMIT=$(git rev-list --max-parents=0 HEAD)
-    RANGE="$FIRST_COMMIT..HEAD"
-    log_info "No previous tag found — using all commits"
+# --apply-file needs only the PR; --prompt never reads it.
+if [[ "$MODE" != --apply-file ]]; then
+    gather_git_context
+    gather_skipped_commits
 fi
-
-# Rich commit log (subject + body + file stats)
-log_step "Collecting commit details..."
-COMMIT_CONTEXT=$(build_commit_context "$RANGE")
-COMMIT_COUNT=$(git rev-list --count "$RANGE" 2>/dev/null || echo "0")
-log_info "Commits in range: $COMMIT_COUNT"
-
-# Final net file changes (source of truth when commits revert each other)
-FINAL_FILE_CHANGES=$(git diff --name-status "$RANGE" 2>/dev/null || echo "(none)")
-
-# Revert commits (chronology hints for the AI)
-REVERT_COMMITS=$(git log --reverse --pretty=format:"%h | %s" "$RANGE" 2>/dev/null |
-    grep -Ei '\|[[:space:]]*revert\b' || echo "(none)")
-
-# User-facing code diff (token-limited)
-log_step "Building code diff for user-facing paths..."
-USER_DIFF=$(build_user_facing_diff "$RANGE")
-if [[ -z "$USER_DIFF" ]]; then
-    USER_DIFF="(no user-facing code changes)"
-fi
-
-# Try to find open release-please PR
-PR_JSON=""
 PR_BODY=""
 PR_NUMBER=""
-if gh auth status >/dev/null 2>&1; then
-    PR_JSON=$(gh pr list --label "autorelease: pending" --json number,body --limit 1 2>/dev/null || echo "[]")
-    PR_NUMBER=$(echo "$PR_JSON" | jq -r '.[0].number // empty' 2>/dev/null || true)
-    if [[ -n "$PR_NUMBER" ]]; then
-        PR_BODY=$(echo "$PR_JSON" | jq -r '.[0].body // empty' 2>/dev/null || true)
-        log_info "Found release-please PR: #$PR_NUMBER"
-    else
-        log_info "No open release-please PR found"
-    fi
-else
-    log_warning "GitHub CLI not authenticated — skipping PR lookup"
+if [[ "$MODE" != --prompt ]]; then
+    find_release_pr
 fi
-
-# Skipped commits summary
-SKIPPED_COMMITS=""
-while IFS= read -r commit_hash; do
-    if commit_should_skip "$commit_hash"; then
-        SKIPPED_COMMITS+="$(git show -s --format='%h | %s' "$commit_hash")"$'\n'
-    fi
-done < <(git rev-list --reverse "$RANGE")
-if [[ -z "$SKIPPED_COMMITS" ]]; then
-    SKIPPED_COMMITS="(none)"
-fi
-
 log_success "Context gathered"
 
 # ---------------------------------------------------------------------------
@@ -405,32 +442,26 @@ PROMPT_DIFF
 # ---------------------------------------------------------------------------
 
 run_agent() {
-    require_agent
-    local prompt_file
+    local prompt_file result=0
     prompt_file=$(mktemp)
     build_prompt >"$prompt_file"
 
     log_info "Using $AGENT_NAME${AGENT_MODEL:+ with model $AGENT_MODEL}" >&2
-
-    local result=0
     agent_prompt "$prompt_file" || result=$?
-
     rm -f "$prompt_file"
-    return "$result"
+
+    if [[ $result -ne 0 ]]; then
+        echo "" >&2
+        die "$AGENT_NAME failed — is it signed in? Another CLI: AGENT_CLI=<name>"
+    fi
 }
 
-# apply_notes NOTES: put NOTES under the version heading of the release PR, as release-please reads it back.
+# apply_notes FILE: put the notes in FILE under the version heading of the release PR, as release-please reads it back.
 apply_notes() {
-    local body_file notes_file merged
-    body_file=$(mktemp)
-    notes_file=$(mktemp)
-    printf '%s\n' "$PR_BODY" >"$body_file"
-    printf '%s\n' "$1" >"$notes_file"
-    if ! merged=$(python3 "$SCRIPT_DIR/.lib/release_notes_body.py" "$body_file" "$notes_file"); then
-        rm -f "$body_file" "$notes_file"
+    local merged
+    if ! merged=$(python3 "$SCRIPT_DIR/.lib/release_notes_body.py" <(printf '%s\n' "$PR_BODY") "$1"); then
         die "PR #$PR_NUMBER left unchanged — release-please could not read the new body back"
     fi
-    rm -f "$body_file" "$notes_file"
 
     log_header "Updating PR #$PR_NUMBER"
     printf '%s\n' "$merged" | gh pr edit "$PR_NUMBER" --body-file -
@@ -448,23 +479,18 @@ run_hook "release-notes" "pre"
 case "$MODE" in
 --prompt)
     mkdir -p "$SCRATCH_DIR"
-    PROMPT_FILE="$SCRATCH_DIR/release-notes-prompt.md"
+    PROMPT_FILE="$PWD/$SCRATCH_DIR/release-notes-prompt.md"
     build_prompt >"$PROMPT_FILE"
-    log_success "Prompt written to $PROMPT_FILE — hand it to a fresh agent, then: script/release-notes --apply-file <notes>"
-    echo "$PROMPT_FILE"
+    log_success "Prompt written — hand it to a fresh agent, then: script/release-notes --apply-file <notes>"
+    echo "$PROMPT_FILE" >&3
     ;;
 
 --apply-file)
-    NOTES_PATH="${2:-}"
-    if [[ -z "$NOTES_PATH" || ! -s "$NOTES_PATH" ]]; then
-        die "Usage: script/release-notes --apply-file FILE — FILE holds the rewritten notes"
-    fi
     require_release_pr
-    apply_notes "$(cat "$NOTES_PATH")"
+    apply_notes "$NOTES_PATH"
     ;;
 
 --interactive)
-    require_agent --any
     log_header "Launching $AGENT_NAME (interactive mode)"
     mkdir -p "$SCRATCH_DIR"
 
@@ -479,39 +505,22 @@ case "$MODE" in
 
 --apply)
     require_release_pr
-
     log_header "Generating enhanced release notes"
 
     TEMP_OUTPUT=$(mktemp)
-    if ! run_agent >"$TEMP_OUTPUT"; then
-        rm -f "$TEMP_OUTPUT"
-        die "${AGENT_NAME:-The agent} failed — is it signed in? Another CLI: AGENT_CLI=<name>"
+    trap 'rm -f "$TEMP_OUTPUT"' EXIT
+    run_agent >"$TEMP_OUTPUT"
+    if [[ ! -s "$TEMP_OUTPUT" ]]; then
+        die "$AGENT_NAME returned empty output"
     fi
-
-    ENHANCED=$(cat "$TEMP_OUTPUT")
-    rm -f "$TEMP_OUTPUT"
-
-    if [[ -z "$ENHANCED" ]]; then
-        die "${AGENT_NAME:-The agent} returned empty output"
-    fi
-
-    apply_notes "$ENHANCED"
+    apply_notes "$TEMP_OUTPUT"
     ;;
 
-stdout | "")
+stdout)
     log_header "Generating enhanced release notes"
     log_separator
     echo ""
-    if ! run_agent; then
-        echo "" >&2
-        die "${AGENT_NAME:-The agent} failed — is it signed in? Another CLI: AGENT_CLI=<name>"
-    fi
-    ;;
-
-*)
-    log_error "Unknown option: $MODE"
-    echo "Usage: script/release-notes [--prompt|--apply|--apply-file FILE|--interactive]"
-    exit 1
+    run_agent
     ;;
 esac
 
