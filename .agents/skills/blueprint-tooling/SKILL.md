@@ -196,6 +196,10 @@ Renovate needs its GitHub App installed on the repository and does nothing witho
 Dependabot has no mise ecosystem, so without the App the tool pins and the runtime requirements only move by hand;
 `toolchain-update-check.yml` then keeps one issue open listing the outdated pins, and stays quiet while Renovate is
 active.
+
+**A `googleapis/release-please-action` update needs one more step:** replace
+`script/tests/fixtures/release-please-pr-body.txt` with the body of a release PR the new version wrote. That test is
+what proves `script/release-notes --apply` still writes a body release-please can read back.
 `mise run renovate-dry-run` shows what Renovate would raise, without opening anything. The developer-facing version of
 this section is `docs/development/DEPENDENCY_UPDATES.md`.
 
