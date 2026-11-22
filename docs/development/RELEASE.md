@@ -133,7 +133,8 @@ Generates AI-enhanced release notes with a coding agent CLI — Claude Code, Cod
 
 **What the prompt knows about your integration** comes from `.github/release-notes/prompt.md`, if you add one: what
 the integration does for users, your own jargon to keep out of the notes, a title, a commit trailer to prefer. It is
-added after the generic rules and wins where they disagree. The file is yours; template sync never replaces it, while
+added after the generic rules and wins over them on wording and content; the output format stays fixed apart from
+an optional `#` title line, since `--apply` has to read it back. The file is yours; template sync never replaces it, while
 `script/release-notes` itself is template-managed.
 
 **`--interactive` mode** writes the full prompt and context to `.agents/scratch/release-notes-context.md` and opens a session of the same agent so you can iterate manually.

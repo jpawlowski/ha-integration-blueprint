@@ -25,8 +25,7 @@
 #   AGENT_MODEL              Model for that CLI (default: the CLI's own; for copilot, COPILOT_MODEL)
 #   RELEASE_NOTES_DIFF_MAX   Max bytes for code diff context (default: 8000)
 #
-# .github/release-notes/prompt.md, when present, adds what this integration does and how its notes are
-# written to the prompt; it belongs to the project, so template sync never replaces it.
+# Reads .github/release-notes/prompt.md, when present, into the prompt.
 
 set -euo pipefail
 
@@ -377,7 +376,8 @@ PROMPT_RULES
 
     if [[ -s "$PROJECT_PROMPT" ]]; then
         printf '## ABOUT THIS INTEGRATION — FROM ITS MAINTAINER\n'
-        printf 'Where this section and the rules above disagree, this section wins.\n\n%s\n\n' "$(<"$PROJECT_PROMPT")"
+        printf 'On wording and content this section wins over the rules above; the output format stays as given.\n\n'
+        printf '%s\n\n' "$(<"$PROJECT_PROMPT")"
     fi
 
     # Dynamic context section
@@ -442,7 +442,8 @@ $USER_DIFF
 
 ---
 
-Output ONLY the release notes. Start directly with the first ### section.
+Output ONLY the release notes. Start directly with the first ### section, or with a # title if the maintainer's
+section asks for one.
 PROMPT_DIFF
 }
 
