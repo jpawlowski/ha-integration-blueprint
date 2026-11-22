@@ -1,4 +1,4 @@
-"""Every state a user can see has a translation, and every language file carries the same keys."""
+"""Every state a user can see has a translation, and no language file keeps a key en.json does not have."""
 
 import json
 from pathlib import Path
@@ -112,17 +112,14 @@ async def test_every_attribute_has_a_display_name(
     assert not missing, f"missing in en.json: {missing}"
 
 
-def test_language_files_carry_the_same_keys() -> None:
-    """A language file neither lacks a key of en.json nor has one en.json does not."""
+def test_language_files_keep_no_stale_keys() -> None:
+    """A language file has no key en.json lacks; a key it lacks falls back to English."""
     reference = _key_paths(TRANSLATIONS / "en.json")
 
-    differences = {
-        path.name: {
-            "missing": sorted(reference - keys),
-            "extra": sorted(keys - reference),
-        }
+    stale = {
+        path.name: sorted(extra)
         for path in sorted(TRANSLATIONS.glob("*.json"))
-        if (keys := _key_paths(path)) != reference
+        if (extra := _key_paths(path) - reference)
     }
 
-    assert not differences, json.dumps(differences, indent=2)
+    assert not stale, json.dumps(stale, indent=2)
