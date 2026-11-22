@@ -69,31 +69,32 @@ agent that implements it. If yours does not, read the `SKILL.md` before starting
 
 ### Routing table
 
-| Working on                                             | Procedure                                                              | Style rules (`.agents/instructions/`)                  |
-| ------------------------------------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------ |
-| an entity platform or an individual entity             | [`ha-entity-platform`](.agents/skills/ha-entity-platform/SKILL.md)     | `blueprint.entities`                                   |
-| a service action                                       | [`ha-service-action`](.agents/skills/ha-service-action/SKILL.md)       | `blueprint.service_actions`, `blueprint.services_yaml` |
-| config flow, options, reauth, reconfigure, discovery   | [`ha-config-flow`](.agents/skills/ha-config-flow/SKILL.md)             | `blueprint.config_flow`                                |
-| the coordinator, the API client, runtime debugging     | [`ha-coordinator-debug`](.agents/skills/ha-coordinator-debug/SKILL.md) | `blueprint.coordinator`                                |
-| translations, `icons.json`                             | [`ha-translations`](.agents/skills/ha-translations/SKILL.md)           | `blueprint.translations`                               |
-| what users see: states, attributes, options, help text | [`ha-user-experience`](.agents/skills/ha-user-experience/SKILL.md)     | —                                                      |
-| tests                                                  | [`ha-testing`](.agents/skills/ha-testing/SKILL.md)                     | `blueprint.tests`                                      |
-| repair issues and flows                                | [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md)   | `blueprint.repairs`                                    |
-| anything that could break existing installs            | [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md)   | —                                                      |
-| a Quality Scale audit or pre-release review            | [`ha-quality-review`](.agents/skills/ha-quality-review/SKILL.md)       | —                                                      |
-| deprecation warnings, verifying an API is current      | [`ha-modern-apis`](.agents/skills/ha-modern-apis/SKILL.md)             | —                                                      |
-| a request whose requirements are not settled yet       | [`ha-grill`](.agents/skills/ha-grill/SKILL.md)                         | —                                                      |
-| planning a large change, recording a decision          | [`ha-planning`](.agents/skills/ha-planning/SKILL.md)                   | —                                                      |
-| lessons from bugs and corrections, project skills      | [`blueprint-lessons`](.agents/skills/blueprint-lessons/SKILL.md)       | —                                                      |
-| commit messages, versioning, changelog, release notes  | [`ha-release`](.agents/skills/ha-release/SKILL.md)                     | `blueprint.commit-message`                             |
-| triaging or fixing a backlog of GitHub issues          | [`ha-issue-triage`](.agents/skills/ha-issue-triage/SKILL.md)           | —                                                      |
-| publishing through HACS and the Marketplace            | [`ha-marketplace`](.agents/skills/ha-marketplace/SKILL.md)             | —                                                      |
-| validation scripts, dependencies, hooks, template sync | [`blueprint-tooling`](.agents/skills/blueprint-tooling/SKILL.md)       | `blueprint.shell`                                      |
-| blueprint changes the template sync cannot deliver     | [`blueprint-update`](.agents/skills/blueprint-update/SKILL.md)         | —                                                      |
-| `manifest.json`                                        | —                                                                      | `blueprint.manifest`                                   |
-| diagnostics                                            | —                                                                      | `blueprint.diagnostics`                                |
-| any Python, YAML, JSON or Markdown file                | —                                                                      | `blueprint.python`, `.yaml`, `.json`, `.markdown`      |
-| commenting any file, in any syntax                     | —                                                                      | `blueprint.comments`                                   |
+| Working on                                             | Procedure                                                                    | Style rules (`.agents/instructions/`)                  |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------ |
+| an entity platform or an individual entity             | [`ha-entity-platform`](.agents/skills/ha-entity-platform/SKILL.md)           | `blueprint.entities`                                   |
+| a service action                                       | [`ha-service-action`](.agents/skills/ha-service-action/SKILL.md)             | `blueprint.service_actions`, `blueprint.services_yaml` |
+| config flow, options, reauth, reconfigure, discovery   | [`ha-config-flow`](.agents/skills/ha-config-flow/SKILL.md)                   | `blueprint.config_flow`                                |
+| the coordinator, the API client, runtime debugging     | [`ha-coordinator-debug`](.agents/skills/ha-coordinator-debug/SKILL.md)       | `blueprint.coordinator`                                |
+| translations, `icons.json`                             | [`ha-translations`](.agents/skills/ha-translations/SKILL.md)                 | `blueprint.translations`                               |
+| what users see: states, attributes, options, help text | [`ha-user-experience`](.agents/skills/ha-user-experience/SKILL.md)           | —                                                      |
+| tests                                                  | [`ha-testing`](.agents/skills/ha-testing/SKILL.md)                           | `blueprint.tests`                                      |
+| repair issues and flows                                | [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md)         | `blueprint.repairs`                                    |
+| anything that could break existing installs            | [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md)         | —                                                      |
+| a Quality Scale audit or pre-release review            | [`ha-quality-review`](.agents/skills/ha-quality-review/SKILL.md)             | —                                                      |
+| deprecation warnings, verifying an API is current      | [`ha-modern-apis`](.agents/skills/ha-modern-apis/SKILL.md)                   | —                                                      |
+| a request whose requirements are not settled yet       | [`ha-grill`](.agents/skills/ha-grill/SKILL.md)                               | —                                                      |
+| planning a large change, recording a decision          | [`ha-planning`](.agents/skills/ha-planning/SKILL.md)                         | —                                                      |
+| lessons from bugs and corrections, project skills      | [`blueprint-lessons`](.agents/skills/blueprint-lessons/SKILL.md)             | —                                                      |
+| reviewing a change before a commit or a merge          | [`blueprint-change-review`](.agents/skills/blueprint-change-review/SKILL.md) | —                                                      |
+| commit messages, versioning, changelog, release notes  | [`ha-release`](.agents/skills/ha-release/SKILL.md)                           | `blueprint.commit-message`                             |
+| triaging or fixing a backlog of GitHub issues          | [`ha-issue-triage`](.agents/skills/ha-issue-triage/SKILL.md)                 | —                                                      |
+| publishing through HACS and the Marketplace            | [`ha-marketplace`](.agents/skills/ha-marketplace/SKILL.md)                   | —                                                      |
+| validation scripts, dependencies, hooks, template sync | [`blueprint-tooling`](.agents/skills/blueprint-tooling/SKILL.md)             | `blueprint.shell`                                      |
+| blueprint changes the template sync cannot deliver     | [`blueprint-update`](.agents/skills/blueprint-update/SKILL.md)               | —                                                      |
+| `manifest.json`                                        | —                                                                            | `blueprint.manifest`                                   |
+| diagnostics                                            | —                                                                            | `blueprint.diagnostics`                                |
+| any Python, YAML, JSON or Markdown file                | —                                                                            | `blueprint.python`, `.yaml`, `.json`, `.markdown`      |
+| commenting any file, in any syntax                     | —                                                                            | `blueprint.comments`                                   |
 
 Two one-time skills exist for a fresh repository and remove themselves as their final step:
 [`blueprint-scaffold`](.agents/skills/blueprint-scaffold/SKILL.md) (turn the template into an integration for one real
@@ -387,12 +388,20 @@ The Community AI policy's restriction on posting to Open Home Foundation reposit
   Rebase only a pull request whose commits each pass the _Check each commit_ step, and only when the developer asks.
 - **A pull request still being worked on is a draft** (`gh pr create --draft`). CI skips drafts, so pushes to it cost
   no Actions minutes; mark it ready (`gh pr ready`) once `script/lint`, `script/type-check` and `script/test` pass
-  locally — that is what starts the checks.
+  locally and the review below ran — that is what starts the checks.
 - Updating a branch from `main`, conflicts, splitting mixed work and stacked pull requests:
   [`ha-release/references/branches-and-pull-requests.md`](.agents/skills/ha-release/references/branches-and-pull-requests.md).
 - When a task completes and the developer moves on, offer a commit message based on the work done.
 - Format: [Conventional Commits](https://www.conventionalcommits.org/), enforced by the commitlint hook — see
   `.agents/instructions/blueprint.commit-message.instructions.md`.
+
+### Review before a commit and before a pull request leaves draft
+
+Before the first commit of a change, whether you make it or offer it, and before `gh pr ready` over what came since,
+run the pass in [`blueprint-change-review`](.agents/skills/blueprint-change-review/SKILL.md): simplify, run the gates
+again because simplifying can change behaviour, then a review by a subagent or a new session that did not write the
+change and gets none of your reasoning. A second review on another model family runs only on the developer's word. A
+step that did not run is said, and an agent's review is not human review.
 
 ### Scope of a change
 

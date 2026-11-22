@@ -4,6 +4,19 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `change-review-pass` — 2026-11-22
+
+**Check:** `grep -q '^| .*blueprint-change-review/SKILL.md' AGENTS.md && grep -q 'Review before a commit and before a pull request leaves draft' AGENTS.md && grep -q 'and the review below ran' AGENTS.md && grep -q 'Agent review' .github/pull_request_template.md`
+
+The sync brings the skill `blueprint-change-review`, the review pass before the first commit of a change and before
+`gh pr ready`. `AGENTS.md`, the pull request template and `docs/` are not synced:
+
+1. Carry over the section _Review before a commit and before a pull request leaves draft_, its routing row, and the
+   words "and the review below ran" in the draft bullet under _Commits, branches and pull requests_.
+2. Add the `Agent review` line under _Verification context_ in `.github/pull_request_template.md`.
+3. Optionally, the paragraph on the agent's own review pass under _Human Review and Transparency_ in
+   `docs/development/AI_AGENTS.md`.
+
 ## `release-notes-sections` — 2026-11-22
 
 **Check:** `grep -q '"type": "build"' release-please-config.json && grep -q 'include-v-in-tag' release-please-config.json`

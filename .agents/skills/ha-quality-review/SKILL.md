@@ -3,9 +3,9 @@ name: ha-quality-review
 description: >-
   Perform a structured quality review of this Home Assistant custom integration, either as a full audit or scoped
   to a diff. Use when asked to "review the integration", "audit the code", "check quality scale", "are we
-  bronze/silver/gold", "is this ready to release", "review my changes", "what's missing before publishing", or
-  before opening a pull request that touches integration code. Covers running the automated gates first, then
-  auditing architecture, the Integration Quality Scale rules, error handling, security, performance, user
+  bronze/silver/gold", "is this ready to release", "what's missing before publishing", or before a release. The
+  review of a change before a commit or a merge is blueprint-change-review. Covers running the automated gates
+  first, then auditing architecture, the Integration Quality Scale rules, error handling, security, performance, user
   experience, and documentation — and reporting findings ranked by severity with concrete fixes. SYMPTOMS — load
   this if you are about to: report a review that only restates linter output; claim real-device testing that did
   not happen; give a finding without a file path and a fix; or judge quality without running `script/hassfest` and
