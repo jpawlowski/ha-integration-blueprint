@@ -17,6 +17,14 @@ The sync brings the skill `blueprint-change-review`, the review pass before the 
 3. Optionally, the paragraph on the agent's own review pass under _Human Review and Transparency_ in
    `docs/development/AI_AGENTS.md`.
 
+## `release-notes-sentence-case` — 2026-11-22
+
+**Check:** `! grep -qE "What's New|More Reliable|Updated Dependencies" release-please-config.json`
+
+The release notes sections are now in sentence case, like every heading in Home Assistant: 🎉 What's new,
+⚡ More reliable and 📦 Updated dependencies. `release-please-config.json` is not synced: rename those sections in its
+`changelog-sections`, and in the table in `docs/development/RELEASE.md`.
+
 ## `release-notes-sections` — 2026-11-22
 
 **Check:** `grep -q '"type": "build"' release-please-config.json && grep -q 'include-v-in-tag' release-please-config.json`
