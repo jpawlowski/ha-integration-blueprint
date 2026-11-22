@@ -130,7 +130,9 @@ For a feature request, "Fix" means "implement," and scope is more often unsettle
 5. **Gate once.** Run `script/check` (type-check + lint-check + spell-check) redirected to a log, judged by its exit
    code — see [`blueprint-tooling`](../blueprint-tooling/SKILL.md)'s token-discipline note. Read the log, and only
    the failing part, on a non-zero exit; iterate on just the failing piece, then re-run the full gate once more
-   before moving on.
+   before moving on. Then run the review pass in [`blueprint-change-review`](../blueprint-change-review/SKILL.md)
+   on the fix. This gate runs no tests, so its step 2 is `script/test` on top of it, and the full gate again
+   whenever simplifying or `/code-review --fix` changed files.
 6. **Commit** using Conventional Commits
    ([`blueprint.commit-message.instructions.md`](../../instructions/blueprint.commit-message.instructions.md)).
    **No manual version bump** — release-please derives it from the commit type once this lands on `main`

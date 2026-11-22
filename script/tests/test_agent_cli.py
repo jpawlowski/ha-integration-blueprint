@@ -218,3 +218,95 @@ def test_copilot_model_still_applies_to_copilot(tmp_path: Path) -> None:
     result = _run(tmp_path, folder, 'agent_resolve && echo "$AGENT_MODEL"', AGENT_CLI="copilot", COPILOT_MODEL="m2")
 
     assert result.stdout.strip() == "m2"
+
+
+@pytest.mark.unit
+def test_other_never_takes_the_sessions_own_cli(tmp_path: Path) -> None:
+    """Inside a Claude Code session, --other skips claude even when it is the only one signed in besides codex."""
+    folder = _bin(tmp_path, "claude", "codex")
+
+    result = _run(
+        tmp_path, folder, 'agent_resolve --other && echo "$AGENT_NAME"', CLAUDECODE="1", STUB_SIGNED_IN="claude codex"
+    )
+
+    assert result.stdout.strip() == "codex"
+
+
+@pytest.mark.unit
+def test_other_refuses_a_named_cli_that_is_the_sessions_own(tmp_path: Path) -> None:
+    """AGENT_CLI naming the session's own CLI is not a second opinion, so --other fails instead of using it."""
+    folder = _bin(tmp_path, "claude", "codex")
+
+    result = _run(
+        tmp_path, folder, "agent_resolve --other", AGENT_CLI="claude", CLAUDECODE="1", STUB_SIGNED_IN="claude"
+    )
+
+    assert result.returncode == 1
+    assert "the CLI this session runs in" in result.stderr
+
+
+@pytest.mark.unit
+def test_other_with_only_the_sessions_cli_installed_says_so(tmp_path: Path) -> None:
+    """When nothing but the session's own CLI is installed, the failure names it."""
+    folder = _bin(tmp_path, "claude")
+
+    result = _run(tmp_path, folder, "agent_resolve --other", CLAUDECODE="1", STUB_SIGNED_IN="claude")
+
+    assert result.returncode == 1
+    assert "other than claude" in result.stderr
+
+
+@pytest.mark.parametrize(
+    ("cli", "expected"),
+    [
+        pytest.param(
+            "claude",
+            "claude --print --restricted --strict-mcp-config --setting-sources user --permission-mode dontAsk "
+            "--tools Read,Grep,Glob --model m1 --allowedTools Read Grep Glob",
+            id="claude",
+        ),
+        pytest.param(
+            "copilot",
+            "copilot --silent --trust-folder --deny-tool=write --deny-tool=shell --model m1",
+            id="copilot",
+        ),
+        pytest.param("opencode", "opencode run --agent plan --archived --model m1 --file /", id="opencode"),
+    ],
+)
+@pytest.mark.unit
+def test_review_runs_in_the_repository_reading_only(tmp_path: Path, cli: str, expected: str) -> None:
+    """A reviewer starts in the directory it reviews, with reading tools only — no shell — and AGENT_MODEL."""
+    folder = _bin(tmp_path, cli)
+    (tmp_path / "repo").mkdir()
+
+    result = _run(
+        tmp_path,
+        folder,
+        "agent_resolve && agent_review repo prompt.md",
+        AGENT_CLI=cli,
+        AGENT_MODEL="m1",
+        STUB_SIGNED_IN=cli,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.startswith(expected)
+    assert f"cwd: {tmp_path / 'repo'}\n" in result.stdout
+
+
+@pytest.mark.unit
+def test_codex_reviews_in_the_directory_in_a_read_only_sandbox(tmp_path: Path) -> None:
+    """Codex starts in the directory with a read-only sandbox, and only its last message is printed."""
+    folder = _bin(tmp_path, "codex")
+    (tmp_path / "repo").mkdir()
+    log = tmp_path / "calls"
+    (folder / "codex").write_text(
+        STUB.replace('echo "$name $*"', f'echo "$name $* @ $PWD" >>"{log}"; echo "$name $*"'), encoding="utf-8"
+    )
+
+    result = _run(tmp_path, folder, "agent_resolve && agent_review repo prompt.md", STUB_SIGNED_IN="codex")
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "codex answer\n"
+    call = log.read_text()
+    assert "codex exec --sandbox read-only --skip-git-repo-check --output-last-message" in call
+    assert call.rstrip().endswith(f"@ {tmp_path / 'repo'}")

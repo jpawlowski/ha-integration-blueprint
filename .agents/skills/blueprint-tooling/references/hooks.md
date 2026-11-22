@@ -80,6 +80,7 @@ Rules:
 | `script/python`                   | `script/hooks/python.pre.sh`                 | `script/hooks/python.post.sh`                 |
 | `script/python-check`             | `script/hooks/python-check.pre.sh`           | `script/hooks/python-check.post.sh`           |
 | `script/release-notes`            | `script/hooks/release-notes.pre.sh`          | `script/hooks/release-notes.post.sh`          |
+| `script/second-review`            | `script/hooks/second-review.pre.sh`          | `script/hooks/second-review.post.sh`          |
 | `script/shell`                    | `script/hooks/shell.pre.sh`                  | `script/hooks/shell.post.sh`                  |
 | `script/shell-check`              | `script/hooks/shell-check.pre.sh`            | `script/hooks/shell-check.post.sh`            |
 | `script/spell`                    | `script/hooks/spell.pre.sh`                  | `script/hooks/spell.post.sh`                  |

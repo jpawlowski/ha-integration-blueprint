@@ -11,6 +11,10 @@ publish. Before merging, review the diff and accurately record which checks, aut
 performed. If review is partial or some behavior could not be tested, document that limitation instead of implying full
 verification.
 
+Before that, agents run a review pass of their own — simplify, run the gates again, then a review in a context that
+did not write the change ([`blueprint-change-review`](../../.agents/skills/blueprint-change-review/SKILL.md)). It is
+recorded as _Agent review_ in the pull request, and it does not replace yours.
+
 Extensive AI assistance is acceptable for a community custom integration. See [`AI_POLICY.md`](../../AI_POLICY.md) for
 the project's approach to AI use, transparency, and informed user choice. Do not use this workflow for autonomous
 contributions to an Open Home Foundation repository, where the official OHF AI Policy applies.

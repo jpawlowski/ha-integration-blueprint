@@ -3,8 +3,9 @@
 # shellcheck disable=SC2034  # AGENT_NAME and AGENT_BIN are used by sourcing scripts
 #
 # Runs a one-shot prompt through whichever coding agent CLI is installed and signed in — Claude Code, Codex, GitHub
-# Copilot or OpenCode, all four of which the dev container installs. The prompt gets no tools: everything the agent
-# needs is in the prompt, and it only returns text.
+# Copilot or OpenCode, all four of which the dev container installs. agent_prompt gives the agent no tools, so
+# everything it needs is in the prompt; agent_review starts it in a directory to read, and lets it run and write
+# nothing.
 #
 # Variables read:
 #   AGENT_CLI    claude, codex, copilot or opencode; unset or "auto" picks one (see agent_resolve)
@@ -89,19 +90,32 @@ _agent_use() {
     fi
 }
 
-# agent_resolve [--any]: set AGENT_NAME and AGENT_BIN, or fail saying what is missing.
+# agent_resolve [--any] [--other]: set AGENT_NAME and AGENT_BIN, or fail saying what is missing.
 #
 # AGENT_CLI names one CLI, which must be installed and, unless --any, not known to be signed out. Otherwise, in order:
 # the CLI of the agent session this runs in, then the first CLI with a key in the environment, then the first that
 # reports being signed in, then one that cannot tell. --any takes the first installed CLI without asking: an
-# interactive session lets the user sign in there.
+# interactive session lets the user sign in there. --other never takes the CLI of the session this runs in, for a
+# second opinion from a different agent.
 agent_resolve() {
-    local any="" i name bin status unknown="" unknown_bin="" installed=() bins=()
-    [[ "${1:-}" == --any ]] && any=1
+    local any="" other="" session="" arg i name bin status unknown="" unknown_bin="" installed=() bins=()
+    for arg in "$@"; do
+        case "$arg" in
+        --any) any=1 ;;
+        --other) other=1 ;;
+        esac
+    done
+    if [[ -n "$other" ]]; then
+        session="$(_agent_session_cli)"
+    fi
 
     if [[ -n "${AGENT_CLI:-}" && "$AGENT_CLI" != auto ]]; then
         if [[ " ${AGENT_CLIS[*]} " != *" $AGENT_CLI "* ]]; then
             echo "AGENT_CLI=$AGENT_CLI is not one of: ${AGENT_CLIS[*]}" >&2
+            return 1
+        fi
+        if [[ -n "$session" && "$AGENT_CLI" == "$session" ]]; then
+            echo "AGENT_CLI=$AGENT_CLI is the CLI this session runs in, which --other excludes" >&2
             return 1
         fi
         bin="$(_agent_bin "$AGENT_CLI")"
@@ -121,13 +135,16 @@ agent_resolve() {
         return 0
     fi
 
-    name="$(_agent_session_cli)"
-    if [[ -n "$name" ]] && bin="$(_agent_bin "$name")" && [[ -n "$bin" ]]; then
-        _agent_use "$name" "$bin"
-        return 0
+    if [[ -z "$other" ]]; then
+        name="$(_agent_session_cli)"
+        if [[ -n "$name" ]] && bin="$(_agent_bin "$name")" && [[ -n "$bin" ]]; then
+            _agent_use "$name" "$bin"
+            return 0
+        fi
     fi
 
     for name in "${AGENT_CLIS[@]}"; do
+        [[ "$name" == "$session" ]] && continue
         bin="$(_agent_bin "$name")"
         [[ -n "$bin" ]] || continue
         if [[ -n "$any" ]] || _agent_has_key "$name"; then
@@ -156,7 +173,7 @@ agent_resolve() {
         return 0
     fi
     if [[ ${#installed[@]} -eq 0 ]]; then
-        echo "No coding agent CLI found — install one of: ${AGENT_CLIS[*]}" >&2
+        echo "No coding agent CLI${session:+ other than $session} found — install one of: ${AGENT_CLIS[*]}" >&2
         return 1
     fi
     echo "No agent CLI is signed in. Sign in to one of them:" >&2
@@ -166,41 +183,67 @@ agent_resolve() {
     return 1
 }
 
-# agent_prompt FILE: send the prompt in FILE and print only the agent's answer.
+# _agent_run MODE DIR FILE: send the prompt in FILE through the chosen CLI and print only the agent's answer.
 #
-# The CLI runs in an empty directory (Copilot, which would ask to trust it, with --no-custom-instructions instead), so
-# it loads none of this repository's agent instructions or session hooks: the answer comes from the prompt alone.
-agent_prompt() {
-    local prompt_file work answer status=0
-    prompt_file="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+# MODE "prompt" runs the CLI in an empty directory (Copilot, which would ask to trust it, with
+# --no-custom-instructions instead) and without tools, so it loads none of this repository's agent instructions or
+# session hooks. MODE "review" runs it in DIR with its agent instructions and lets it read, but run and write
+# nothing: no shell, since git and rg take options that write files or run commands, and for Claude Code none of the
+# project's settings or MCP servers, which would widen that. The caller writes the diff into a file in DIR, and
+# makes DIR no git checkout, so no session-start hook acts there.
+_agent_run() {
+    local mode="$1" dir="$2" prompt_file work answer status=0
+    prompt_file="$(cd "$(dirname "$3")" && pwd)/$(basename "$3")"
+    work="$(mktemp -d)"
+    [[ "$mode" == prompt ]] && dir="$work"
     set --
     if [[ -n "${AGENT_MODEL:-}" ]]; then
         set -- --model "$AGENT_MODEL"
     fi
-    work="$(mktemp -d)"
     case "$AGENT_NAME" in
     claude)
-        (cd "$work" && "$AGENT_BIN" --print --tools "" "$@") <"$prompt_file" || status=$?
+        if [[ "$mode" == review ]]; then
+            set -- --restricted --strict-mcp-config --setting-sources user --permission-mode dontAsk \
+                --tools "Read,Grep,Glob" "$@" --allowedTools Read Grep Glob
+        else
+            set -- --tools "" "$@"
+        fi
+        (cd "$dir" && "$AGENT_BIN" --print "$@") <"$prompt_file" || status=$?
         ;;
     codex)
         answer="$work/answer.md"
-        (cd "$work" && "$AGENT_BIN" exec --sandbox read-only --skip-git-repo-check "$@" \
+        (cd "$dir" && "$AGENT_BIN" exec --sandbox read-only --skip-git-repo-check "$@" \
             --output-last-message "$answer" -) <"$prompt_file" >/dev/null || status=$?
         if [[ $status -eq 0 ]]; then
             cat "$answer"
         fi
         ;;
     copilot)
-        "$AGENT_BIN" --silent --no-custom-instructions --deny-tool='write' --deny-tool='shell' "$@" \
-            <"$prompt_file" || status=$?
+        if [[ "$mode" == review ]]; then
+            (cd "$dir" && "$AGENT_BIN" --silent --trust-folder --deny-tool='write' --deny-tool='shell' "$@") \
+                <"$prompt_file" || status=$?
+        else
+            "$AGENT_BIN" --silent --no-custom-instructions --deny-tool='write' --deny-tool='shell' "$@" \
+                <"$prompt_file" || status=$?
+        fi
         ;;
     opencode)
-        (cd "$work" && "$AGENT_BIN" run --agent plan --archived "$@" --file "$prompt_file" \
+        (cd "$dir" && "$AGENT_BIN" run --agent plan --archived "$@" --file "$prompt_file" \
             "Follow the instructions in the attached file and reply with nothing else.") || status=$?
         ;;
     esac
     rm -rf "$work"
     return "$status"
+}
+
+# agent_prompt FILE: send the prompt in FILE, with no tools and none of this repository's instructions.
+agent_prompt() {
+    _agent_run prompt "" "$1"
+}
+
+# agent_review DIR FILE: run the prompt in FILE inside DIR, reading only, with DIR's agent instructions.
+agent_review() {
+    _agent_run review "$1" "$2"
 }
 
 # agent_session: replace the shell with an interactive session of the chosen CLI.
