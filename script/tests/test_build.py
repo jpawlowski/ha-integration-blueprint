@@ -66,6 +66,30 @@ def test_build_hook_adds_files_to_the_zip(repo: Path) -> None:
 
 
 @pytest.mark.unit
+def test_pre_hook_output_survives_and_hooks_may_change_directory(repo: Path) -> None:
+    """What build.pre.sh writes ships, and a hook that changes directory still writes into BUILD_DIR."""
+    hooks = repo / "script" / "hooks"
+    hooks.mkdir()
+    (hooks / "build.pre.sh").write_text('cd /tmp && echo "data" > "$BUILD_DIR/data.json"\n', encoding="utf-8")
+    (hooks / "build.post.sh").write_text('cd / && touch "$BUILD_DIR/post.js"\n', encoding="utf-8")
+
+    result = _build(repo, "--zip", "demo.zip")
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert {"data.json", "post.js"} <= set(zipfile.ZipFile(repo / "demo.zip").namelist())
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("output", [".", "..", "custom_components/demo", "custom_components/demo/sub"])
+def test_output_that_would_delete_the_source_is_refused(repo: Path, output: str) -> None:
+    """The build folder is emptied first, so it may not contain the repository or sit in the integration."""
+    result = _build(repo, "--output", output)
+
+    assert result.returncode != 0
+    assert (repo / "custom_components" / "demo" / "manifest.json").exists()
+
+
+@pytest.mark.unit
 def test_in_place_runs_the_hook_on_the_integration_folder(repo: Path) -> None:
     """--in-place generates next to the code, for script/develop."""
     (repo / "script" / "hooks").mkdir()

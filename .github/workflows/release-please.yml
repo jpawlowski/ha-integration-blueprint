@@ -73,10 +73,10 @@ jobs:
           # renovate: datasource=github-releases depName=jdx/mise extractVersion=^v(?<version>.+)$
           version: "2026.11.12"
 
-      # The release stays a draft until its asset is attached, so no install ever finds it missing.
-      - name: Build and upload the ZIP asset, then publish
+      # Build hooks may run third-party code (npm install scripts): they get no token.
+      - name: Build the ZIP asset
+        id: asset
         env:
-          GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
         run: |
           if jq -e '.zip_release == true' hacs.json >/dev/null; then
@@ -85,8 +85,19 @@ jobs:
             filename=$(jq -er '.filename' hacs.json) ||
               { echo "::error::hacs.json sets zip_release without a filename"; exit 1; }
             script/build --zip "${filename}" --version "${TAG#v}"
-            gh release upload "${TAG}" "${filename}" --clobber --repo "${GITHUB_REPOSITORY}"
+            echo "filename=${filename}" >> "${GITHUB_OUTPUT}"
           else
             echo "::notice::hacs.json does not set zip_release - no ZIP asset attached"
+          fi
+
+      # The release stays a draft until its asset is attached, so no install ever finds it missing.
+      - name: Upload the ZIP asset, then publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
+          FILENAME: ${{ steps.asset.outputs.filename }}
+        run: |
+          if [[ -n "${FILENAME}" ]]; then
+            gh release upload "${TAG}" "${FILENAME}" --clobber --repo "${GITHUB_REPOSITORY}"
           fi
           gh release edit "${TAG}" --draft=false --repo "${GITHUB_REPOSITORY}"

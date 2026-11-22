@@ -103,9 +103,9 @@ Rules:
 
 ## The build hook
 
-`script/build` copies the tracked files of the integration into `$BUILD_DIR`, runs `build.pre.sh` and `build.post.sh`,
-checks the result and packs the release ZIP. A hook adds what is generated rather than committed — a bundled card, a
-data file — by writing into `$BUILD_DIR`, which is the integration folder as it ships:
+`script/build` empties `$BUILD_DIR`, runs `build.pre.sh`, copies the tracked files of the integration over it, runs
+`build.post.sh`, checks the result and packs the release ZIP. A hook adds what is generated rather than committed — a
+bundled card, a data file — by writing into `$BUILD_DIR`, an absolute path to the integration folder as it ships:
 
 ```bash
 # script/hooks/build.post.sh
