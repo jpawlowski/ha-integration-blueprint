@@ -39,7 +39,8 @@ Releases are managed with [release-please](https://github.com/googleapis/release
 The Home Assistant Marketplace offers users the tag of the latest **published** GitHub Release —
 a bare tag is not enough — and refuses an integration whose `manifest.json` has no `version`. Its update entity shows
 the release body as the release notes. Release-please writes the version and the body; the release-asset job publishes
-the release once its ZIP is attached. A failed job leaves a draft no user sees — run the workflow by hand with that
+the release once its ZIP is attached, and ends the body with a link to the changelog for users who skipped more than
+the five releases the update dialog shows. A failed job leaves a draft no user sees — run the workflow by hand with that
 tag (**Actions** → **Release Please** → **Run workflow**). A pre-release only reaches users who switched on
 pre-releases for the repository. Details: [Releases and updates](https://contributors.home-assistant.io/marketplace/guides/releases/).
 

@@ -91,7 +91,7 @@ jobs:
           fi
 
       # The release stays a draft until its asset is attached, so no install ever finds it missing.
-      - name: Upload the ZIP asset, then publish
+      - name: Upload the ZIP asset, link the changelog, then publish
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
@@ -104,4 +104,11 @@ jobs:
           if [[ "${TAG}" == *-* ]]; then
             prerelease=true
           fi
-          gh release edit "${TAG}" --draft=false --prerelease="${prerelease}" --repo "${GITHUB_REPOSITORY}"
+          changelog_path="$(jq -r '.packages["."]["changelog-path"] // "CHANGELOG.md"' release-please-config.json)"
+          changelog="https://github.com/${GITHUB_REPOSITORY}/blob/${TAG}/${changelog_path}"
+          notes="$(gh release view "${TAG}" --json body --jq .body --repo "${GITHUB_REPOSITORY}")"
+          [[ "${notes}" == *"${changelog}"* ]] ||
+            notes+="${notes:+$'\n\n'}Skipped a few versions? Their notes are in the [changelog](${changelog})."
+          printf '%s\n' "${notes}" |
+            gh release edit "${TAG}" --draft=false --prerelease="${prerelease}" --notes-file - \
+              --repo "${GITHUB_REPOSITORY}"

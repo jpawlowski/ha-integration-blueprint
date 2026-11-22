@@ -83,9 +83,12 @@ commits on main → release-please opens/updates "chore(main): release X.Y.Z"
 
 `manifest.json` → `version` is the source of truth and is bumped inside the release PR by release-please
 (`release-please-config.json` → `extra-files`). Never edit it by hand. The Marketplace depends on that: it offers the tag of the latest published GitHub Release — a bare tag is not enough — expects
-`version` to equal it, and shows the release body as the notes in the update dialog.
+`version` to equal it, and shows the release body as the notes in the update dialog. It joins the notes of every
+release since the installed one only within the last five releases, so the `release-asset` job ends each body with a
+link to the changelog.
 
-There is no automatic merge. The developer decides when to release.
+There is no automatic merge. The developer decides when to release — in batches rather than per change, so a user who
+updates now and then stays inside those five.
 
 ## A beta
 
