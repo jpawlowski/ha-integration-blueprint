@@ -186,7 +186,7 @@ build_user_facing_diff() {
 
 # ---------------------------------------------------------------------------
 # Helper: The sections the notes use — release-please's visible ones, so the
-# rewritten notes keep the headings CHANGELOG.md and the release use
+# rewritten notes keep the headings CHANGELOG.md uses, apart from the breaking one
 # ---------------------------------------------------------------------------
 
 build_sections() {
@@ -195,8 +195,8 @@ build_sections() {
     echo ""
     echo "Use these sections with ### (H3) headings, in this order:"
     echo ""
-    echo "- ### ⚠️ Breaking Changes"
-    echo "  (Changes that require user action — reconfiguration, removal of automations, etc.)"
+    echo "- ### ⚠️ Backward-incompatible changes"
+    echo "  (Changes that need the user to act, such as reconfiguring the integration or updating an automation)"
     while IFS=$'\t' read -r type section; do
         echo ""
         echo "- ### $section"
@@ -323,14 +323,14 @@ state machine, MRO, or any Python/software engineering jargon.
 **Rule 1 — No jargon.**
 NEVER use technical terms. Always rephrase as a user experience.
   ❌ "Refactored coordinator error handling with exponential backoff"
-  ✅ "The integration now recovers more gracefully when your device is temporarily unreachable"
+  ✅ "When your device is unreachable for a while, the integration now reconnects on its own"
 
 **Rule 2 — Second person, present tense.**
 Write: "You can now...", "Your automations will...", "The setup wizard now..."
 
 **Rule 3 — Bug fixes: describe the SYMPTOM, not the cause.**
   ❌ "Fix timezone-aware datetime comparison at resolution boundary"
-  ✅ "Fixed: Sensor data could show incorrect values when switching to/from daylight saving time"
+  ✅ "Sensors no longer show wrong values on the night daylight saving time starts or ends"
 
 **Rule 4 — New features: lead with what the user can DO.**
   ❌ "Add {ClassPrefix}FanSpeedSensor with EntityDescription"
@@ -344,6 +344,19 @@ Do NOT list every commit as a separate bullet. Group related changes.
 
 **Rule 7 — Imagine explaining to your neighbor.**
 Before writing each bullet, ask: "Would someone who just uses Home Assistant understand this?"
+
+**Rule 8 — Home Assistant's own words.**
+The notes appear in Home Assistant's update dialog, so they follow its UI text style: American English, "Home
+Assistant" in full (never "HA"), "select" not "click", no "e.g.", "i.e." or "etc." (use "for example", "such as"),
+entity IDs and file names in backticks. One thing has one name: "action", not "service"; "integration", not
+"component"; "app", not "add-on"; "dashboard", not "Lovelace"; "backward-incompatible change", not "breaking change".
+
+**Rule 9 — Precise, not loud.**
+- Concrete beats adjectives: name the sensor, the setting, the situation, the number. "Loads in 2 seconds instead of
+  10" over "much faster". If the commits give no such detail, state the change plainly instead of padding it.
+- No hype: never "awesome", "amazing", "exciting", "seamless", "robust", "powerful", "game-changing".
+- State it; do not hedge with "might", "should now" or "hopefully" unless the change really is uncertain.
+- One point per bullet. No closing summary.
 
 PROMPT_HEADER
 

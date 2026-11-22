@@ -179,6 +179,10 @@ the retired ones: "action", not "service"; "integration", not "component"; "app"
 "Lovelace"; "backward-incompatible change", not "breaking change" (in text users read — commit footers keep
 `BREAKING CHANGE:`).
 
+The release notes prompt in `script/release-notes` (Rule 8) carries a condensed copy of these rules for the update
+dialog. In the upstream template, a change here goes there too; a project adds its own wording rules to
+`.github/release-notes/prompt.md`, since the script is template-managed.
+
 ## Best Practices
 
 - **Only native speakers** should provide translations
