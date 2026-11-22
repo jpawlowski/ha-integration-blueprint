@@ -2,6 +2,7 @@
   "name": "Integration blueprint",
   "zip_release": true,
   "filename": "ha_integration_domain.zip",
+  "hide_default_branch": true,
   "homeassistant": "2026.11.0",
   "hacs": "2.0.5"
 }

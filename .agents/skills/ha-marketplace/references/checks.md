@@ -19,7 +19,7 @@ warning; unknown keys are ignored. Versions compare with AwesomeVersion.
 | `zip_release`          | boolean        | Install from the ZIP asset named by `filename`; the release workflow builds it. ✅ set          |
 | `filename`             | string         | The ZIP asset's name with `zip_release`; `release-please.yml` reads it. ✅ set                  |
 | `content_in_root`      | boolean        | Integration files in the repository root instead of `custom_components/<domain>/`. ❌           |
-| `hide_default_branch`  | boolean        | HACS does not offer the default branch as an installable version. ❌                            |
+| `hide_default_branch`  | boolean        | The default branch is not offered as an installable version. ✅ set, required by `zip_release`  |
 | `country`              | string or list | ISO 3166-1 alpha-2 codes for a region-bound integration; the catalog asks for it then. Optional |
 
 ## Catalog review checks

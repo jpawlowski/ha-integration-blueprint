@@ -4,6 +4,15 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `hide-default-branch` — 2026-11-22
+
+**Check:** `jq -e '(.zip_release != true) or (.hide_default_branch == true)' hacs.json`
+
+With `zip_release`, the Marketplace installs every version from the release asset — the default branch too, whose
+asset (`releases/download/main/<filename>`) never exists, so choosing it in the version menu fails. Add
+`"hide_default_branch": true` to `hacs.json` (not synced) in the same change that sets `zip_release`, or now if
+`release-zip-asset` is already done. A repository then has nothing to install before its first release.
+
 ## `branch-and-pr-rules` — 2026-11-22
 
 **Check:** `grep -q 'Commits, branches and pull requests' AGENTS.md`
