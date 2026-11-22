@@ -99,3 +99,28 @@ def test_command_line_prints_the_body(tmp_path: Path) -> None:
 
     assert result.returncode == 0, result.stderr
     assert version_of(result.stdout) == "0.2.0"
+
+
+CAPTURED = Path(__file__).parent / "fixtures" / "release-please-pr-body.txt"
+
+
+@pytest.mark.unit
+def test_a_body_captured_from_release_please_round_trips() -> None:
+    """A real release PR body (release-please-action v5.0.0) keeps its header, heading and footer byte for byte.
+
+    The body is taken unchanged from a merged release PR, so a release-please update that changes the format fails
+    here rather than at the next release.
+    """
+    captured = CAPTURED.read_text(encoding="utf-8")
+    first, last = captured.index("\n---\n"), captured.rindex("\n---\n")
+    heading = next(line for line in captured[first:].split("\n") if line.startswith("## ["))
+
+    body = merge(captured, NOTES)
+
+    assert version_of(captured) == "0.40.0"
+    assert version_of(body) == "0.40.0"
+    assert body.startswith(captured[:first])
+    assert body.endswith(captured[last:].rstrip("\n") + "\n")
+    assert heading in body
+    assert "BREAKING CHANGES" not in body
+    assert "A new sensor shows your device's fan speed" in body
