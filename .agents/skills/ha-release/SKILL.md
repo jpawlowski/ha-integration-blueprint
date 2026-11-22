@@ -2,8 +2,8 @@
 name: ha-release
 description: >-
   Cut a release of this Home Assistant custom integration, or prepare the commits that feed it. Use when asked to
-  "release", "cut a version", "bump the version", "prepare release notes", "what will the next version be", "write a
-  commit message", "why didn't release-please pick this up", "update my branch", "rebase", "fix the conflict",
+  "release", "cut a version", "bump the version", "prepare release notes", "a release footer", "what will the next version be", "write a
+  commit message", "why didn't release-please pick this up", "update my branch", "rebase",
   "split this PR", "stacked PR", "release a beta", or when reviewing whether a change is user-facing. Covers the
   commit rules commitlint enforces, how release-please versions and writes the changelog, pre-1.0 bumps, betas,
   script/version and script/release-notes, and branch upkeep. SYMPTOMS — load this if you are about
@@ -84,8 +84,14 @@ commits on main → release-please opens/updates "chore(main): release X.Y.Z"
 `manifest.json` → `version` is the source of truth and is bumped inside the release PR by release-please
 (`release-please-config.json` → `extra-files`). Never edit it by hand. The Marketplace depends on that: it offers the tag of the latest published GitHub Release — a bare tag is not enough — expects
 `version` to equal it, and shows the release body as the notes in the update dialog. It joins the notes of every
-release since the installed one only within the last five releases, so the `release-asset` job ends each body with a
-link to the changelog.
+release since the installed one only within the last five releases, so the `release-asset` job adds a link to the
+changelog to each body.
+
+**Text on every release** — a support link, a standing notice — goes into `.github/release-notes/header.md` or
+`footer.md`; the `release-asset` job puts it around each body, and `CHANGELOG.md` never sees it. Not into
+`release-please.yml`, which template sync replaces, nor into `changelog-sections` or a `release-notes` hook, which both
+land in `CHANGELOG.md`. A support link takes its handle from `.github/FUNDING.yml`. Keep it to a line: the dialog
+repeats it for every release it joins.
 
 There is no automatic merge. The developer decides when to release — in batches rather than per change, so a user who
 updates now and then stays inside those five.
