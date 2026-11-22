@@ -24,7 +24,7 @@ PR_BODY = """:robot: I have created a release *beep* *boop*
 ## [0.2.0](https://github.com/owner/repo/compare/v0.1.0...v0.2.0) (2026-11-22)
 
 
-### 🎉 What's New
+### 🎉 What's new
 
 * add a fan speed sensor ([#12](https://github.com/owner/repo/issues/12)) ([abc1234](https://github.com/owner/repo/commit/abc1234))
 
@@ -32,7 +32,7 @@ PR_BODY = """:robot: I have created a release *beep* *boop*
 This PR was generated with [Release Please](https://github.com/googleapis/release-please).
 """
 
-NOTES = """### 🎉 What's New
+NOTES = """### 🎉 What's new
 
 - A new sensor shows your device's fan speed on your dashboard.
 """

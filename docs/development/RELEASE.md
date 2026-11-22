@@ -80,10 +80,10 @@ Only user-facing changes appear in the public CHANGELOG:
 
 | Type                                      | Visible                    |
 | ----------------------------------------- | -------------------------- |
-| `feat`                                    | ✅ 🎉 What's New           |
+| `feat`                                    | ✅ 🎉 What's new           |
 | `fix`                                     | ✅ 🐛 Fixed                |
-| `perf`                                    | ✅ ⚡ More Reliable        |
-| `build`                                   | ✅ 📦 Updated Dependencies |
+| `perf`                                    | ✅ ⚡ More reliable        |
+| `build`                                   | ✅ 📦 Updated dependencies |
 | `refactor`, `chore`, `docs`, `test`, `ci` | hidden                     |
 
 ## Developer Scripts
