@@ -3,16 +3,22 @@ name: ha-planning
 description: >-
   Plan a large change to this Home Assistant custom integration before writing code, or record an architectural
   decision. Use when asked to "create a plan", "plan this feature", "how should we approach", "propose an
-  architecture", "write an ADR", "document this decision", "should we use library X or write our own client", or
-  whenever a change would touch more than about ten files or alter the integration's structure. Covers when a plan
-  is mandatory, the phased plan format, where plans live, when a decision is worth recording, and the DECISIONS.md
-  entry format used by this project. SYMPTOMS — load this if you are about to: start a refactor spanning more than
-  ten files without confirmation; write a plan whose phases name no files; write one in prose nobody will finish
-  reading; create a planning markdown file outside `.agents/scratch/`; or make a hard-to-reverse architectural
-  choice without recording why.
+  architecture", "write an ADR", "document this decision", "record a decision", "supersede a decision", "should we use
+  library X or write our own client", or whenever a change would touch more than about ten files or alter the
+  integration's structure. Covers when a plan is mandatory, the phased plan format, where plans live, when a decision
+  is worth recording, and the decision record format and index. SYMPTOMS — load this if you are about to: start a
+  refactor spanning more than ten files without confirmation; write a plan whose phases name no files; write one in
+  prose nobody will finish reading; create a planning markdown file outside `.agents/scratch/`; or make a
+  hard-to-reverse architectural choice without recording why.
 ---
 
 # Plan changes and record decisions
+
+## Reference files
+
+| File                                                               | When to read                                          |
+| ------------------------------------------------------------------ | ----------------------------------------------------- |
+| [`references/decision-records.md`](references/decision-records.md) | Writing or superseding a decision record, or its rule |
 
 ## When a plan is required
 
@@ -98,8 +104,8 @@ rather than at the end.
 
 ## Recording a decision
 
-Record a decision in `docs/development/DECISIONS.md` when it is expensive to reverse and the reasoning would otherwise
-be lost:
+A decision is recorded in `docs/development/decisions/` — one file per decision, listed in that folder's generated
+`README.md` — when it is expensive to reverse and the reasoning would otherwise be lost:
 
 - Third-party library vs. own API client (this is the most common one — see the decision process in `AGENTS.md`).
 - Polling vs. push, and the update interval.
@@ -113,38 +119,15 @@ Assistant convention, or a breaking change made before `1.0.0` — those are exp
 the `BREAKING CHANGE:` footer in the commit ([`ha-breaking-changes`](../ha-breaking-changes/SKILL.md)).
 
 The bar is all three of: hard to reverse, a genuine trade-off rather than the one sensible option, and surprising to a
-reader who was not there. **Most sessions produce no entry, and that is the normal outcome** — a log padded with
-decisions that made themselves is one nobody reads when a real one is in it.
+reader who was not there — the test for the last one: without the record, would the choice read as an oversight
+someone fixes? **Most sessions produce no record, and that is the normal outcome** — a log padded with decisions that
+made themselves is one nobody reads when a real one is in it.
 
-### Entry format
+Before deciding, read the index, as `AGENTS.md` › _Documentation_ says — a new decision must not silently contradict
+an old one.
 
-Append to the decision log in `docs/development/DECISIONS.md`, matching the entries already there:
-
-```markdown
-### <Decision in imperative form, e.g. "Use aiohttp directly instead of the vendor SDK">
-
-**Date:** YYYY-MM-DD
-
-**Context:** <The situation that forced a choice. What constraint made this non-obvious.>
-
-**Decision:** <What was decided, stated plainly.>
-
-**Rationale:**
-
-- <Why this option won>
-- <What the alternatives were and why they lost>
-
-**Consequences:**
-
-- <What this now obliges the code to do>
-- <What becomes harder, and what we accept as a trade-off>
-```
-
-Be honest in **Consequences**. A decision record that lists only benefits is marketing, and it is useless to the person
-who has to revisit it in two years.
-
-Keep entries in the "Decision Log" section in chronological order, newest last, separated by `---`. Entries that were
-later reversed stay in the log — add a new entry that supersedes them and say so, rather than editing history.
+The format, superseding, the rule a decision produces and the index script:
+[`references/decision-records.md`](references/decision-records.md).
 
 ## Handoff
 
@@ -153,6 +136,6 @@ next session can pick it up without re-deriving the context.
 
 **`.agents/scratch/` is gitignored**, so it survives the next session but not a fresh clone, a second machine, or a
 second contributor. Before the work stretches that far, move anything that must outlive it to its real home: a
-hard-to-reverse choice into the decision log above, the project's own vocabulary into
+hard-to-reverse choice into a decision record, the project's own vocabulary into
 `docs/development/GLOSSARY.md` ([`ha-grill`](../ha-grill/SKILL.md)), and everything else into the commit messages of
 the phases already shipped. What is left in the scratch file should be losable.

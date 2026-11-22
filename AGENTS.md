@@ -123,7 +123,7 @@ These are the ones an agent typically breaks _before_ it realises a skill or ins
   — a closed account, unsupported firmware — which stops the retry loop instead of spinning forever. Do not log
   `ConfigEntryNotReady` manually; HA already logs it at debug level.
 - **Diagnostics must call `async_redact_data()`** for credentials, tokens, location and personal data.
-- **YAML configuration is deprecated** for integrations talking to devices or services (ADR-0010) — config flow only.
+- **YAML configuration is deprecated** for integrations talking to devices or services ([ADR-0010](https://github.com/home-assistant/architecture/blob/master/adr/0010-integration-configuration.md)) — config flow only.
 - **Changing the shape of `entry.data`** requires a `VERSION`/`MINOR_VERSION` bump and `async_migrate_entry()`.
 - **While Home Assistant runs, ask it — do not read `config/.storage/`.** Those files are written 1–180 seconds after
   the change they describe and hold no live state at all, so `script/ha` is the source of truth. With Home Assistant
@@ -422,7 +422,7 @@ Record it with a `BREAKING CHANGE:` footer either way.
 **Before `1.0.0`, breaking is usually the right answer** — the goal is a settled code base, not compatibility code
 wrapped around a shape nobody has committed to yet. What still needs asking is whether to build the **migration**:
 never write `async_migrate_entry` or bump `VERSION` / `MINOR_VERSION` unprompted, and do not log each break in
-`DECISIONS.md`. After `1.0.0`, prefer a migration path over a break.
+a decision record. After `1.0.0`, prefer a migration path over a break.
 Procedure: [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md).
 
 ### Code that predates the current rules
@@ -479,6 +479,11 @@ or `docs/user/` (end user). Use `.agents/scratch/` for temporary notes; it is ne
 - ✅ Ask before creating permanent documentation
 - ✅ Prefer a module docstring over a separate markdown file
 
+**Decisions** are records in `docs/development/decisions/`, one file each. Read its `README.md` index before a choice
+that is hard to reverse, and a record only when its decision is the one at hand — never load the records by a glob or
+an import. What a decision obliges lives as a rule in an instructions file or here, ending in a `Source:` line
+([`ha-planning`](.agents/skills/ha-planning/references/decision-records.md)).
+
 ## Custom Integration Flexibility
 
 **This is a custom integration, not a Core one.** It follows Core patterns for quality, but implementation decisions
@@ -487,7 +492,7 @@ have more room.
 **Third-party library or own client?** Prefer a maintained PyPI library that fits. Write a client instead when the
 device speaks a simple REST or GraphQL API, or when the available libraries are unmaintained, bloated or badly
 designed. Evaluate maintenance, async support, documentation and dependency footprint; complex OAuth2 and standards
-like MQTT argue for a library. Record the outcome in [`docs/development/DECISIONS.md`](docs/development/DECISIONS.md).
+like MQTT argue for a library. Record the outcome as a decision record in [`docs/development/decisions/`](docs/development/decisions/README.md).
 
 **Aim for Silver or Gold on the Quality Scale.** Always implement type hints, async I/O, proper error handling,
 actions registered in `async_setup()`, redacted diagnostics and device info. Add config flow validation, reauth,

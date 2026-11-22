@@ -14,7 +14,7 @@ description: >-
 
 # Work on the config flow
 
-The config flow is the only supported way to configure a device or service integration (ADR-0010). Everything the user
+The config flow is the only supported way to configure a device or service integration ([ADR-0010](https://github.com/home-assistant/architecture/blob/master/adr/0010-integration-configuration.md)). Everything the user
 can change lives here, and mistakes here are expensive: `unique_id` and the shape of `entry.data` are effectively
 permanent.
 

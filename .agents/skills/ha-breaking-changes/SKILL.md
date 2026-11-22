@@ -34,7 +34,7 @@ Before 1.0.0:
   the choice to the developer: break cleanly now, or carry the migration.
 - **Recommend.** "The cleanest fix is to rename the key and let existing test entries be recreated; a migration would
   cost ~40 lines we would then maintain" is the useful form. Not "shall I migrate?"
-- **Do not record each one in `DECISIONS.md`.** That log is for architecture. A key renamed before the first stable
+- **Do not write a decision record for each one.** Those are for architecture. A key renamed before the first stable
   release is not an architectural decision, and a log padded with them is one nobody reads.
 - **Keep the `BREAKING CHANGE:` footer anyway.** It costs one line, and it is the whole price of this freedom: the
   Marketplace installs `0.x` versions too, and the people testing early deserve a changelog entry rather than a silent surprise.
@@ -181,7 +181,7 @@ ir.async_create_issue(
 - Update `docs/user/` and the README where the old behaviour is described. Text users read — docs, release notes,
   repair issues — says **backward-incompatible change**, Home Assistant's term; `BREAKING CHANGE:` stays the commit
   footer, because release-please keys on it.
-- Record the reasoning in `docs/development/DECISIONS.md` if it was an architectural call
+- Record the reasoning as a decision record in `docs/development/decisions/` if it was an architectural call
   ([`ha-planning`](../ha-planning/SKILL.md)).
 
 ## 6. Removing entities and devices

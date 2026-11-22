@@ -538,7 +538,7 @@ tests/                         # Your test files (add your own!)
 docs/                          # Documentation
 ├── blueprint/                 # About the template itself  ⚑ removed by initialize.sh
 │   ├── README.md              # What belongs here, and what does not
-│   ├── DECISIONS.md           # Decisions about the blueprint
+│   ├── decisions/             # Decisions about the blueprint, one record each
 │   ├── MIGRATION.md           # Adopting the blueprint in an existing integration
 │   └── TRANSFORMATION_PROMPT.md  # Prompting an agent to transform the template
 ├── development/               # Developer documentation
@@ -546,7 +546,7 @@ docs/                          # Documentation
 │   ├── ARCHITECTURE.md        # Architecture overview
 │   ├── CODESPACES.md          # Codespaces setup guide
 │   ├── CUSTOMIZATION.md       # Customization guide
-│   ├── DECISIONS.md           # Architectural decisions
+│   ├── decisions/             # Architectural decisions, one record each
 │   └── RELEASE.md             # Release process
 └── user/                      # User documentation
     ├── CONFIGURATION.md       # Configuration guide
@@ -591,7 +591,7 @@ Two further packages are permitted and created only once something needs them:
 **`entity_utils/`** for a helper shared by three or more entity classes, and **`utils/`** for
 integration-wide utilities.
 
-See [docs/development/ARCHITECTURE.md](docs/development/ARCHITECTURE.md) for a detailed architecture overview and architectural decision records.
+See [docs/development/ARCHITECTURE.md](docs/development/ARCHITECTURE.md) for a detailed architecture overview, and [docs/development/decisions/](docs/development/decisions/README.md) for the decision records.
 
 ---
 
@@ -943,7 +943,8 @@ Once you have the blueprint working with your device or service:
 
 ### This blueprint's documentation
 
-- [docs/development/ARCHITECTURE.md](docs/development/ARCHITECTURE.md) - Architecture overview and decision records
+- [docs/development/ARCHITECTURE.md](docs/development/ARCHITECTURE.md) - Architecture overview
+- [docs/development/decisions/](docs/development/decisions/README.md) - Decision records
 - [docs/development/CUSTOMIZATION.md](docs/development/CUSTOMIZATION.md) - Extending scripts and staying up to date
 - [docs/development/RELEASE.md](docs/development/RELEASE.md) - Release process and versioning
 - [docs/development/CODESPACES.md](docs/development/CODESPACES.md) - GitHub Codespaces setup and tips

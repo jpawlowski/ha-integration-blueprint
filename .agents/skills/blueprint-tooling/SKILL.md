@@ -74,6 +74,7 @@ script/architecture-check # conservative architecture guardrails (also part of l
 script/push-gate         # git's pre-push hook: clean HEAD only, then lint-check + type-check in parallel
 script/version           # read the canonical version from manifest.json
 script/build             # build the integration as it ships (--zip, --in-place); hook: build.post.sh
+script/decisions         # write (--check: verify) the decision record index (also part of lint / lint-check)
 script/ha-version-sync   # align the pinned Home Assistant version across config files, and mise's Python with it
 script/setup/toolchain   # install the tools mise.toml pins (--install-mise: mise itself too) — run by bootstrap
 script/setup/github      # apply the GitHub settings and .github/rulesets/ (--dry-run first) — see REPOSITORY_SETUP.md
@@ -154,7 +155,7 @@ Pin versions in both, and keep them identical. Renovate raises the two files in 
 | `requirements.local.txt` | — (gitignored) | your personal extras (`ipdb`, profilers, …)      |
 
 Before adding a dependency at all, decide whether you want it: the criteria are in `AGENTS.md` § Custom Integration
-Flexibility, and the choice belongs in `docs/development/DECISIONS.md` ([`ha-planning`](../ha-planning/SKILL.md)).
+Flexibility, and the choice belongs in a decision record ([`ha-planning`](../ha-planning/SKILL.md)).
 For a serial port that means `serialx`, not `pyserial-asyncio` — the replacement table is in
 [`ha-modern-apis`](../ha-modern-apis/references/deprecations.md).
 

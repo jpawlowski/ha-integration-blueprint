@@ -4,6 +4,22 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `decision-records` — 2026-11-22
+
+**Check:** `test ! -e docs/development/DECISIONS.md && test -f docs/development/decisions/README.md && grep -q 'docs/development/decisions' AGENTS.md`
+
+Decisions are now one record per file in `docs/development/decisions/`, with an index `script/decisions` writes and
+checks — see [`ha-planning`](../../ha-planning/references/decision-records.md). The script arrives through the sync and
+passes while the old single file is still there; `docs/` and `AGENTS.md` are not synced:
+
+1. Move each entry of `docs/development/DECISIONS.md` this project made into a record of its own, keeping its text,
+   with `status: accepted` and `migrated-from: docs/development/DECISIONS.md`; name it after the entry's date.
+2. Drop the four entries headed "Template initialization" and the "Future Considerations" section, if the developer
+   agrees: they came with the blueprint and restate Home Assistant conventions the instructions files already hold.
+3. Delete `docs/development/DECISIONS.md` and run `script/decisions`, which writes the index.
+4. Carry over the _Decisions_ paragraph in the blueprint's `AGENTS.md` (section _Documentation_), and point the
+   project's own mentions of `DECISIONS.md` at the new folder.
+
 ## `template-sync-prune` — 2026-11-22
 
 **Check:** `grep -q 'prune-blueprint --apply' .github/workflows/template-sync.yml && test ! -e script/import-overlay`
