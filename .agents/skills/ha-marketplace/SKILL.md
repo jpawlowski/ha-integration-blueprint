@@ -2,14 +2,14 @@
 name: ha-marketplace
 description: >-
   Publish this Home Assistant custom integration through the Marketplace and HACS, and keep it listed — repository
-  preconditions, hacs.json, release assets, brand images, the catalog's CI gates, the hacs/default pull request, My links, how a release reaches users, and renaming, archiving or removing a listing. Use when
-  asked to "publish the integration", "get it into HACS", "submit to the Marketplace", "add it to the default
-  repositories", "why doesn't the update show up", "keep files across updates", "rename or archive the
-  repository", or when editing hacs.json, brand/ or the README's Marketplace view. SYMPTOMS — load this if you are
-  about to: open the hacs/default pull request yourself; add an `ignore` to the HACS action to make it pass; delete
-  a repository that is in the catalog; delete an old release; write user data into the integration folder; remove
-  `zip_release`; ship Home Assistant's own logo as the brand icon; or raise `homeassistant` in hacs.json without
-  naming the new minimum in the changelog.
+  preconditions, hacs.json, release assets, brand images, the catalog's CI gates, the hacs/default pull request, My
+  links, how a release reaches users, and renaming, archiving or removing a listing. Use when asked to "publish the
+  integration", "get it into HACS", "submit to the Marketplace", "add it to the default repositories", "why doesn't
+  the update show up", "keep files across updates", "rename or archive the repository", or when editing hacs.json,
+  brand/ or the README's Marketplace view. SYMPTOMS — load this if you are about to: open the hacs/default pull
+  request yourself; add an `ignore` to the HACS action to make it pass; delete a repository that is in the catalog;
+  delete an old release; write user data into the integration folder; remove `zip_release`; ship Home Assistant's own
+  logo as the brand icon; or raise `homeassistant` in hacs.json without naming the new minimum in the changelog.
 ---
 
 # Publish through the Marketplace
@@ -67,7 +67,8 @@ curl -s https://data-v2.hacs.xyz/integration/data.json | jq -r '.[] | select(.do
 ## 2. `hacs.json` — when to touch it
 
 The Marketplace reads `hacs.json` from the root **for every version it installs**, so a key applies per release.
-`initialize.sh` writes `name`, `homeassistant` and `hacs`; most integrations never need more. Full key table:
+The template ships `name`, `homeassistant`, `hacs`, `zip_release` and `filename` (`initialize.sh` sets the domain
+in it); most integrations never need more. Full key table:
 [`references/checks.md`](references/checks.md).
 
 - **`homeassistant`** — the minimum version for _this_ release. The Marketplace does not offer the release to an
@@ -86,7 +87,8 @@ The Marketplace reads `hacs.json` from the root **for every version it installs*
   that `manifest.json` sits at the root with the tag's version, attaches it under the name read from `filename`, and
   only then publishes. The Marketplace installs from that asset, for a catalog version without a GitHub connection.
   Only an asset carries a GitHub download count; a source archive does not. Removing the keys breaks installs; the
-  file name lives only in `hacs.json`, never a second time in the workflow.
+  file name lives only in `hacs.json`, never a second time in the workflow. When the job fails, the release stays a
+  draft: run the workflow by hand with the tag — "Re-run all jobs" creates no release and skips the job.
 - **`hacs`** — the minimum HACS version. The Marketplace reads it but never compares it; HACS still does, so keep it.
 - **`content_in_root`, `hide_default_branch`** — not for this layout; leave them out.
 - **`country`** — only when the integration works in some countries only; the catalog asks for it then.

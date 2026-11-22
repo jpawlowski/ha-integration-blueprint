@@ -35,7 +35,7 @@ the install badge and its fallbacks, a Codespaces blurb, the contributing sectio
 
 ## `release-zip-asset` — 2026-11-22
 
-**Check:** `jq -e '.zip_release == true and (.filename | type == "string")' hacs.json`
+**Check:** `jq -e '.zip_release == true and (.filename | type == "string")' hacs.json && jq -e '.packages["."] | .draft == true and .["force-tag-creation"] == true' release-please-config.json`
 
 Every release now carries a ZIP of `custom_components/<domain>/` as a release asset, and `hacs.json` tells the
 Marketplace to install from it. A source archive has no download count, an asset does. The sync brings the
