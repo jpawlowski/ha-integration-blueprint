@@ -5,11 +5,11 @@ description: >-
   preconditions, hacs.json, release assets, brand images, the catalog's CI gates, the hacs/default pull request, My
   links, how a release reaches users, and renaming, archiving or removing a listing. Use when asked to "publish the
   integration", "get it into HACS", "submit to the Marketplace", "add it to the default repositories", "why doesn't
-  the update show up", "keep files across updates", "rename or archive the repository", or when editing hacs.json or
-  the brand/ folder. SYMPTOMS — load this if you are about to: open the hacs/default pull request yourself; add an
-  `ignore` to the HACS action to make it pass; delete a repository that is in the catalog; delete an old release;
-  write user data into the integration folder; remove `zip_release`; ship Home Assistant's own logo as the brand icon;
-  or raise `homeassistant` in hacs.json without naming the new minimum in the changelog.
+  the update show up", "keep files across updates", "rename or archive the repository", or when editing hacs.json,
+  brand/ or the README's Marketplace view. SYMPTOMS — load this if you are about to: open the hacs/default pull
+  request yourself; add an `ignore` to the HACS action to make it pass; delete a repository that is in the catalog;
+  delete an old release; write user data into the integration folder; remove `zip_release`; ship Home Assistant's own
+  logo as the brand icon; or raise `homeassistant` in hacs.json without naming the new minimum in the changelog.
 ---
 
 # Publish through the Marketplace
@@ -137,6 +137,29 @@ pass first, then a release is published, then the pull request is opened.
 Set expectations plainly: reviews take **months**; the backlog is public. Not accepted at all: integrations that
 replace a Core integration, and builds for testing an alpha or beta of a Core integration. Never request reviews on
 the pull request — it gets closed.
+
+## 6. The README is read in two places
+
+GitHub shows the whole `README.md`. The Marketplace shows it on the repository page too, which already has an install
+button, so install instructions, install badges and contributor setup are noise there. Put what is only for GitHub
+between two markers; GitHub does not render HTML comments, so it reads as before:
+
+```markdown
+<!-- ha-marketplace:exclude-start -->
+
+## Contributing
+
+<!-- ha-marketplace:exclude-end -->
+```
+
+- A section runs from a start marker to the next end marker, or to the end of the README without one. Spaces inside
+  the marker are optional.
+- A marker inside a code block or inline code is text, so a README can show them as an example.
+- `README.template.md` excludes the Codespaces blurb, the install badge with its fallbacks, and the contributing
+  section. Keep the setup steps, entities, options and troubleshooting visible: users read those before installing.
+- Excluded text must not be referred to from visible text ("see the section above").
+- A start without its end hides the rest of the README in the Marketplace, and GitHub shows neither marker —
+  `tests/test_readme_markers.py` checks that they pair up.
 
 ## Do not
 

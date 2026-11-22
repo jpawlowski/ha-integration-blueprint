@@ -14,9 +14,13 @@ Uncomment and customize these badges if you want to use them:
 [![Discord][discord-shield]][discord]
 -->
 
+<!-- ha-marketplace:exclude-start -->
+
 **✨ Develop in the cloud:** Want to contribute or customize this integration? Open it directly in GitHub Codespaces - no local setup required!
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/jpawlowski/ha-integration-blueprint?quickstart=1)
+
+<!-- ha-marketplace:exclude-end -->
 
 ## ✨ Features
 
@@ -53,11 +57,13 @@ Uncomment and customize these badges if you want to use them:
 
 **Prerequisites:** Home Assistant 2026.11 or newer, which has the Marketplace built in (**Settings** → **Marketplace**).
 
-Click the button below to open the integration in the Marketplace:
+In the Marketplace, open this repository and select **Download**. It loads right away, without a restart.
+
+<!-- ha-marketplace:exclude-start -->
+
+Click the button below to open this repository in the Marketplace:
 
 [![Open your Home Assistant instance and open this repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=jpawlowski&repository=ha-integration-blueprint&category=integration)
-
-Then click "Download" to install the integration. The Marketplace loads it right away, without a restart.
 
 On a Home Assistant version before 2026.11, if this integration still supports it, install [HACS](https://hacs.xyz/) (Home Assistant Community Store) first, add this repository there as a custom repository, download it, and restart Home Assistant.
 
@@ -74,10 +80,11 @@ If you prefer not to use the Marketplace:
 3. Restart Home Assistant
 
 </details>
+<!-- ha-marketplace:exclude-end -->
 
 ### Step 2: Add and Configure the Integration
 
-**Important:** You must have installed the integration first (see Step 1), and restarted Home Assistant if Step 1 asked you to.
+**Important:** Install the integration first (see Step 1).
 
 #### Option 1: One-Click Setup (Quick)
 
@@ -293,6 +300,8 @@ If your device is not responding:
 3. Verify the device is powered on
 4. Check the integration diagnostics (Settings → Devices & Services → Integration blueprint → 3 dots → Download diagnostics)
 
+<!-- ha-marketplace:exclude-start -->
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please open an issue or pull request if you have suggestions or improvements.
@@ -391,6 +400,7 @@ script/develop          # Home Assistant runs at http://localhost:8123
 ```
 
 </details>
+<!-- ha-marketplace:exclude-end -->
 
 ---
 
@@ -408,6 +418,7 @@ script/develop          # Home Assistant runs at http://localhost:8123
 > - **Human review:** complete / partial / spot-checked / not performed
 > - **Automated tests:** [describe or state "not performed"]
 > - **Real-device or service testing:** [describe or state "not performed"]
+> - **Work behind it:** [devices or accounts tested, how long it has been maintained, or state "not stated"]
 > - **Maturity and known limitations:** [describe]
 >
 > If you encounter unexpected behavior, please [open an issue](../../issues) on GitHub.

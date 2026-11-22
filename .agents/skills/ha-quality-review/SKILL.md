@@ -151,6 +151,13 @@ Check each; the rule and how to comply live in the linked file.
 - Entity names read well in the UI with `has_entity_name` (no repeated device name).
 - Units, device classes, and state classes are set so history and statistics work.
 - Failures surface as repair issues or reauth flows rather than silent unavailability.
+- Every enum state, selector option and attribute name has a translation; no raw key reaches the UI.
+- Every option's `data_description` says what it changes; a long options flow has a menu rather than a chain of
+  steps.
+- What users would trigger on is a state, not only an attribute; action response data has a stable, documented
+  shape; device and library failures in actions are raised as `HomeAssistantError`.
+- Whichever of the [`ha-user-experience`](../ha-user-experience/SKILL.md) options the integration took, they are
+  applied consistently — a finding is an inconsistency, not a missing option.
 - For an integration that depends on a remote endpoint, consider `system_health.py`: a `@callback async_register`
   that calls `register.async_register_info(...)`, whose info callback returns a dict whose values may be coroutines
   (the frontend shows a spinner and resolves them). `system_health.async_check_can_reach_url(hass, ENDPOINT)` covers

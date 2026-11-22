@@ -76,6 +76,7 @@ agent that implements it. If yours does not, read the `SKILL.md` before starting
 | config flow, options, reauth, reconfigure, discovery   | [`ha-config-flow`](.agents/skills/ha-config-flow/SKILL.md)             | `blueprint.config_flow`                                |
 | the coordinator, the API client, runtime debugging     | [`ha-coordinator-debug`](.agents/skills/ha-coordinator-debug/SKILL.md) | `blueprint.coordinator`                                |
 | translations, `icons.json`                             | [`ha-translations`](.agents/skills/ha-translations/SKILL.md)           | `blueprint.translations`                               |
+| what users see: states, attributes, options, help text | [`ha-user-experience`](.agents/skills/ha-user-experience/SKILL.md)     | —                                                      |
 | tests                                                  | [`ha-testing`](.agents/skills/ha-testing/SKILL.md)                     | `blueprint.tests`                                      |
 | repair issues and flows                                | [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md)   | `blueprint.repairs`                                    |
 | anything that could break existing installs            | [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md)   | —                                                      |
@@ -116,7 +117,7 @@ These are the ones an agent typically breaks _before_ it realises a skill or ins
   it with `format_mac()`; reading the ARP cache (`getmac` and friends) does not work in every supported network setup
   and is not acceptable.
 - **Entity metadata comes from `EntityDescription` + `translation_key`** — never a hardcoded `name=` or `icon=`. The
-  one exception is a name the device or its library supplies, or a proper noun.
+  narrow exceptions are listed in `blueprint.entities`.
 - **Coordinator failures raise**: `ConfigEntryAuthFailed` (triggers reauth), `UpdateFailed` (retry),
   `ConfigEntryNotReady` during setup (retry later), or `ConfigEntryError` when the failure will not resolve on its own
   — a closed account, unsupported firmware — which stops the retry loop instead of spinning forever. Do not log

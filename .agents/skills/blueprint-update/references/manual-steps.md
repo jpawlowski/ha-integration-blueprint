@@ -4,6 +4,36 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `translation-test` — 2026-11-22
+
+**Check:** `test -f tests/test_translations.py`
+
+Optional. Copy `tests/test_translations.py` from the blueprint (`tests/` is never synced) and replace the
+blueprint's domain in its `const` import. It checks what hassfest does not: a state translation for every enum and
+select option, a display name for every attribute the integration adds, and no key in another language file that
+`en.json` lacks. It uses the `init_integration` fixture from the blueprint's `tests/conftest.py` — copy that fixture
+too if this repository's conftest has none. A failure after copying lists the keys this integration still lacks.
+
+## `ux-skill-routing` — 2026-11-22
+
+**Check:** `grep -q 'ha-user-experience' AGENTS.md`
+
+The sync brings the skill `ha-user-experience` and corrected rules in `blueprint.entities`. `AGENTS.md` is not
+synced, so carry over two changes from the blueprint's `AGENTS.md`: the routing row above the `tests` row — agents
+that only read the routing table otherwise never load the skill — and the _Entity metadata_ contract, which now
+points to `blueprint.entities` for its exceptions instead of listing them.
+
+## `readme-marketplace-markers` — 2026-11-22
+
+**Check:** `grep -q 'ha-marketplace:exclude-start' README.md`
+
+The Marketplace shows the README on the repository page, next to its own install button. Put what is only for GitHub —
+the install badge and its fallbacks, a Codespaces blurb, the contributing section — between
+`<!-- ha-marketplace:exclude-start -->` and `<!-- ha-marketplace:exclude-end -->`; GitHub renders nothing for them.
+`README.md` is never synced, so copy the placement from the blueprint's `README.template.md`, and copy
+`tests/test_readme_markers.py`, which checks that the markers pair up. Optional, and the reasoning is in
+[`ha-marketplace`](../../ha-marketplace/SKILL.md#6-the-readme-is-read-in-two-places).
+
 ## `release-zip-asset` — 2026-11-22
 
 **Check:** `jq -e '.zip_release == true and (.filename | type == "string")' hacs.json && jq -e '.packages["."] | .draft == true and .["force-tag-creation"] == true' release-please-config.json`
