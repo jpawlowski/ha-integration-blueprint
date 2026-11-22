@@ -64,6 +64,7 @@ def test_stale_index_fails_the_check(tmp_path: Path) -> None:
         pytest.param({"supersedes": "20250101-missing"}, "has no record", id="dangling-supersedes"),
         pytest.param({"rule": "AGENTS.md"}, "does not exist", id="missing-rule"),
         pytest.param({"owner": "someone"}, "unknown frontmatter fields", id="unknown-field"),
+        pytest.param({"supersedes": "2026-01-01"}, "must be a string or a list", id="date-instead-of-id"),
     ],
 )
 @pytest.mark.unit

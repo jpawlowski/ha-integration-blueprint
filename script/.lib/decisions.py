@@ -49,9 +49,11 @@ class Record:
     def links(self, name: str) -> list[str]:
         """Return a field that holds one id or path, or a list of them, as a list."""
         value = self.fields.get(name)
-        if value is None:
-            return []
-        return [value] if isinstance(value, str) else [str(item) for item in value]  # type: ignore[union-attr]
+        if isinstance(value, str):
+            return [value]
+        if isinstance(value, list):
+            return [str(item) for item in value]
+        return []
 
 
 @dataclass
