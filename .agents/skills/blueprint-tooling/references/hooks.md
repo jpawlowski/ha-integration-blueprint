@@ -64,6 +64,7 @@ Rules:
 | Script                            | pre hook                                     | post hook                                     |
 | --------------------------------- | -------------------------------------------- | --------------------------------------------- |
 | `script/architecture-check`       | `script/hooks/architecture-check.pre.sh`     | `script/hooks/architecture-check.post.sh`     |
+| `script/build`                    | `script/hooks/build.pre.sh`                  | `script/hooks/build.post.sh`                  |
 | `script/check`                    | `script/hooks/check.pre.sh`                  | `script/hooks/check.post.sh`                  |
 | `script/clean`                    | `script/hooks/clean.pre.sh`                  | `script/hooks/clean.post.sh`                  |
 | `script/develop`                  | `script/hooks/develop.pre.sh`                | — (long-running process)                      |
@@ -99,3 +100,24 @@ Rules:
 | `.devcontainer/setup-shell.sh`    | `.devcontainer/hooks/setup-shell.pre.sh`     | `.devcontainer/hooks/setup-shell.post.sh`     |
 | `.devcontainer/setup-git.sh`      | `.devcontainer/hooks/setup-git.pre.sh`       | `.devcontainer/hooks/setup-git.post.sh`       |
 | `.devcontainer/post-attach.sh`    | `.devcontainer/hooks/post-attach.pre.sh`     | `.devcontainer/hooks/post-attach.post.sh`     |
+
+## The build hook
+
+`script/build` copies the tracked files of the integration into `$BUILD_DIR`, runs `build.pre.sh` and `build.post.sh`,
+checks the result and packs the release ZIP. A hook adds what is generated rather than committed — a bundled card, a
+data file — by writing into `$BUILD_DIR`, which is the integration folder as it ships:
+
+```bash
+# script/hooks/build.post.sh
+log_step "Bundling the cards"
+npm --prefix frontend ci --silent
+npm --prefix frontend run build -- --outfile "$BUILD_DIR/frontend/cards.js"
+```
+
+- The release job sets up mise only when a build hook exists; put the tools the hook needs into
+  `.config/mise/conf.d/project.toml`, never into the workflow.
+- `script/build --in-place` runs the hooks on `custom_components/<domain>/` itself, so `script/develop` sees the
+  generated files. Ignore them in `custom_components/.gitignore`.
+- Generate only additions. `manifest.json`, translations, `services.yaml` and Python modules stay committed: hassfest,
+  the HACS action and the tests check the repository, not the ZIP.
+- `script/build` alone previews what a release ships, in `.local/build/<domain>/`.

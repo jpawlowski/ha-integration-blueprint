@@ -82,10 +82,10 @@ it) and `hide_default_branch`; most integrations never need more. Full key table
   `homeassistant.helpers.storage.Store` (under `config/.storage/`), which survives updates and is covered by
   backups. Reach for it only for files a library insists on finding inside the integration folder.
 - **`zip_release` / `filename`** — ✅ set, and keep both. release-please creates each release as a draft (`draft`,
-  `force-tag-creation` in `release-please-config.json`); the `release-asset` job in `release-please.yml` packs
-  `custom_components/<domain>/` from the tag with `git archive` (tracked files only, at the archive root), checks
-  that `manifest.json` sits at the root with the tag's version, attaches it under the name read from `filename`, and
-  only then publishes. The Marketplace installs from that asset, for a catalog version without a GitHub connection.
+  `force-tag-creation` in `release-please-config.json`); the `release-asset` job in `release-please.yml` builds the ZIP
+  with `script/build` (the tracked files of `custom_components/<domain>/` at the archive root, the build hooks, a check
+  that `manifest.json` carries the tag's version), attaches it under the name read from `filename`, and only then
+  publishes. The Marketplace installs from that asset, for a catalog version without a GitHub connection.
   Only an asset carries a GitHub download count; a source archive does not. Removing the keys breaks installs; the
   file name lives only in `hacs.json`, never a second time in the workflow. When the job fails, the release stays a
   draft: run the workflow by hand with the tag — "Re-run all jobs" creates no release and skips the job.
@@ -95,6 +95,10 @@ it) and `hide_default_branch`; most integrations never need more. Full key table
   so offering the branch offers a version that cannot install (`_async_download_version` in the Marketplace). The
   key only hides the branch in the version menu; before the first release the Marketplace still falls back to the
   branch, and that install fails, so the repository has nothing installable until then.
+- **What ships can be built, not committed.** A bundled card or generated data comes from
+  `script/hooks/build.post.sh` at release time instead of sitting in the repository; the files hassfest and the HACS
+  action validate stay committed. How:
+  [`blueprint-tooling/references/hooks.md`](../blueprint-tooling/references/hooks.md#the-build-hook).
 - `script/tests/test_hacs_json.py` fails CI when `zip_release` is set without `filename`, `hide_default_branch`, or the
   draft settings in `release-please-config.json`.
 - **`content_in_root`** — not for this layout; leave it out.

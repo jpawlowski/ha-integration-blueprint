@@ -164,7 +164,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
   setup creates, and fails with a `KeyError` before it.
 - The version in the URL busts the browser cache after an update.
 - The cards are JavaScript the integration now maintains, with its own translations and editor — a project in its own
-  right.
+  right. Bundle them in `script/hooks/build.post.sh` rather than committing the bundle
+  ([build hook](../../blueprint-tooling/references/hooks.md#the-build-hook)).
 
 ## Shipped blueprints
 

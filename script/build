@@ -1,0 +1,104 @@
+#!/bin/bash
+
+# script/build: Build the integration as it ships in a release
+#
+# Copies the tracked files of the integration into a build folder, runs the build hooks, checks the result and
+# optionally packs it as the release ZIP. Without a hook the result is the integration as committed; a project adds
+# generated files (bundled cards, data) in script/hooks/build.post.sh, which writes into $BUILD_DIR.
+#
+# Usage:
+#   ./script/build [--output DIR] [--zip FILE] [--version X.Y.Z] [--in-place]
+#
+# Options:
+#   --output DIR     Build folder (default: .local/build/<domain>); emptied first
+#   --zip FILE       Also pack the build folder into FILE, its files at the archive root
+#   --version X.Y.Z  Fail unless manifest.json carries this version
+#   --in-place       Run the hooks on the integration folder itself, for local development; no copy, no ZIP
+#
+# Examples:
+#   ./script/build                                  # Preview what ships in .local/build/
+#   ./script/build --zip my_domain.zip --version 1.2.3
+#   ./script/build --in-place                       # Generate files next to the code for script/develop
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/.."
+
+# shellcheck source=script/.lib/output.sh
+source "$SCRIPT_DIR/.lib/output.sh"
+# shellcheck source=script/.lib/integration.sh
+source "$SCRIPT_DIR/.lib/integration.sh"
+
+OUTPUT=""
+ZIP_FILE=""
+VERSION=""
+IN_PLACE=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    --output)
+        OUTPUT="${2:?--output needs a folder}"
+        shift 2
+        ;;
+    --zip)
+        ZIP_FILE="${2:?--zip needs a file name}"
+        shift 2
+        ;;
+    --version)
+        VERSION="${2:?--version needs a version}"
+        shift 2
+        ;;
+    --in-place)
+        IN_PLACE=true
+        shift
+        ;;
+    *)
+        die "Unknown option: $1 (see the usage at the top of script/build)"
+        ;;
+    esac
+done
+
+if [[ $IN_PLACE == true ]]; then
+    [[ -z $OUTPUT && -z $ZIP_FILE ]] || die "--in-place builds into the integration folder and takes no --output or --zip"
+    BUILD_DIR="$INTEGRATION_PATH"
+else
+    BUILD_DIR="${OUTPUT:-.local/build/$INTEGRATION_DOMAIN}"
+    log_header "Building $INTEGRATION_DOMAIN into $BUILD_DIR"
+    rm -rf "$BUILD_DIR"
+    mkdir -p "$BUILD_DIR"
+    # Tracked files only, as they are in the working tree: nothing untracked, ignored or cached ends up in a release.
+    git ls-files -z -- "$INTEGRATION_PATH" | while IFS= read -r -d '' file; do
+        target="$BUILD_DIR/${file#"$INTEGRATION_PATH"/}"
+        mkdir -p "$(dirname "$target")"
+        cp -p "$file" "$target"
+    done
+fi
+export BUILD_DIR
+
+run_hook "build" "pre"
+run_hook "build" "post"
+
+[[ -f "$BUILD_DIR/__init__.py" ]] || die "$BUILD_DIR has no __init__.py at its root"
+manifest_version="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["version"])' "$BUILD_DIR/manifest.json")" ||
+    die "$BUILD_DIR has no manifest.json with a version at its root"
+if [[ -n $VERSION && $manifest_version != "$VERSION" ]]; then
+    die "manifest.json carries version $manifest_version, not $VERSION"
+fi
+
+if [[ -n $ZIP_FILE ]]; then
+    python3 - "$BUILD_DIR" "$ZIP_FILE" <<'EOF'
+import sys
+import zipfile
+from pathlib import Path
+
+source, target = Path(sys.argv[1]), Path(sys.argv[2])
+with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
+    for path in sorted(source.rglob("*")):
+        if path.is_file():
+            archive.write(path, path.relative_to(source).as_posix())
+EOF
+    log_success "Packed $ZIP_FILE (version $manifest_version)"
+else
+    log_success "Built $BUILD_DIR (version $manifest_version)"
+fi
