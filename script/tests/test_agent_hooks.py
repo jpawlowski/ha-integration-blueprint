@@ -191,3 +191,37 @@ def test_blocks_invalid_payload(tmp_path: Path) -> None:
 def test_finds_a_push_behind_shell_syntax(repository: Path, command: str) -> None:
     """A push hidden behind newlines, subshells, keywords, substitutions or quoting is still inspected."""
     assert _explain(command, repository) == _other_refs("--all")
+
+
+REMIND = Path(__file__).parents[2] / ".agents" / "hooks" / "remind-change-review.sh"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("command", "reminds"),
+    [
+        pytest.param("gh pr ready 12", True, id="ready"),
+        pytest.param("script/test && gh pr ready", True, id="ready-after-a-chain"),
+        pytest.param("gh pr ready --undo", False, id="back-to-draft"),
+        pytest.param('echo "gh pr ready"', False, id="only-mentioned"),
+        pytest.param("git status", False, id="unrelated"),
+    ],
+)
+def test_change_review_reminder_before_a_pull_request_leaves_draft(
+    tmp_path: Path, command: str, *, reminds: bool
+) -> None:
+    """The reminder adds context before gh pr ready and never blocks the call."""
+    result = subprocess.run(
+        ["bash", str(REMIND)],
+        cwd=tmp_path,
+        input=json.dumps({"tool_input": {"command": command}}),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    if reminds:
+        assert "blueprint-change-review" in json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+    else:
+        assert result.stdout == ""

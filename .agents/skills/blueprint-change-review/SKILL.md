@@ -123,8 +123,16 @@ ground, when:
 - a finding needed all three fix passes.
 
 Otherwise propose nothing. It runs only on the developer's word — it spends their quota under their account — and the
-work does not wait for the answer. It is a fresh session on another family, Codex for an author on Claude for example,
-with the same brief and range; its findings go through step 4.
+work does not wait for the answer. Its findings go through step 4.
+
+`script/second-review` runs it: it takes another installed agent CLI than the one this session runs in — signed in,
+where the CLI can tell — exports the committed head into a temporary directory outside any checkout, and gives that
+CLI the brief and the diff, to read and to run and write nothing. It reviews commits, so before the first commit a
+fresh session of another family takes its place. The range is the whole branch; `--base` with the last commit an `Agent-Review:`
+trailer marks narrows it. The script recognises a Claude Code session and one that sets `AI_AGENT`; in any other,
+name the CLI with `AGENT_CLI`. A different CLI is not yet a different family — Copilot and OpenCode can run Claude
+models — so name the model with `AGENT_MODEL` where the CLI's default may be the author's. Where the script cannot
+run, a fresh session of another family with the same brief and range does the same.
 
 ## 6. Say what ran
 

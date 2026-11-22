@@ -73,6 +73,7 @@ script/skills-check      # validate .agents/skills/ and agent protected paths (a
 script/architecture-check # conservative architecture guardrails (also part of lint / lint-check) — see below
 script/push-gate         # git's pre-push hook: clean HEAD only, then lint-check + type-check in parallel
 script/version           # read the canonical version from manifest.json
+script/second-review     # a review by another agent CLI than this session's — see blueprint-change-review
 script/build             # build the integration as it ships (--zip, --in-place); hook: build.post.sh
 script/decisions         # write (--check: verify) the decision record index (also part of lint / lint-check)
 script/ha-version-sync   # align the pinned Home Assistant version across config files, and mise's Python with it
