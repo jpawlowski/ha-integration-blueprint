@@ -110,6 +110,18 @@ Release-As: 1.2.0-beta.1
 How a published release reaches users, and getting the repository into the catalog in the first place, is
 [`ha-marketplace`](../ha-marketplace/SKILL.md).
 
+## Who reads the notes
+
+The update dialog joins the notes of every release since the installed one, **but only within the last five
+releases**. A user further behind sees the newest release's notes alone; the `release-asset` job ends each release
+with a link to `CHANGELOG.md` for them.
+
+- **Anything a user must act on is a repair issue, not only a line in the notes.** Many update without reading, and a
+  notice five releases back is gone. The code raises it for whoever it concerns, whatever version they came from
+  ([`ha-breaking-changes`](../ha-breaking-changes/SKILL.md)).
+- **Release in batches, not per change.** release-please collects every merge in the open release pull request; merging
+  it weekly rather than daily keeps most users inside the five.
+
 ## Commands
 
 ```bash
