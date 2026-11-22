@@ -100,4 +100,8 @@ jobs:
           if [[ -n "${FILENAME}" ]]; then
             gh release upload "${TAG}" "${FILENAME}" --clobber --repo "${GITHUB_REPOSITORY}"
           fi
-          gh release edit "${TAG}" --draft=false --repo "${GITHUB_REPOSITORY}"
+          prerelease=false
+          if [[ "${TAG}" == *-* ]]; then
+            prerelease=true
+          fi
+          gh release edit "${TAG}" --draft=false --prerelease="${prerelease}" --repo "${GITHUB_REPOSITORY}"
