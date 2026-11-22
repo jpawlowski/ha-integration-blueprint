@@ -4,6 +4,18 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `release-notes-sections` — 2026-11-22
+
+**Check:** `grep -q '"type": "build"' release-please-config.json && grep -q 'include-v-in-tag' release-please-config.json`
+
+The release notes are what users read in the update dialog, so their sections now speak to users: 🎉 What's New,
+🐛 Fixed, ⚡ More Reliable, and 📦 Updated Dependencies for the new commit type `build`. The sync brings `build` to
+commitlint and Renovate, which now commits an update of a library in `manifest.json` → `requirements` as `build`.
+`release-please-config.json` is not synced: copy the blueprint's `changelog-sections` and add
+`"include-component-in-tag": false` and `"include-v-in-tag": true`, which pin the tag format at `v1.2.3`. Without the
+`build` section those commits stay out of the changelog. The table in `docs/development/RELEASE.md` names the
+sections too.
+
 ## `lessons-routing` — 2026-11-22
 
 **Check:** `grep -q 'A fixed bug stays fixed' AGENTS.md && grep -q 'never only in your own memory' AGENTS.md && grep -q '^| .*blueprint-lessons/SKILL.md' AGENTS.md`

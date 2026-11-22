@@ -67,7 +67,7 @@ This project is pre-1.0.0. Version bumps follow these rules:
 | Commit type                   | Version change                      |
 | ----------------------------- | ----------------------------------- |
 | `feat`                        | patch bump (e.g. `0.1.0` → `0.1.1`) |
-| `fix`, `perf`                 | patch bump                          |
+| `fix`, `perf`, `build`        | patch bump                          |
 | `feat!` or `BREAKING CHANGE:` | minor bump (e.g. `0.1.0` → `0.2.0`) |
 
 Once the project reaches `1.0.0`, standard SemVer applies (`feat` → minor, `fix` → patch, breaking → major).
@@ -76,12 +76,13 @@ Once the project reaches `1.0.0`, standard SemVer applies (`feat` → minor, `fi
 
 Only user-facing changes appear in the public CHANGELOG:
 
-| Type                                      | Visible        |
-| ----------------------------------------- | -------------- |
-| `feat`                                    | ✅ Features    |
-| `fix`                                     | ✅ Bug Fixes   |
-| `perf`                                    | ✅ Performance |
-| `refactor`, `chore`, `docs`, `test`, `ci` | hidden         |
+| Type                                      | Visible                    |
+| ----------------------------------------- | -------------------------- |
+| `feat`                                    | ✅ 🎉 What's New           |
+| `fix`                                     | ✅ 🐛 Fixed                |
+| `perf`                                    | ✅ ⚡ More Reliable        |
+| `build`                                   | ✅ 📦 Updated Dependencies |
+| `refactor`, `chore`, `docs`, `test`, `ci` | hidden                     |
 
 ## Developer Scripts
 
