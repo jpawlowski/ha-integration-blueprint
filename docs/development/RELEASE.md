@@ -131,6 +131,11 @@ Generates AI-enhanced release notes with a coding agent CLI — Claude Code, Cod
    keeping everything release-please reads back when the PR is merged. Run it last: release-please rewrites the
    body whenever another commit reaches `main`
 
+**What the prompt knows about your integration** comes from `.github/release-notes/prompt.md`, if you add one: what
+the integration does for users, your own jargon to keep out of the notes, a title, a commit trailer to prefer. It is
+added after the generic rules and wins where they disagree. The file is yours; template sync never replaces it, while
+`script/release-notes` itself is template-managed.
+
 **`--interactive` mode** writes the full prompt and context to `.agents/scratch/release-notes-context.md` and opens a session of the same agent so you can iterate manually.
 
 **Skip a commit from release notes** by adding a trailer to the commit body:

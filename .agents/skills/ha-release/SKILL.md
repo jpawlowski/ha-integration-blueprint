@@ -138,6 +138,11 @@ script/release-notes --apply-file NOTES # write finished notes into the open rel
 `autorelease: pending` for users, from the commits and a compact diff since the last tag, with the sections of
 `release-please-config.json`.
 
+**What the prompt should know about this integration** goes into `.github/release-notes/prompt.md`: what it does for
+users, this project's own jargon to keep out of the notes, a title, a commit trailer to prefer. The project owns the
+file and it wins over the generic rules; `script/release-notes` itself is template-managed. Asked to change how the
+notes read, edit that file.
+
 **Run `--apply` or `--apply-file` last, right before merging the release PR.** release-please rewrites that body whenever another
 commit reaches `main`, and the rewritten notes are gone without a word. `--apply` replaces only the notes under the
 version heading and leaves the rest of the body as release-please reads it back; the release takes its notes from
