@@ -88,4 +88,4 @@ moment they go looking, and it cannot go stale — the code it describes is froz
 | JSON (`manifest.json`, translations, …) | none       | The format has none. Say it in the schema, or in `docs/`.                                                                                       |
 | JSONC (`.devcontainer/`, `*.jsonc`)     | `//`       | Comments are _possible_ here, which is not the same as wanted. Gate 1 decides, and the answer is usually no.                                    |
 | Shell in `script/`                      | `#`        | The header block from `blueprint.shell` (name, description, usage); in the body only for non-obvious logic. Shellcheck disables carry a reason. |
-| Markdown                                | `<!-- -->` | Only for machine-read markers such as `blueprint-only` and `repo-role`. Prose explains itself.                                                  |
+| Markdown                                | `<!-- -->` | Only for machine-read markers such as `blueprint-only`, `repo-role` and `ha-marketplace:exclude-start`/`-end`. Prose explains itself.           |
