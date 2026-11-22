@@ -165,8 +165,7 @@ Beyond a plain icon, a key can carry:
 - `state_attributes` — icons per attribute value, for things like a climate preset or a fan mode. Only attributes,
   not arbitrary keys.
 
-An icon that depends on more than the entity's own state — the time, another value — is the one case for an `icon`
-property in code ([`blueprint.entities`](../../instructions/blueprint.entities.instructions.md)).
+Where code may set an icon instead is in [`blueprint.entities`](../../instructions/blueprint.entities.instructions.md).
 
 ```json
 {

@@ -82,11 +82,9 @@ The mechanical rules are in the instructions file. What this step actually costs
 
 - **`key`** becomes part of the unique ID. Pick it once — renaming it later is a breaking change
   ([`ha-breaking-changes`](../ha-breaking-changes/SKILL.md)).
-- **Primary, diagnostic or config?** Diagnostic is information about the device or the integration itself — signal,
-  firmware, connection, data age — not a secondary reading of what it measures; the test is in
-  [Entity Categories](../../instructions/blueprint.entities.instructions.md#entity-categories). Useful to few and
-  noisy for everyone else means disabled by default, a separate choice; hidden is something else again. Which is
-  which, and why the choice is final:
+- **Primary, diagnostic or config?** The test is in
+  [Entity Categories](../../instructions/blueprint.entities.instructions.md#entity-categories); disabled by default is
+  a separate choice, hidden another. Which is which, and why the choice is final:
   [Disabled and Hidden By Default](../../instructions/blueprint.entities.instructions.md#disabled-and-hidden-by-default).
 - **Is there a matching `device_class`?** Check the platform's enum before inventing units or icons. A device class
   buys unit conversion, correct icons and voice-assistant behaviour for free.

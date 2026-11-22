@@ -22,9 +22,11 @@ never renumber it — automations depend on the numbers.
 
 ## Timestamp and minutes-until
 
-For an upcoming event, give both: `next_start` as an ISO 8601 timestamp (a `TIMESTAMP` sensor or an attribute) for
-templates and display, and `next_start_in_minutes` for a numeric-state trigger. The minutes value changes every
-minute, so it belongs in `_unrecorded_attributes` or in its own disabled-by-default sensor.
+For an upcoming event, `next_start` as an ISO 8601 timestamp (a `TIMESTAMP` sensor or an attribute) is the default:
+it changes only when the event moves, and a template or `time` trigger can test against it. A
+`next_start_in_minutes` value for a numeric-state trigger costs a timer and a state write every minute, unrecorded or
+not — offer it as its own disabled-by-default sensor, never as an attribute on an entity that otherwise changes
+rarely.
 
 ## Units without a converter
 
@@ -147,13 +149,16 @@ return {
 ## Shipped cards
 
 ```python
-await hass.http.async_register_static_paths(
-    [StaticPathConfig(f"/{DOMAIN}/cards", str(Path(__file__).parent / "frontend"), cache_headers=True)]
-)
-add_extra_js_url(hass, f"/{DOMAIN}/cards/{DOMAIN}-cards.js?v={VERSION}")
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(f"/{DOMAIN}/cards", str(Path(__file__).parent / "frontend"), cache_headers=True)]
+    )
+    add_extra_js_url(hass, f"/{DOMAIN}/cards/{DOMAIN}-cards.js?v={VERSION}")
+    return True
 ```
 
-- Register once per Home Assistant start, not per config entry.
+- `async_setup()`, not `async_setup_entry()`: it runs once per start. Per entry, a second registration of the same
+  route raises and the script URL is added twice.
 - The version in the URL busts the browser cache after an update.
 - The cards are JavaScript the integration now maintains, with its own translations and editor — a project in its own
   right.

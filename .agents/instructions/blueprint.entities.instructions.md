@@ -188,50 +188,23 @@ ones from history with a **class-level** `_unrecorded_attributes: frozenset[str]
 - Static facts — firmware, serial number, model — belong in the device info, not in an attribute.
 - The recorder drops **all** attributes of a state, with a warning, once together they exceed 16 KiB.
 
-**Shape and names:**
+**Shape and names** — the reasoning and the naming scheme are in
+[`ha-user-experience`](../skills/ha-user-experience/SKILL.md#3-attributes):
 
-- **Flat for what people read.** A value someone should see is a top-level attribute with a plain value — the
-  more-info dialog gives it its own row, a translated name and locale formatting. A dict or a list of objects is
-  shown as raw YAML, unformatted and untranslated: keep those for bulk data machines read (chart series, time
-  windows), and list them in `_unrecorded_attributes`.
-- **Every attribute has a key and a display name, designed separately.** The display name is
-  `entity.<platform>.<translation_key>.state_attributes.<attr>.name` — always set, for every attribute, which needs a
-  `translation_key` on the entity — also on a main-feature entity with `name=None`, and on one its device class
-  would otherwise name.
-  - **The key is the technical name** that templates, automations and the YAML view use: one scheme across the
-    integration, the same words for the same things, built as a hierarchy from subject to detail (`period_start`,
-    `period_end`, `period_duration_minutes`). It is stable — renaming it breaks automations.
-  - **The display name is for people** and decides where the attribute appears: the more-info dialog sorts by it, per
-    language. Word it so related attributes sort together and the important ones read first in each language;
-    rewording it later breaks nothing.
-  - Without a display name the dialog falls back to the key with underscores as spaces, the first letter capitalised
-    and `id`, `ip`, `mac`, `gps` in capitals (`computeAttributeNameDisplay` in the frontend) — English in every
-    language. The key still reads as words for that case.
-- **The name explains itself.** Put the scope or time window in it (`next_3h_average`, `trailing_24h_max`), name the
-  reference of a comparison (`price_diff_from_daily_min`), use a singular `_count`, and qualify generic words
-  (`data_status`, not `status`).
-- **Say the unit, and put the symbol in the translation.** A unit that is not obvious goes into the name, because a
-  custom attribute shows no unit of its own. The key is a translation key, which hassfest restricts to
-  `[a-z0-9_-]`, so it spells the unit (`price_diff_from_daily_max_percent`, `remaining_minutes`); the translated name
-  carries the symbol ("Difference from daily maximum (%)"). A key with `%` cannot be translated and shows as the raw
-  English key in every language.
-- **A time attribute only when the state's own timestamps do not answer the question.** `last_changed` (the value
-  changed), `last_updated` (value or attributes changed) and `last_reported` (written, even unchanged) all say when
-  Home Assistant wrote the state — never what the value refers to. Add one when:
-  - the value is about another time than now — the next interval, tomorrow, a window ahead: name its start and end,
-    or the day (`interval_start`, `window_end`, `applies_to_date`);
-  - the source measured it noticeably earlier than Home Assistant received it — a cloud that caches, a device that
-    reports late: `measured_at`.
-
-  Not when the value is current and arrives promptly: the state's timestamps already cover it. Data age for the whole
-  integration is one diagnostic `TIMESTAMP` sensor, not an attribute on every entity. Never an attribute that changes
-  on every poll ("fetched at") — it duplicates `last_reported`, fires a state change each time and, unless
-  unrecorded, writes a row. Name it for what it means, not `timestamp`; a time that is itself the main information is
-  a `TIMESTAMP` sensor.
-
-- **One order, by importance:** time reference, the values decisions rest on, further values, comparisons, detail,
-  bulk data, help text. The more-info dialog sorts attributes alphabetically by their translated name, so the order
-  does not make anything prominent there; it keeps the YAML view, developer tools and the API readable.
+- **Flat for what people read.** A value someone should see is a top-level attribute with a plain value. A dict or a
+  list of objects is shown as raw YAML: keep those for bulk data machines read, in `_unrecorded_attributes`.
+- **Every attribute has a display name**, `entity.<platform>.<translation_key>.state_attributes.<attr>.name`, so the
+  entity needs a `translation_key` — also a main-feature entity with `name=None`, and one its device class would
+  otherwise name. Without it the dialog shows the de-underscored English key in every language.
+- **The key is stable and a translation key**: renaming it breaks automations, and hassfest allows only `[a-z0-9_-]`,
+  so a unit is spelled out (`remaining_minutes`, `diff_from_daily_max_percent`) and the symbol goes into the display
+  name ("Difference from daily maximum (%)").
+- **A time attribute only when the state's own timestamps do not answer the question.** `last_changed`,
+  `last_updated` and `last_reported` say when Home Assistant wrote the state, never what the value refers to. Add one
+  for a value about another time than now (`interval_start`, `applies_to_date`), or one the source measured noticeably
+  earlier (`measured_at`). Data age for the whole integration is one diagnostic `TIMESTAMP` sensor. Never a per-poll
+  "fetched at": it duplicates `last_reported` and writes a state change each time. Name it for what it means, not
+  `timestamp`.
 
 **NEVER override `state_attributes` or `capability_attributes`** - reserved for base platform components (brightness,
 color, etc.)

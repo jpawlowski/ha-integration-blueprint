@@ -8,25 +8,19 @@ once it is done. Run the check from the repository root.
 
 **Check:** `test -f tests/test_translations.py`
 
-Optional. The blueprint now ships `tests/test_translations.py`: every option of an enum sensor or a select has its
-`state` translation in `en.json`, every attribute the integration adds has a display name
-(`state_attributes.<attr>.name`), and every language file carries exactly the keys of `en.json`. Neither hassfest nor
-`pytest-homeassistant` checks any of it. The attribute test finds the attributes Home Assistant's platforms name
-themselves on its own; a failure after copying lists the display names this integration still lacks. `tests/` is never synced, so copy the file from the blueprint and replace the
-blueprint's domain in its `const` import with this repository's. It needs no other change — it reads the entities
-through the registry and finds the translation files next to the integration. If the integration has no entity with
-options yet, it fails on purpose; delete the first test until one exists, or record this step as skipped.
+Optional. Copy `tests/test_translations.py` from the blueprint (`tests/` is never synced) and replace the
+blueprint's domain in its `const` import. It checks what hassfest does not: a state translation for every enum and
+select option, a display name for every attribute the integration adds, and the same keys in every language file. A
+failure after copying lists the keys this integration still lacks.
 
 ## `ux-skill-routing` — 2026-11-22
 
 **Check:** `grep -q 'ha-user-experience' AGENTS.md`
 
-The sync brings the new skill `ha-user-experience` — deciding what users see: states, attributes, icons, options,
-help in the UI, and actions shaped for automations — and the corrected entity rules in `blueprint.entities` (the icon
-property exception, entity versus attribute, `EntityCategory.CONFIG` for settings automations change). `AGENTS.md` is
-not synced, so carry over two changes from the blueprint's `AGENTS.md`: the routing row above the `tests` row —
-agents that only read the routing table otherwise never load the skill — and the `icon` property exception in the
-_Entity metadata_ contract, which otherwise contradicts `blueprint.entities`.
+The sync brings the skill `ha-user-experience` and corrected rules in `blueprint.entities`. `AGENTS.md` is not
+synced, so carry over two changes from the blueprint's `AGENTS.md`: the routing row above the `tests` row — agents
+that only read the routing table otherwise never load the skill — and the _Entity metadata_ contract, which now
+points to `blueprint.entities` for its exceptions instead of listing them.
 
 ## `readme-marketplace-markers` — 2026-11-22
 

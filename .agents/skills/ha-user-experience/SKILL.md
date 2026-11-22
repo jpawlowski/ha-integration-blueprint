@@ -22,20 +22,8 @@ its own.
 
 **Everything here is an option with a cost, not a rule.** The developer decides which ones the integration takes; ask
 in their terms ("will people put this on a dashboard, use it in an automation, or both?") and record the answer.
-Small integrations need little of it. The rules the patterns rely on stay where they are:
-
-- [`blueprint.entities`](../../instructions/blueprint.entities.instructions.md) — attributes, entity categories,
-  disabled and hidden by default, icons
-- [`blueprint.translations`](../../instructions/blueprint.translations.instructions.md) — keys, placeholders, UI
-  text style
-- [`blueprint.config_flow`](../../instructions/blueprint.config_flow.instructions.md) — menus, sections,
-  `data_description`
-- [`blueprint.service_actions`](../../instructions/blueprint.service_actions.instructions.md) — exceptions, response
-  data, targets
-
-The procedures to build each piece are [`ha-entity-platform`](../ha-entity-platform/SKILL.md),
-[`ha-config-flow`](../ha-config-flow/SKILL.md), [`ha-service-action`](../ha-service-action/SKILL.md) and
-[`ha-translations`](../ha-translations/SKILL.md). This skill decides _what_ to build before them.
+Small integrations need little of it. This skill decides _what_ to build; the rules live in the `blueprint.*`
+instructions files and the procedures in the matching `ha-*` skills, linked where they apply.
 
 ## Reference files
 
@@ -54,8 +42,6 @@ them:
 | Reading    | looks at a dashboard, the more-info dialog, the history  | 2–4      |
 | Operating  | sets it up, changes options, reacts to an error          | 5–6      |
 | Automating | builds automations and scripts on its states and actions | 7        |
-
-Sections 8 and 9 serve all three.
 
 Home Assistant designs for
 [three user types](https://contributors.home-assistant.io/design/users/): Outgrowers want it to just work, Tinkerers
@@ -83,9 +69,9 @@ changes entity IDs, states or attributes, which [`ha-breaking-changes`](../ha-br
 
 - **Something people trigger on is a state.** "Is it in the cheap period", "is a fault active" → a binary sensor or
   an enum sensor. A `state` trigger works on it directly; an attribute needs a template trigger.
-- **A fixed set of values is an enum sensor** (`SensorDeviceClass.ENUM` with `options`), with a translated name for
-  **every** value. Untranslated states are the most common gap in custom integrations, and the frontend then shows
-  the raw code.
+- **A fixed set of values is an enum sensor** (`SensorDeviceClass.ENUM` with `options`), every value translated
+  ([rule](../../instructions/blueprint.translations.instructions.md#language-aware-from-the-first-line)) —
+  untranslated states are the most common gap in custom integrations.
 - **An ordered enum gets an ordinal beside it** — `level: "high"` as the state, `level_value: 1` as an attribute — so
   an automation can test "at least high" without listing values. [`patterns.md`](references/patterns.md#ordinal-beside-an-enum).
 
@@ -140,8 +126,6 @@ The category answers what an entity is about, and is decided separately from on 
 | **Primary**    | the main readings and controls                      | a secondary reading few need — another time window |
 | **Diagnostic** | what users watch for trouble — connection, data age | noisy detail — signal strength, raw API counters   |
 
-- **Do not make an entity diagnostic to hide it.** It then drops out of the dashboards and voice assistants of the
-  users who want exactly that reading. Disable it by default instead.
 - **Give a service integration its own diagnostics too**: last successful update, API status, data age. That is what
   users look at when "the values look stale", and what an automation can alert on.
 - **An entity or the diagnostics download?** A value someone watches over time or alerts on is a diagnostic entity; a
@@ -171,9 +155,8 @@ A device picks its unit for technical reasons; the integration picks the one use
 - **Where it cannot** — money, a currency subunit, a price per kWh, anything without a device class: converting is the
   integration's job. Make it an option with a default from context (the account's currency, the region's custom —
   cents for euro electricity prices, the main unit for kroner), and say so in its `data_description`.
-- **Build units from Home Assistant's constants**, never typed by hand: `UnitOfEnergy.KILO_WATT_HOUR`, `CURRENCY_EURO`
-  and friends, composed as `f"{symbol}/{UnitOfEnergy.KILO_WATT_HOUR}"`; `hass.config.currency` gives the ISO code to
-  pick the symbol from.
+- **Units come from Home Assistant's constants** ([`blueprint.python`](../../instructions/blueprint.python.instructions.md));
+  for money, `hass.config.currency` gives the ISO code to pick the symbol from.
 - `SensorDeviceClass.MONETARY` takes an ISO 4217 code as its unit and only `state_class: total`; it has no converter.
 
 ### One entity per purpose when they conflict
@@ -201,22 +184,22 @@ of the recorder. Translate attribute names and enum attribute values too
 ([`ha-translations`](../ha-translations/SKILL.md)), so the more-info dialog shows no raw keys.
 
 **Attributes are part of the UI, not only data for automations.** They are where a curious user finds out more
-about a value without opening the documentation — why a period was chosen, what a value is compared to. Give their
-names and values the same care as entity names. Every attribute gets a technical key for templates and a translated
-display name for people, and the two are designed for different readers: the key as a stable hierarchy, the display
-name for reading and for the alphabetical order of the dialog in each language
-([rule](../../instructions/blueprint.entities.instructions.md#custom-state-attributes)).
+about a value without opening the documentation — why a period was chosen, what a value is compared to. The rules
+for their shape, display names and keys are in
+[`blueprint.entities`](../../instructions/blueprint.entities.instructions.md#custom-state-attributes); the design on
+top of them:
 
-How the frontend shows attributes decides their shape (`ha-more-info-details.ts` and `ha-attribute-value.ts` in
-the frontend):
-
-- **A plain value gets a row of its own** with its translated name and a locale-formatted value; a dict or a list of
-  objects becomes a raw YAML block. What a person should read is flat; nested structures are for cards and templates.
-- **The dialog sorts attributes alphabetically by name.** Nothing can be pinned to the top by ordering the dict —
-  prominence comes from the state, the name and the icon, and grouping from display names that start alike. A consistent order
-  still pays off in the YAML view and in developer tools, where templates are written.
-- Names, order and the time-reference rule are in
-  [`blueprint.entities`](../../instructions/blueprint.entities.instructions.md#custom-state-attributes).
+- **The key is for templates, the display name for people.** Build keys as one hierarchy across the integration,
+  subject to detail (`period_start`, `period_end`, `period_duration_minutes`), with the scope in the name
+  (`next_3h_average`), the reference of a comparison (`price_diff_from_daily_min`), a singular `_count`, and
+  qualified generic words (`data_status`).
+- **The dialog sorts by display name, per language** (`ha-more-info-details.ts` in the frontend), so nothing can be
+  pinned to the top by ordering the dict. Word display names so related attributes start alike and sort together;
+  prominence comes from the state, the name and the icon. Rewording a display name breaks nothing.
+- **A plain value gets its own row** with a locale-formatted value; a dict becomes a raw YAML block
+  (`ha-attribute-value.ts`). What a person should read is flat.
+- **Still keep one order in the dict** — time reference, decision values, further values, comparisons, detail, bulk
+  data, help text: it is what the YAML view, developer tools and the API show.
 
 ### What belongs in the recorder
 
@@ -224,24 +207,23 @@ The recorder keeps every state change with its attributes for 10 days by default
 statistics, indefinitely, only for entities with a `state_class`. An integration cannot exclude an entity's state
 from recording; what it controls is:
 
-- **Whether the value is an entity at all**, and whether that entity is on by default (above). A disabled entity
-  records nothing.
-- **`state_class`** — only where a long-term curve means something. Prices for today, a forecast, a value for a
-  future time: their history is uninteresting tomorrow, so no statistics.
+- **Whether the value is an entity at all**, and whether it is on by default (above) — a disabled entity records
+  nothing — and its `state_class`: none for a value whose history is uninteresting tomorrow
+  ([rule](../../instructions/blueprint.entities.instructions.md)).
 - **Which attributes are recorded.** What matters only now or today — the schedule for the coming hours, a list for
-  a chart, help text, a minutes-until value — goes into `_unrecorded_attributes`.
-- **How often the state changes.** A write that carries no new meaning is a new row; do not refresh a timestamp
-  attribute on every poll.
+  a chart, help text — goes into `_unrecorded_attributes`.
+- **How often the state is written.** `_unrecorded_attributes` keeps a value out of the database, not out of the
+  state machine: every change is still a state write and a `state_changed` event. A minutes-until value means a write
+  per minute; a long help text travels with every write.
 
 A user who wants less can exclude whole entities with `recorder: exclude` — worth a line in the user documentation for
 an integration with many frequently changing entities.
 
 ## 4. Icons and colors
 
-- **An icon that changes with the state tells the story at a glance** — `icons.json` `state` or `range` for the
-  entity's own state, the `icon` property only when it depends on more
-  ([`blueprint.entities`](../../instructions/blueprint.entities.instructions.md), [`ha-translations`](../ha-translations/SKILL.md#iconsjson)).
-  `icons.json` is also what makes the icon right in the history and in state selectors.
+- **An icon that changes with the state tells the story at a glance** — `icons.json` `state` or `range`, which also
+  shows the right icon in the history and in state selectors; where code is allowed instead is in
+  [`blueprint.entities`](../../instructions/blueprint.entities.instructions.md).
 - **A color hint is a workaround.** Home Assistant has no color slot; an attribute (`icon_color`) holding a theme
   variable such as `var(--warning-color)` serves custom cards and card templates, and the default frontend ignores
   it. Theme variables, never hex values, so it follows the user's theme. Unrecorded.
@@ -260,7 +242,7 @@ more, not the basics.
 - **Entity descriptions are a workaround.** Home Assistant has no slot for "what is this entity for". A `description`
   attribute filled from the integration's own translated text, optionally switchable to a long form, answers it on
   the more-info dialog. Cost: the text is in the server's language, not each user's; it needs its own loader; it must
-  be unrecorded. [`patterns.md`](references/patterns.md#entity-descriptions).
+  be unrecorded, and it still travels with every state write — keep it short, the long form in `docs/user/`. [`patterns.md`](references/patterns.md#entity-descriptions).
 - **A failure the user can fix is a repair issue** that names the cause and the fix, not a log line.
 
 ## 6. Options that stay navigable
@@ -284,13 +266,11 @@ more, not the basics.
   or a one-shot command. Anything that is a state of the device is an entity.
 - **Response data is an interface.** Stable keys, ISO 8601 timestamps, units stated in the key or the data, one shape
   per action — or an explicit format parameter. `SupportsResponse.OPTIONAL` when it is both a command and a query.
-  Changing the shape later is a breaking change. [`patterns.md`](references/patterns.md#response-data).
+  [`patterns.md`](references/patterns.md#response-data).
 - **Parameters default to what most calls want**, selector options are translated, and fields go into `sections` once
   they pile up.
-- **Only `HomeAssistantError` can be skipped** with `continue_on_error` — `ServiceValidationError` included. Any other
-  exception stops the automation regardless, and so do configuration errors: a schema error, a template error, an
-  unknown action or entity (`CONFIGURATION_ERRORS` in `helpers/script.py`). Wrap device and library failures.
-- **Calling twice is harmless.** Automations retrigger more often than anyone expects.
+- **Errors an automation can skip, and calls that are safe twice** — the rules are in
+  [`blueprint.service_actions`](../../instructions/blueprint.service_actions.instructions.md).
 - Events the integration can detect ("a fault was reported") are a trigger platform, not an event the user has to
   filter — [`ha-service-action`](../ha-service-action/SKILL.md#triggers-and-conditions).
 
@@ -321,7 +301,6 @@ running entities, before a user sees a raw key.
 
 - ❌ Do not turn these options into requirements. Ask which ones the integration should take.
 - ❌ Do not use an attribute as the only place for something users trigger on.
-- ❌ Do not compute an icon in code that `icons.json` can express.
 - ❌ Do not present a workaround (color hints, entity descriptions) as a Home Assistant feature.
 - ❌ Do not overwrite a file the integration ships — a blueprint, a dashboard — once its content differs from what
   was shipped: the user edited it.

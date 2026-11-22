@@ -117,8 +117,7 @@ These are the ones an agent typically breaks _before_ it realises a skill or ins
   it with `format_mac()`; reading the ARP cache (`getmac` and friends) does not work in every supported network setup
   and is not acceptable.
 - **Entity metadata comes from `EntityDescription` + `translation_key`** — never a hardcoded `name=` or `icon=`. The
-  exceptions are a name the device or its library supplies, a proper noun, and an `icon` property whose icon depends
-  on more than the entity's own state.
+  narrow exceptions are listed in `blueprint.entities`.
 - **Coordinator failures raise**: `ConfigEntryAuthFailed` (triggers reauth), `UpdateFailed` (retry),
   `ConfigEntryNotReady` during setup (retry later), or `ConfigEntryError` when the failure will not resolve on its own
   — a closed account, unsupported firmware — which stops the retry loop instead of spinning forever. Do not log
