@@ -41,7 +41,7 @@ Do not run it as a ritual. If nothing you could ask would change a file, you are
 
 1. **Read before you ask.** Every question the repository already answers spends the developer's patience on
    nothing. Check `manifest.json`, the coordinator's `_async_update_data`, the existing `EntityDescription` sets,
-   `translations/en.json`, `docs/development/DECISIONS.md` and recent commits first. Then _state_ what you found and
+   `translations/en.json`, the index in `docs/development/decisions/` and recent commits first. Then _state_ what you found and
    ask for confirmation instead — "you poll every 30 s and there is no push path; still true?" is one word to answer.
 2. **One question at a time.** A numbered list of twelve gets one reply covering three of them, and the other nine
    turn into assumptions. Ask, wait, use the answer to pick the next question.
@@ -171,7 +171,7 @@ entry says what a word means, not what the code does with it.
 | A whole integration on the fresh blueprint               | [`blueprint-scaffold`](../blueprint-scaffold/SKILL.md)                           |
 | An integration that already has users, being migrated in | [`blueprint-import`](../blueprint-import/SKILL.md) — the brief feeds its phase 0 |
 | More than ~10 files, or a structural change              | [`ha-planning`](../ha-planning/SKILL.md) — plan, then confirm                    |
-| A choice that is expensive to reverse                    | `ha-planning` → an entry in `docs/development/DECISIONS.md`                      |
+| A choice that is expensive to reverse                    | `ha-planning` → a record in `docs/development/decisions/`                        |
 | Entities or a platform                                   | [`ha-entity-platform`](../ha-entity-platform/SKILL.md)                           |
 | A service action                                         | [`ha-service-action`](../ha-service-action/SKILL.md)                             |
 | Setup, options, reauth or discovery                      | [`ha-config-flow`](../ha-config-flow/SKILL.md)                                   |

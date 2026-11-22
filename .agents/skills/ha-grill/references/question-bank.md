@@ -16,7 +16,7 @@ Answer these from the repository, then confirm the result in one line instead of
 | `custom_components/<domain>/coordinator/` | The current payload shape and update interval              |
 | The platform directories and `PLATFORMS`  | Which surfaces already exist                               |
 | `translations/en.json`, `icons.json`      | Naming conventions already in use                          |
-| `docs/development/DECISIONS.md`           | Choices already made, and what they oblige                 |
+| `docs/development/decisions/README.md`    | Choices already made, and what they oblige                 |
 | `git log --oneline -20`                   | What the developer has been working on, and in which style |
 
 If `initialize.sh` still exists, the repository has not been initialised — settle that before anything else
@@ -51,14 +51,14 @@ blocks apply rather than forcing the integration into one of them.
 
 **Access** — when there is an endpoint
 
-| Decision                                                | Why it earns a turn                                                  |
-| ------------------------------------------------------- | -------------------------------------------------------------------- |
-| Local network, cloud API, or both                       | `iot_class`, and whether the integration survives an outage          |
-| Protocol: REST, WebSocket, MQTT, Bluetooth, proprietary | API client shape, and whether a library beats writing one            |
-| Auth: none, API key, username/password, OAuth2, token   | Config flow fields, and whether reauth is needed                     |
-| Do credentials expire, rotate, or get revoked           | Reauth is not optional if they do                                    |
-| Rate limits, or a documented minimum poll interval      | `UPDATE_INTERVAL`; a ban is a support ticket you cannot fix          |
-| A maintained PyPI library that already wraps this       | The most expensive decision to revisit — record it in `DECISIONS.md` |
+| Decision                                                | Why it earns a turn                                              |
+| ------------------------------------------------------- | ---------------------------------------------------------------- |
+| Local network, cloud API, or both                       | `iot_class`, and whether the integration survives an outage      |
+| Protocol: REST, WebSocket, MQTT, Bluetooth, proprietary | API client shape, and whether a library beats writing one        |
+| Auth: none, API key, username/password, OAuth2, token   | Config flow fields, and whether reauth is needed                 |
+| Do credentials expire, rotate, or get revoked           | Reauth is not optional if they do                                |
+| Rate limits, or a documented minimum poll interval      | `UPDATE_INTERVAL`; a ban is a support ticket you cannot fix      |
+| A maintained PyPI library that already wraps this       | The most expensive decision to revisit — record it as a decision |
 
 **The payload** — when something is fetched, insist on a real one
 

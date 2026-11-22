@@ -41,7 +41,7 @@ Every piece of guidance goes in exactly one place. Before writing anything into 
 The last row is decided by audience, not by subject. `docs/development/CUSTOMIZATION.md` describes hooks and template
 sync — blueprint mechanisms both — but it addresses someone who received the blueprint, so it stays there. Why the
 blueprint mints its development token offline addresses whoever maintains the blueprint, so it goes in
-[`docs/blueprint/DECISIONS.md`](../../../docs/blueprint/DECISIONS.md).
+[`docs/blueprint/decisions/`](../../../docs/blueprint/decisions/README.md).
 
 `initialize.sh` deletes `docs/blueprint/` wholesale, and `docs/` is already in `.templatesyncignore`, so nothing there
 needs further registration. Anything blueprint-only **outside** that directory needs all three steps — see

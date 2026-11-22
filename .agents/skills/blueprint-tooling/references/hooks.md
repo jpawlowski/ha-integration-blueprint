@@ -67,6 +67,7 @@ Rules:
 | `script/build`                    | `script/hooks/build.pre.sh`                  | `script/hooks/build.post.sh`                  |
 | `script/check`                    | `script/hooks/check.pre.sh`                  | `script/hooks/check.post.sh`                  |
 | `script/clean`                    | `script/hooks/clean.pre.sh`                  | `script/hooks/clean.post.sh`                  |
+| `script/decisions`                | `script/hooks/decisions.pre.sh`              | `script/hooks/decisions.post.sh`              |
 | `script/develop`                  | `script/hooks/develop.pre.sh`                | — (long-running process)                      |
 | `script/ha`                       | `script/hooks/ha.pre.sh`                     | `script/hooks/ha.post.sh`                     |
 | `script/hassfest`                 | `script/hooks/hassfest.pre.sh`               | `script/hooks/hassfest.post.sh`               |
