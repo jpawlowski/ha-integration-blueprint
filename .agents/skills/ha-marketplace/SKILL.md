@@ -147,7 +147,7 @@ between two markers; GitHub does not render HTML comments, so it reads as before
 ```markdown
 <!-- ha-marketplace:exclude-start -->
 
-## Installation
+## Contributing
 
 <!-- ha-marketplace:exclude-end -->
 ```

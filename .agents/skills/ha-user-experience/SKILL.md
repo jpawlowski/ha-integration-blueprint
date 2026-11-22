@@ -294,7 +294,7 @@ The agent rule stays: change `en.json` only, and another language file only when
 ([`ha-translations`](../ha-translations/SKILL.md)).
 
 Nothing in Home Assistant's tooling checks that every enum option is translated, that every attribute has a display
-name, or that the language files carry the same keys. `tests/test_translations.py` checks all three through the
+name, or that no language file keeps a key `en.json` no longer has. `tests/test_translations.py` checks all three through the
 running entities, before a user sees a raw key.
 
 ## Do not

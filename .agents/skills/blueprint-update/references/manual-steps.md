@@ -10,8 +10,9 @@ once it is done. Run the check from the repository root.
 
 Optional. Copy `tests/test_translations.py` from the blueprint (`tests/` is never synced) and replace the
 blueprint's domain in its `const` import. It checks what hassfest does not: a state translation for every enum and
-select option, a display name for every attribute the integration adds, and the same keys in every language file. A
-failure after copying lists the keys this integration still lacks.
+select option, a display name for every attribute the integration adds, and no key in another language file that
+`en.json` lacks. It uses the `init_integration` fixture from the blueprint's `tests/conftest.py` — copy that fixture
+too if this repository's conftest has none. A failure after copying lists the keys this integration still lacks.
 
 ## `ux-skill-routing` — 2026-11-22
 

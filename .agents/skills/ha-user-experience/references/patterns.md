@@ -114,7 +114,8 @@ class {ClassPrefix}OptionsFlow(config_entries.OptionsFlowWithReload):
 ```
 
 - Each topic step returns to the menu; only `save` stores. Nothing is written when the user closes the dialog.
-- `menu_option_descriptions` under `config.step.init` explains each entry; a "reset to defaults" entry is cheap to
+- `menu_option_descriptions` under `options.step.init` (an options flow translates under `options`, not `config`)
+  explains each entry; a "reset to defaults" entry is cheap to
   add and saves support questions.
 - A `section()` nests its data under the section key — merge it back accordingly
   ([`blueprint.config_flow`](../../../instructions/blueprint.config_flow.instructions.md)).
@@ -159,6 +160,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 - `async_setup()`, not `async_setup_entry()`: it runs once per start. Per entry, a second registration of the same
   route raises and the script URL is added twice.
+- `"dependencies": ["frontend", "http"]` in `manifest.json`: `add_extra_js_url` writes into data the `frontend`
+  setup creates, and fails with a `KeyError` before it.
 - The version in the URL busts the browser cache after an update.
 - The cards are JavaScript the integration now maintains, with its own translations and editor — a project in its own
   right.

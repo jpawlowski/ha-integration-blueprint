@@ -46,7 +46,7 @@ not a refactoring.
   description) comes from the integration's own per-language files, loaded for `hass.config.language` — never from a
   string literal.
 - **`en.json` is the base, whatever language the author works in.** Home Assistant falls back to English for every key
-  a language lacks, so `en.json` is always complete; the author's own language is a second file with the same keys.
+  a language lacks, so `en.json` is always complete; the author's own language is a second file beside it.
 
 ## Critical Instructions
 
@@ -152,7 +152,8 @@ Imperativs](https://www.duden.de/sprachwissen/sprachratgeber/Bildung-des-Imperat
 
 ### Multi-Language Files
 
-All language files must have identical structure — only the values differ. A region-specific file (`fr-CA`, `pt-BR`)
+A language file carries no key `en.json` lacks — that is a stale or misspelled key. A key it lacks falls back to
+English, so a new key in `en.json` never requires touching another language file. A region-specific file (`fr-CA`, `pt-BR`)
 falls back to **English**, not to its base language, for every key it lacks — so copy the base language's string for
 each key that reads the same in the region, rather than leaving it out.
 

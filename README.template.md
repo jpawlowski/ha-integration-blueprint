@@ -57,7 +57,7 @@ Uncomment and customize these badges if you want to use them:
 
 **Prerequisites:** Home Assistant 2026.11 or newer, which has the Marketplace built in (**Settings** → **Marketplace**).
 
-Install it with the **Download** button in the Marketplace. It loads right away, without a restart.
+In the Marketplace, open this repository and select **Download**. It loads right away, without a restart.
 
 <!-- ha-marketplace:exclude-start -->
 
@@ -84,7 +84,7 @@ If you prefer not to use the Marketplace:
 
 ### Step 2: Add and Configure the Integration
 
-**Important:** Install the integration first (see Step 1). An install that did not go through the Marketplace needs a restart of Home Assistant before this step.
+**Important:** Install the integration first (see Step 1).
 
 #### Option 1: One-Click Setup (Quick)
 
