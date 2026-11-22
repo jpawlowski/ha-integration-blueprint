@@ -105,9 +105,10 @@ script/hooks/
 .devcontainer/.env
 
 # ── Release management ───────────────────────────────────────
-# Release Please configuration is project-specific
+# Release Please configuration and the release notes' own header and footer are project-specific
 release-please-config.json
 .release-please-manifest.json
+.github/release-notes/
 
 # ── Local Home Assistant development config ──────────────────
 # Your local HA instance config (credentials, test devices, etc.)
