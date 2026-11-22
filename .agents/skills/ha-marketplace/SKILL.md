@@ -93,7 +93,10 @@ it) and `hide_default_branch`; most integrations never need more. Full key table
 - **`hide_default_branch`** — ✅ set, and keep it while `zip_release` is set. With `zip_release` every install
   fetches the release asset, even for the default branch — `releases/download/main/<filename>`, which never exists —
   so offering the branch offers a version that cannot install (`_async_download_version` in the Marketplace). The
-  consequence: before its first release, the repository has nothing installable.
+  key only hides the branch in the version menu; before the first release the Marketplace still falls back to the
+  branch, and that install fails, so the repository has nothing installable until then.
+- `script/tests/test_hacs_json.py` fails CI when `zip_release` is set without `filename`, `hide_default_branch`, or the
+  draft settings in `release-please-config.json`.
 - **`content_in_root`** — not for this layout; leave it out.
 - **`country`** — only when the integration works in some countries only; the catalog asks for it then.
 
