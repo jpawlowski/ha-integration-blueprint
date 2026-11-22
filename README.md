@@ -996,6 +996,13 @@ that community integrations may benefit from extensive AI assistance when their 
 and maturity are communicated honestly. See our [`AI_POLICY.md`](AI_POLICY.md) for the distinction between community
 custom integrations and contributions to Home Assistant Core.
 
+AI makes a first draft cheap, not a good integration. The blueprint itself is a lot of work: the validation scripts, the
+skills, the weekly template sync and keeping all of it current with Home Assistant. So is every integration you build
+with it. Going through real devices, error paths, migrations and years of issues is what turns a draft into something
+people can rely on, and AI is often what makes that level of detail affordable in the first place. If this blueprint
+saves you work, a star, a good bug report or sponsorship is a fine way to give something back. The same goes for the
+integrations you publish: say in your README what stands behind it.
+
 The comprehensive AI agent instructions included in this repository ([`AGENTS.md`](AGENTS.md),
 `.agents/instructions/`) help humans and agents produce inspectable code using Home Assistant Core patterns and
 automated quality checks. These safeguards improve verifiability but do not guarantee correctness.
