@@ -32,6 +32,7 @@ DOMAIN_OWNED = (
     "config/",
     "custom_components/",
     "docs/",
+    "hacs.json",
     "pyproject.toml",
     "requirements.txt",
     "tests/",
