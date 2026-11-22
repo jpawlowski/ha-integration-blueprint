@@ -2,15 +2,15 @@
 name: ha-release
 description: >-
   Cut a release of this Home Assistant custom integration, or prepare the commits that feed it. Use when asked to
-  "release", "cut a version", "bump the version", "prepare release notes", "a release footer", "what will the next version be", "write a
+  "release", "cut a version", "bump the version", "prepare release notes", "release notes tone", "a release footer", "write a
   commit message", "why didn't release-please pick this up", "update my branch", "rebase",
-  "split this PR", "stacked PR", "release a beta", or when reviewing whether a change is user-facing. Covers the
+  "stacked PR", "release a beta", or when reviewing whether a change is user-facing. Covers the
   commit rules commitlint enforces, how release-please versions and writes the changelog, pre-1.0 bumps, betas,
-  script/version and script/release-notes, and branch upkeep. SYMPTOMS — load this if you are about
+  the release scripts, and branch upkeep. SYMPTOMS — load this if you are about
   to: commit without an explicit request; offer to `git push`; force-push without a lease; merge a pull request
   another one is stacked on; label a user-facing fix as `chore` (hidden types never reach the changelog or trigger a
   release); write a commit subject over 100 characters or in sentence case; edit the version in `manifest.json` by
-  hand; or name a beta `1.2.0b1`.
+  hand; name a beta `1.2.0b1`; or edit the prompt in `script/release-notes`.
 ---
 
 # Releases and commit messages
@@ -91,7 +91,9 @@ changelog to each body.
 `footer.md`; the `release-asset` job puts it around each body, and `CHANGELOG.md` never sees it. Not into
 `release-please.yml`, which template sync replaces, nor into `changelog-sections` or a `release-notes` hook, which both
 land in `CHANGELOG.md`. A support link takes its handle from `.github/FUNDING.yml`. Keep it to a line: the dialog
-repeats it for every release it joins.
+repeats it for every release it joins. **How the notes read** — what the integration does, its own jargon, a title —
+goes into `prompt.md` in the same folder, which `script/release-notes` adds to its prompt; edit that file, never the
+template-managed script.
 
 There is no automatic merge. The developer decides when to release — in batches rather than per change, so a user who
 updates now and then stays inside those five.

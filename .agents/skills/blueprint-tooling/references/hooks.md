@@ -103,6 +103,9 @@ Rules:
 | `.devcontainer/setup-git.sh`      | `.devcontainer/hooks/setup-git.pre.sh`       | `.devcontainer/hooks/setup-git.post.sh`       |
 | `.devcontainer/post-attach.sh`    | `.devcontainer/hooks/post-attach.pre.sh`     | `.devcontainer/hooks/post-attach.post.sh`     |
 
+A hook is the wrong place to change the release notes prompt: what the notes should know about the integration goes into
+`.github/release-notes/prompt.md` ([`ha-release`](../../ha-release/SKILL.md)).
+
 ## The build hook
 
 `script/build` empties `$BUILD_DIR`, runs `build.pre.sh`, copies the tracked files of the integration over it, runs

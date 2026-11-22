@@ -24,6 +24,8 @@
 #   AGENT_CLI                claude, codex, copilot or opencode (default: see agent_resolve in agent_cli.sh)
 #   AGENT_MODEL              Model for that CLI (default: the CLI's own; for copilot, COPILOT_MODEL)
 #   RELEASE_NOTES_DIFF_MAX   Max bytes for code diff context (default: 8000)
+#
+# Reads .github/release-notes/prompt.md, when present, into the prompt.
 
 set -euo pipefail
 
@@ -39,6 +41,7 @@ SCRATCH_DIR=".agents/scratch"
 
 # Configuration
 DIFF_MAX_BYTES="${RELEASE_NOTES_DIFF_MAX:-8000}"
+PROJECT_PROMPT=".github/release-notes/prompt.md"
 
 # Integration domain — auto-detected from custom_components/
 # shellcheck source=script/.lib/integration.sh
@@ -371,6 +374,15 @@ Output ONLY the markdown body, nothing else.
 
 PROMPT_RULES
 
+    local project_text=""
+    [[ -f "$PROJECT_PROMPT" ]] && project_text="$(<"$PROJECT_PROMPT")"
+    if [[ -n "${project_text//[[:space:]]/}" ]]; then
+        printf '## ABOUT THIS INTEGRATION — FROM ITS MAINTAINER\n'
+        printf 'On wording and content this section wins over the rules above. The output format stays as given,\n'
+        printf 'apart from one # title line at the top when this section asks for it.\n\n'
+        printf '%s\n\n' "$project_text"
+    fi
+
     # Dynamic context section
     cat <<PROMPT_CONTEXT
 ## SOURCE OF TRUTH
@@ -433,7 +445,8 @@ $USER_DIFF
 
 ---
 
-Output ONLY the release notes. Start directly with the first ### section.
+Output ONLY the release notes. Start directly with the first ### section, or with a # title if the maintainer's
+section asks for one.
 PROMPT_DIFF
 }
 

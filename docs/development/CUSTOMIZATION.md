@@ -124,7 +124,7 @@ Files already excluded by default:
 | `script/hooks/`, `.devcontainer/hooks/`                                                 | Your hook scripts                                                        |
 | `.devcontainer/project-feature/`                                                        | Your project's dev container additions, such as required extensions      |
 | `.devcontainer/.env`                                                                    | Your HA_VERSION pin and DevContainer settings                            |
-| `release-please-config.json`, `.release-please-manifest.json`, `.github/release-notes/` | Release management, and the header and footer of every release           |
+| `release-please-config.json`, `.release-please-manifest.json`, `.github/release-notes/` | Release management, release header and footer, release notes prompt      |
 | `.github/workflows/template-sync.yml`                                                   | Sync workflow itself                                                     |
 | `uv.lock`                                                                               | Your pinned dependency lockfile                                          |
 
