@@ -46,21 +46,23 @@ the install badge and its fallbacks, a Codespaces blurb, the contributing sectio
 
 ## `release-zip-asset` — 2026-11-22
 
-**Check:** `jq -e '.zip_release == true and (.filename | type == "string")' hacs.json && jq -e '.packages["."] | .draft == true and .["force-tag-creation"] == true' release-please-config.json`
+**Check:** `jq -e '.zip_release == true and (.filename | type == "string") and .hide_default_branch == true' hacs.json && jq -e '.packages["."] | .draft == true and .["force-tag-creation"] == true' release-please-config.json`
 
 Every release now carries a ZIP of `custom_components/<domain>/` as a release asset, and `hacs.json` tells the
 Marketplace to install from it. A source archive has no download count, an asset does. The sync brings the
 `release-asset` job in `release-please.yml`. Until this step is done it attaches nothing and only publishes the
 release, because `hacs.json` and `release-please-config.json` are not synced:
 
-1. Add `"zip_release": true` and `"filename": "<domain>.zip"` to `hacs.json`.
+1. Add `"zip_release": true`, `"filename": "<domain>.zip"` and `"hide_default_branch": true` to `hacs.json`. The
+   default branch has no release asset, so it must not be offered for install.
 2. Add `"draft": true` and `"force-tag-creation": true` to the `"."` package in `release-please-config.json`. The
    release then stays a draft until the job has attached the asset, so no user is offered a version whose ZIP is
    not there yet; a failed job leaves a draft to re-run, not a broken release.
 3. If this repository customised `release-please.yml`, copy the blueprint's `release-asset` job and the `outputs` and
    `id: release` it relies on.
 4. Land all of it in the same pull request. Older releases keep installing from the source tree: the Marketplace
-   reads `hacs.json` from the tag of the version it installs.
+   reads `hacs.json` from the tag of the version it installs. `script/tests/test_hacs_json.py`, which the sync
+   brings, fails CI while the keys of steps 1 and 2 do not match.
 
 [`ha-marketplace`](../../ha-marketplace/SKILL.md#2-hacsjson--when-to-touch-it) has the reasoning.
 

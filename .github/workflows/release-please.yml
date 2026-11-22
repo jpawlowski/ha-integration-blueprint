@@ -65,6 +65,8 @@ jobs:
           TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
         run: |
           if jq -e '.zip_release == true' hacs.json >/dev/null; then
+            jq -e '.hide_default_branch == true' hacs.json >/dev/null ||
+              echo "::warning::zip_release without hide_default_branch: the default branch cannot install"
             filename=$(jq -er '.filename' hacs.json) ||
               { echo "::error::hacs.json sets zip_release without a filename"; exit 1; }
             source script/.lib/integration.sh
