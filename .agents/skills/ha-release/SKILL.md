@@ -4,13 +4,13 @@ description: >-
   Cut a release of this Home Assistant custom integration, or prepare the commits that feed it. Use when asked to
   "release", "cut a version", "bump the version", "prepare release notes", "what will the next version be", "write a
   commit message", "why didn't release-please pick this up", "update my branch", "rebase", "fix the conflict",
-  "split this PR", "stacked PR", or when reviewing whether a change is user-facing. Covers the commit rules commitlint
-  enforces, how release-please versions and writes the changelog, pre-1.0 bumps, script/version and
-  script/release-notes, and branch and pull request upkeep. SYMPTOMS — load this if you are about to: commit without
-  an explicit request; offer to `git push`; force-push without a lease; merge a pull request another one is stacked
-  on; label a user-facing fix as `chore` (chore, like every hidden type, never reaches the changelog and never
-  triggers a release); write a commit subject over 100 characters or in sentence case; or edit the version in
-  `manifest.json` by hand.
+  "split this PR", "stacked PR", "release a beta", or when reviewing whether a change is user-facing. Covers the
+  commit rules commitlint enforces, how release-please versions and writes the changelog, pre-1.0 bumps, betas,
+  script/version and script/release-notes, and branch upkeep. SYMPTOMS — load this if you are about
+  to: commit without an explicit request; offer to `git push`; force-push without a lease; merge a pull request
+  another one is stacked on; label a user-facing fix as `chore` (hidden types never reach the changelog or trigger a
+  release); write a commit subject over 100 characters or in sentence case; edit the version in `manifest.json` by
+  hand; or name a beta `1.2.0b1`.
 ---
 
 # Releases and commit messages
@@ -85,6 +85,26 @@ commits on main → release-please opens/updates "chore(main): release X.Y.Z"
 `version` to equal it, and shows the release body as the notes in the update dialog.
 
 There is no automatic merge. The developer decides when to release.
+
+## A beta
+
+**A beta is a GitHub pre-release, or it is not a beta.** The Marketplace never reads the tag: it offers a release
+marked as pre-release only to users who turned on the repository's **Pre-release** switch, and every other release to
+everyone. The `release-asset` job marks the release as a pre-release when its version has a pre-release part.
+
+release-please plans a normal release unless told otherwise. Set the version with a footer as the **last line of the
+description** of the pull request that should trigger it — squash merging makes the description the commit body:
+
+```text
+Release-As: 1.2.0-beta.1
+```
+
+- **Always the hyphen form** — `1.2.0-beta.1`, `1.2.0-rc.1`. release-please reads `1.2.0b1` as `1.2.0` and ships
+  a regular release to every user.
+- **Every version of the beta series takes its own footer** — `-beta.2`, then `Release-As: 1.2.0` for the release
+  itself. Without one, release-please derives the next version from the commits again.
+- ❌ Do not set `prerelease: true` in `release-please-config.json`: before `1.0.0` it marks every release as a
+  pre-release, so nobody without the switch gets an update.
 
 How a published release reaches users, and getting the repository into the catalog in the first place, is
 [`ha-marketplace`](../ha-marketplace/SKILL.md).
