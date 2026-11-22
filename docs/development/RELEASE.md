@@ -27,8 +27,12 @@ Releases are managed with [release-please](https://github.com/googleapis/release
         ↓
 4. Developer merges the PR (intentionally, when ready)
         ↓
-5. release-please creates the GitHub Release + Git tag
+5. release-please creates the Git tag and the GitHub Release as a draft
    manifest.json version is already updated in the merged PR
+        ↓
+6. The release-asset job zips custom_components/<domain>/, attaches it as the
+   file named by `filename` in hacs.json (zip_release: true), and publishes the
+   release — users install from that asset
 ```
 
 The Home Assistant Marketplace offers users the tag of the latest **published** GitHub Release —

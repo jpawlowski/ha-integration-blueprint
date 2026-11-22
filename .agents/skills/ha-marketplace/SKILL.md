@@ -2,14 +2,14 @@
 name: ha-marketplace
 description: >-
   Publish this Home Assistant custom integration through the Marketplace and HACS, and keep it listed — repository
-  preconditions, hacs.json, brand images, the CI gates the catalog requires, the hacs/default pull request, the My
-  links in the README, how a release reaches users, and renaming, archiving or removing a listed repository. Use when
+  preconditions, hacs.json, release assets, brand images, the catalog's CI gates, the hacs/default pull request, My links, how a release reaches users, and renaming, archiving or removing a listing. Use when
   asked to "publish the integration", "get it into HACS", "submit to the Marketplace", "add it to the default
   repositories", "why doesn't the update show up", "keep files across updates", "rename or archive the
-  repository", or when editing hacs.json or the brand/ folder. SYMPTOMS — load this if you are about to: open the hacs/default pull request yourself; add an
-  `ignore` to the HACS action to make it pass; delete a repository that is in the catalog; delete an old release;
-  write user data into the integration folder; set `zip_release`; ship Home Assistant's own logo as the brand icon;
-  or raise `homeassistant` in hacs.json without naming the new minimum in the changelog.
+  repository", or when editing hacs.json or the brand/ folder. SYMPTOMS — load this if you are
+  about to: open the hacs/default pull request yourself; add an `ignore` to the HACS action to make it pass; delete
+  a repository that is in the catalog; delete an old release; write user data into the integration folder; remove
+  `zip_release`; ship Home Assistant's own logo as the brand icon; or raise `homeassistant` in hacs.json without
+  naming the new minimum in the changelog.
 ---
 
 # Publish through the Marketplace
@@ -80,8 +80,13 @@ The Marketplace reads `hacs.json` from the root **for every version it installs*
   Marketplace moves aside and restores. ❌ Do not design for it: user data and runtime state belong in
   `homeassistant.helpers.storage.Store` (under `config/.storage/`), which survives updates and is covered by
   backups. Reach for it only for files a library insists on finding inside the integration folder.
-- **`zip_release` / `filename`** — ❌ not with this repository's release flow. Release-please publishes the source
-  tree and attaches no ZIP asset, so installs would look for an asset that does not exist.
+- **`zip_release` / `filename`** — ✅ set, and keep both. release-please creates each release as a draft (`draft`,
+  `force-tag-creation` in `release-please-config.json`); the `release-asset` job in `release-please.yml` packs
+  `custom_components/<domain>/` from the tag with `git archive` (tracked files only, at the archive root), checks
+  that `manifest.json` sits at the root with the tag's version, attaches it under the name read from `filename`, and
+  only then publishes. The Marketplace installs from that asset, for a catalog version without a GitHub connection.
+  Only an asset carries a GitHub download count; a source archive does not. Removing the keys breaks installs; the
+  file name lives only in `hacs.json`, never a second time in the workflow.
 - **`hacs`** — the minimum HACS version. The Marketplace reads it but never compares it; HACS still does, so keep it.
 - **`content_in_root`, `hide_default_branch`** — not for this layout; leave them out.
 - **`country`** — only when the integration works in some countries only; the catalog asks for it then.
@@ -136,7 +141,7 @@ the pull request — it gets closed.
 - ❌ **Never delete a repository that is in the catalog without the removal request first.** Deleting a listed
   repository bars the owner from adding any repository to the catalog in the future. Archive it, or file the request and wait for it to be handled.
 - ❌ Do not open the hacs/default pull request or the removal issue yourself; draft them for the developer.
-- ❌ Do not add `ignore` to the HACS action, delete old releases, or set `zip_release`.
+- ❌ Do not add `ignore` to the HACS action, delete old releases, or remove `zip_release`/`filename`.
 - ❌ Do not store user data inside `custom_components/<domain>/`.
 - ❌ Do not claim the integration is "in HACS" or "in the Marketplace" before the catalog pull request is merged —
   until then it installs only as a custom repository.
