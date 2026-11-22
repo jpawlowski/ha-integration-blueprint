@@ -57,9 +57,9 @@ jobs:
         run: |
           if jq -e '.zip_release == true' hacs.json >/dev/null; then
             filename=$(jq -er '.filename' hacs.json)
-            component=$(dirname custom_components/*/manifest.json)
-            git archive --format=zip -o "${filename}" "HEAD:${component}"
-            # The store unpacks the zip root into the integration folder: a wrong layout breaks every install.
+            source script/.lib/integration.sh
+            git archive --format=zip -o "${filename}" "HEAD:${INTEGRATION_PATH}"
+            # The Marketplace unpacks the zip root into the integration folder: a wrong layout breaks every install.
             [[ "$(unzip -p "${filename}" manifest.json | jq -r .version)" == "${TAG#v}" ]] ||
               { echo "::error::${filename} has no manifest.json at its root with version ${TAG#v}"; exit 1; }
             gh release upload "${TAG}" "${filename}" --clobber --repo "${GITHUB_REPOSITORY}"
