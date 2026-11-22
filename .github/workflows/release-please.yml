@@ -58,10 +58,25 @@ jobs:
           ref: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
           persist-credentials: false
 
-      # The release stays a draft until its asset is attached, so no install ever finds it missing.
-      - name: Build and upload the ZIP asset, then publish
+      - name: Detect build hooks
+        id: hooks
+        run: |
+          if compgen -G "script/hooks/build.*.sh" >/dev/null; then
+            echo "present=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+      # Only a project that builds needs its tools from mise.toml and .config/mise/conf.d/project.toml.
+      - name: Set up mise
+        if: steps.hooks.outputs.present == 'true'
+        uses: jdx/mise-action@90f833d396d0cc3674b631d2d225e306476c303a # v5.2.10
+        with:
+          # renovate: datasource=github-releases depName=jdx/mise extractVersion=^v(?<version>.+)$
+          version: "2026.11.12"
+
+      # Build hooks may run third-party code (npm install scripts): they get no token.
+      - name: Build the ZIP asset
+        id: asset
         env:
-          GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
         run: |
           if jq -e '.zip_release == true' hacs.json >/dev/null; then
@@ -69,13 +84,20 @@ jobs:
               echo "::warning::zip_release without hide_default_branch: the default branch cannot install"
             filename=$(jq -er '.filename' hacs.json) ||
               { echo "::error::hacs.json sets zip_release without a filename"; exit 1; }
-            source script/.lib/integration.sh
-            git archive --format=zip -o "${filename}" "HEAD:${INTEGRATION_PATH}"
-            # The Marketplace unpacks the zip root into the integration folder: a wrong layout breaks every install.
-            [[ "$(unzip -p "${filename}" manifest.json | jq -r .version)" == "${TAG#v}" ]] ||
-              { echo "::error::${filename} has no manifest.json at its root with version ${TAG#v}"; exit 1; }
-            gh release upload "${TAG}" "${filename}" --clobber --repo "${GITHUB_REPOSITORY}"
+            script/build --zip "${filename}" --version "${TAG#v}"
+            echo "filename=${filename}" >> "${GITHUB_OUTPUT}"
           else
             echo "::notice::hacs.json does not set zip_release - no ZIP asset attached"
+          fi
+
+      # The release stays a draft until its asset is attached, so no install ever finds it missing.
+      - name: Upload the ZIP asset, then publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
+          FILENAME: ${{ steps.asset.outputs.filename }}
+        run: |
+          if [[ -n "${FILENAME}" ]]; then
+            gh release upload "${TAG}" "${FILENAME}" --clobber --repo "${GITHUB_REPOSITORY}"
           fi
           gh release edit "${TAG}" --draft=false --repo "${GITHUB_REPOSITORY}"
