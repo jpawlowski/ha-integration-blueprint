@@ -178,6 +178,10 @@ ir.async_create_issue(
   automations for renamed entities.
   ```
 
+- **When the user has to act, raise a repair issue** for the installations it concerns, in addition to the footer. The
+  update dialog shows release notes only within the last five releases, and many update without reading them; a
+  repair issue reaches whoever needs it, whatever version they came from
+  ([`blueprint.repairs`](../../instructions/blueprint.repairs.instructions.md)).
 - Update `docs/user/` and the README where the old behaviour is described. Text users read — docs, release notes,
   repair issues — says **backward-incompatible change**, Home Assistant's term; `BREAKING CHANGE:` stays the commit
   footer, because release-please keys on it.

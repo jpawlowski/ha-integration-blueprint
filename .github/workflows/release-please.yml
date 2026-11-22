@@ -91,7 +91,6 @@ jobs:
           fi
 
       # The release stays a draft until its asset is attached, so no install ever finds it missing.
-      # The update dialog shows only the last five releases' notes; the link reaches the ones before.
       - name: Upload the ZIP asset, link the changelog, then publish
         env:
           GH_TOKEN: ${{ github.token }}
@@ -105,11 +104,11 @@ jobs:
           if [[ "${TAG}" == *-* ]]; then
             prerelease=true
           fi
-          changelog="https://github.com/${GITHUB_REPOSITORY}/blob/${TAG}/CHANGELOG.md"
+          changelog_path="$(jq -r '.packages["."]["changelog-path"] // "CHANGELOG.md"' release-please-config.json)"
+          changelog="https://github.com/${GITHUB_REPOSITORY}/blob/${TAG}/${changelog_path}"
           notes="$(gh release view "${TAG}" --json body --jq .body --repo "${GITHUB_REPOSITORY}")"
-          if [[ "${notes}" != *"${changelog}"* ]]; then
-            notes="$(printf '%s\n\nSkipped a few versions? Their notes are in the [changelog](%s).' "${notes}" "${changelog}")"
-          fi
-          printf '%s\n' "${notes}" >"${RUNNER_TEMP}/notes.md"
-          gh release edit "${TAG}" --draft=false --prerelease="${prerelease}" --notes-file "${RUNNER_TEMP}/notes.md" \
-            --repo "${GITHUB_REPOSITORY}"
+          [[ "${notes}" == *"${changelog}"* ]] ||
+            notes+="${notes:+$'\n\n'}Skipped a few versions? Their notes are in the [changelog](${changelog})."
+          printf '%s\n' "${notes}" |
+            gh release edit "${TAG}" --draft=false --prerelease="${prerelease}" --notes-file - \
+              --repo "${GITHUB_REPOSITORY}"
