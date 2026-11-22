@@ -66,9 +66,9 @@ imported repository's comments, an old document — is shown to the developer be
 Most decisions leave a rule behind: "use the own client in `api/`, never the vendor package". The rule goes where an
 agent working on that code already looks:
 
-- one file type or folder → a project instructions file `.agents/instructions/<prefix>.<topic>.instructions.md`, with
-  `name`, `description`, `applyTo` and `paths` ([`blueprint.markdown`](../../../instructions/blueprint.markdown.instructions.md))
-- the whole repository → the project's section of `AGENTS.md`
+- one area of the code → that area's project instructions file `.agents/instructions/<prefix>.<area>.instructions.md`
+  ([`blueprint-lessons`](../../blueprint-lessons/SKILL.md) §3)
+- the whole repository → `AGENTS.md`
 
 Never put it into a `blueprint.*` instructions file — template sync replaces those. The rule ends with a line naming
 its record, which `script/decisions` checks:

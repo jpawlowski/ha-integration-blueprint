@@ -21,6 +21,7 @@ any of it in your own repository, see [`../README.md`](../README.md). This file 
 | [`ha-modern-apis`](ha-modern-apis/SKILL.md)             | verifying an API is current, or fixing deprecation warnings                 |
 | [`ha-breaking-changes`](ha-breaking-changes/SKILL.md)   | anything that could break existing installs — IDs, entry data, migrations   |
 | [`ha-grill`](ha-grill/SKILL.md)                         | interviewing the developer until a change's requirements are settled        |
+| [`blueprint-lessons`](blueprint-lessons/SKILL.md)       | keeping a lesson from a bug or a repeated correction; project skills        |
 | [`ha-planning`](ha-planning/SKILL.md)                   | planning a large change or recording an architectural decision              |
 | [`ha-release`](ha-release/SKILL.md)                     | cutting a release, commit messages, changelog, release notes                |
 | [`ha-marketplace`](ha-marketplace/SKILL.md)             | publishing through the Marketplace/HACS catalog, `hacs.json`, brand images  |
@@ -49,7 +50,7 @@ Two namespaces are in use, by topic rather than by origin:
 | Prefix       | Covers                                                            |
 | ------------ | ----------------------------------------------------------------- |
 | `ha-`        | Home Assistant integration development — entities, flows, testing |
-| `blueprint-` | Tooling the template ships — scripts, dependencies, sync          |
+| `blueprint-` | Tooling and agent workflow the template ships — scripts, lessons  |
 
 Both are reserved for skills that ship with the blueprint. **Give your own skills a different prefix** — your
 integration's short name works well. That keeps a future blueprint skill from colliding with yours, and makes it
