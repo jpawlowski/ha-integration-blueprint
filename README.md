@@ -350,9 +350,9 @@ See [docs/development/CUSTOMIZATION.md](docs/development/CUSTOMIZATION.md) for d
 
 ### Migrating an existing integration
 
-Already have a custom integration? You can adopt this blueprint's structure and tooling without starting from scratch. The short version: copy your `custom_components/<domain>/` folder in and adapt your code incrementally.
+Already have a custom integration? Bring the blueprint into your existing repository instead of starting over: `script/import-overlay` lays it over your project on a new branch, keeps your git history, issues and releases, and leaves your integration folder untouched.
 
-See [docs/blueprint/MIGRATION.md](docs/blueprint/MIGRATION.md) for an overview of strategies (clean start vs. preserving git history) and common pitfalls like namespace mismatches and repository permissions.
+[docs/blueprint/MIGRATION.md](docs/blueprint/MIGRATION.md) has the step-by-step guide from inside your existing project — a prompt to paste into your coding agent, and the same steps by hand.
 
 ### Troubleshooting
 
