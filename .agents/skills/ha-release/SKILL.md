@@ -87,6 +87,11 @@ commits on main → release-please opens/updates "chore(main): release X.Y.Z"
 release since the installed one only within the last five releases, so the `release-asset` job ends each body with a
 link to the changelog.
 
+**Text on every release** — a support link, a standing notice — goes into `.github/release-notes/header.md` or
+`footer.md`, which the `release-asset` job puts around each body; neither reaches `CHANGELOG.md`. Never into
+`release-please.yml`, which template sync replaces, and never into `changelog-sections`. Keep it to a line: the
+update dialog repeats it once for each of up to five releases it joins.
+
 There is no automatic merge. The developer decides when to release — in batches rather than per change, so a user who
 updates now and then stays inside those five.
 

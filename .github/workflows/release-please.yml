@@ -109,6 +109,16 @@ jobs:
           notes="$(gh release view "${TAG}" --json body --jq .body --repo "${GITHUB_REPOSITORY}")"
           [[ "${notes}" == *"${changelog}"* ]] ||
             notes+="${notes:+$'\n\n'}Skipped a few versions? Their notes are in the [changelog](${changelog})."
+          header_file=".github/release-notes/header.md"
+          if [[ -s "${header_file}" ]]; then
+            header="$(<"${header_file}")"
+            [[ "${notes}" == "${header}"* ]] || notes="${header}${notes:+$'\n\n'}${notes}"
+          fi
+          footer_file=".github/release-notes/footer.md"
+          if [[ -s "${footer_file}" ]]; then
+            footer="$(<"${footer_file}")"
+            [[ "${notes}" == *"${footer}" ]] || notes+="${notes:+$'\n\n'}${footer}"
+          fi
           printf '%s\n' "${notes}" |
             gh release edit "${TAG}" --draft=false --prerelease="${prerelease}" --notes-file - \
               --repo "${GITHUB_REPOSITORY}"
