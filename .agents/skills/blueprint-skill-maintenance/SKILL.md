@@ -92,7 +92,7 @@ not a reliable substitute.
 ## Adding a skill to the shipped set
 
 1. Decide it is really a skill and not a rule (see the seam above), and that no existing skill should absorb it.
-   Name it `ha-*` for Home Assistant integration work or `blueprint-*` for this repository's tooling — both prefixes
+   Name it `ha-*` for Home Assistant integration work or `blueprint-*` for this repository's tooling and agent workflow — both prefixes
    are reserved for the shipped set, so downstream repositories can use their own without risking a collision. Keep
    the name short: it is what people type to invoke the skill.
 2. Create `.agents/skills/<name>/SKILL.md`. Use the `<domain>` and `{ClassPrefix}` placeholders — never the concrete

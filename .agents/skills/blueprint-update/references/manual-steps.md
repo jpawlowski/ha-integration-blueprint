@@ -4,6 +4,16 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `lessons-routing` — 2026-11-22
+
+**Check:** `grep -q 'A fixed bug stays fixed' AGENTS.md && grep -q 'never only in your own memory' AGENTS.md && grep -q '^| .*blueprint-lessons/SKILL.md' AGENTS.md`
+
+The sync brings the skill `blueprint-lessons` — where a lesson from a fixed bug or a repeated correction goes so the
+next agent does not repeat it, and when to create or extend a project skill. `AGENTS.md` is not synced: carry over
+the routing row, the paragraph _A fixed bug stays fixed_ under _Scope of a change_, and the rewritten paragraph on a
+permanent change of approach under _When instructions conflict with a request_. From now on `script/skills-check`
+fails while a project instructions file — one not named `blueprint.*` — has no row in the routing table.
+
 ## `decision-records` — 2026-11-22
 
 **Check:** `test ! -e docs/development/DECISIONS.md && test -f docs/development/decisions/README.md && grep -q 'docs/development/decisions' AGENTS.md`

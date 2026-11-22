@@ -84,6 +84,7 @@ agent that implements it. If yours does not, read the `SKILL.md` before starting
 | deprecation warnings, verifying an API is current      | [`ha-modern-apis`](.agents/skills/ha-modern-apis/SKILL.md)             | —                                                      |
 | a request whose requirements are not settled yet       | [`ha-grill`](.agents/skills/ha-grill/SKILL.md)                         | —                                                      |
 | planning a large change, recording a decision          | [`ha-planning`](.agents/skills/ha-planning/SKILL.md)                   | —                                                      |
+| lessons from bugs and corrections, project skills      | [`blueprint-lessons`](.agents/skills/blueprint-lessons/SKILL.md)       | —                                                      |
 | commit messages, versioning, changelog, release notes  | [`ha-release`](.agents/skills/ha-release/SKILL.md)                     | `blueprint.commit-message`                             |
 | triaging or fixing a backlog of GitHub issues          | [`ha-issue-triage`](.agents/skills/ha-issue-triage/SKILL.md)           | —                                                      |
 | publishing through HACS and the Marketplace            | [`ha-marketplace`](.agents/skills/ha-marketplace/SKILL.md)             | —                                                      |
@@ -405,6 +406,10 @@ something meaningful; if you omit them deliberately, say why and what risk remai
 formatting-only changes need none. Automated tests supplement rather than replace human review and real-device
 testing.
 
+**A fixed bug stays fixed.** Name its class, look for the same mistake elsewhere — other platforms, entities, paths —
+and fix those in the same change or list them; the commit body names the root cause. Where the lesson goes so the next
+agent cannot repeat it: [`blueprint-lessons`](.agents/skills/blueprint-lessons/SKILL.md).
+
 **Translations:** update `en.json` only, and only when asked or at a feature milestone. **Never** touch another
 language file without asking — code works without translations, so business logic comes first.
 
@@ -449,7 +454,9 @@ rule nobody follows.
 ### When instructions conflict with a request
 
 Say which instruction the request contradicts and restate what you understood, then follow the developer's decision.
-If it reflects a permanent change of approach, offer to update the instruction file — and propose updates whenever you
+If it reflects a permanent change of approach — a correction given a second time, or with "always", "never" or "from
+now on" — offer to record it in the repository, never only in your own memory, which a parallel session or another
+agent would not see ([`blueprint-lessons`](.agents/skills/blueprint-lessons/SKILL.md)). Propose updates whenever you
 notice repeated deviations, stale rules, or a new pattern worth standardising.
 
 ### Leaving a task unfinished

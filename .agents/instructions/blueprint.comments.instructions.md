@@ -71,6 +71,7 @@ Dropping a comment is not dropping the knowledge. Route it:
 | What a user has to do or expect                     | `docs/user/`                                             |
 | What a function does, takes and returns             | Its docstring                                            |
 | Working notes for the current task only             | `.agents/scratch/` — never committed                     |
+| A mistake an agent must not repeat                  | the `blueprint-lessons` skill                            |
 | Public knowledge you happened to look up            | Nowhere. Say it once in chat and let it go.              |
 
 The last row is the one that gets ignored. Research does not need a resting place just because it was work; store it

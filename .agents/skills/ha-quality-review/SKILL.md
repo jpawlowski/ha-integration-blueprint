@@ -175,6 +175,9 @@ Check each; the rule and how to comply live in the linked file.
 - Architectural choices worth remembering are decision records in `docs/development/decisions/`
   ([`ha-planning`](../ha-planning/SKILL.md)).
 - Breaking changes carry a migration path ([`ha-breaking-changes`](../ha-breaking-changes/SKILL.md)).
+- The project's own skills and instructions files are still worth their context: no rule a check now enforces, none
+  the code no longer has, no two files on one topic
+  ([`blueprint-lessons`](../blueprint-lessons/SKILL.md) §5).
 
 ## Report format
 
