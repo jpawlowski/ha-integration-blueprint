@@ -1027,6 +1027,7 @@ replace_in_files() {
         "./.devcontainer/post-attach.sh"
         "./.agents/skills/blueprint-import/references/git-strategy.md"
         "./.agents/skills/blueprint-update/references/manual-steps.md"
+        "./script/tests/fixtures/release-please-pr-body.txt"
     )
 
     # Find all files, excluding pruned directories
