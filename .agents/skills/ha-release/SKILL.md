@@ -2,14 +2,15 @@
 name: ha-release
 description: >-
   Cut a release of this Home Assistant custom integration, or prepare the commits that feed it. Use when asked to
-  "release", "cut a version", "bump the version", "prepare release notes", "what will the next version be", "write
-  a commit message", "why didn't release-please pick this up", or when reviewing whether a change is user-facing.
-  Covers the Conventional Commits rules commitlint enforces here, how release-please derives the version and
-  changelog, the pre-1.0 bump rules, script/version and script/release-notes, skipping a commit from the notes,
-  and the commit rules this project enforces for agents. SYMPTOMS — load this if you are about to: commit without
-  an explicit request; offer to `git push`; label a user-facing fix as `chore` (chore, like every hidden type, never
-  reaches the changelog and never triggers a release); write a commit subject over 100 characters or in sentence case;
-  or edit the version in `manifest.json` by hand.
+  "release", "cut a version", "bump the version", "prepare release notes", "what will the next version be", "write a
+  commit message", "why didn't release-please pick this up", "update my branch", "rebase", "fix the conflict",
+  "split this PR", "stacked PR", or when reviewing whether a change is user-facing. Covers the commit rules commitlint
+  enforces, how release-please versions and writes the changelog, pre-1.0 bumps, script/version and
+  script/release-notes, and branch and pull request upkeep. SYMPTOMS — load this if you are about to: commit without
+  an explicit request; offer to `git push`; force-push without a lease; merge a pull request another one is stacked
+  on; label a user-facing fix as `chore` (chore, like every hidden type, never reaches the changelog and never
+  triggers a release); write a commit subject over 100 characters or in sentence case; or edit the version in
+  `manifest.json` by hand.
 ---
 
 # Releases and commit messages
@@ -21,9 +22,16 @@ version number and what users read in the changelog.
 
 - **Never commit automatically.** Only commit when the developer explicitly asks, in that message.
 - A previous commit request is **not** standing permission. Each commit needs a fresh instruction.
-- **Never push, and never offer to.** The developer handles `git push`.
+- **Push only when asked** — for a push or a pull request — and never offer to otherwise. The developer handles
+  `git push`.
 - Always run `git diff` (and `git status`) before writing a message. Describe what is actually staged, not what you
   remember doing.
+
+## Reference files
+
+| File                                                                                   | When to read                                                                   |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [`references/branches-and-pull-requests.md`](references/branches-and-pull-requests.md) | Updating a branch, a conflict, splitting mixed work, or a stacked pull request |
 
 ## Commit message format
 
