@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# script/release-notes: Enhance release notes with GitHub Copilot CLI
+# script/release-notes: Rewrite the release notes for users with a coding agent
 #
 # Generates AI-enhanced release notes based on conventional commits and the
-# current release-please PR. Uses GitHub Copilot CLI in programmatic mode.
+# current release-please PR, with whichever coding agent CLI is installed:
+# Claude Code, Codex, GitHub Copilot or OpenCode (script/.lib/agent_cli.sh).
 # Collects rich context (commit bodies, file stats, code diffs) so the AI
 # can translate technical changes into user-friendly descriptions.
 #
@@ -12,11 +13,16 @@
 #
 # Examples:
 #   ./script/release-notes               # Print enhanced notes to stdout
-#   ./script/release-notes --apply       # Update the open release-please PR
-#   ./script/release-notes --interactive # Launch Copilot CLI with context
+#   ./script/release-notes --apply       # Rewrite the notes in the open release-please PR
+#   ./script/release-notes --interactive # Open an agent session with the context
+#
+# From inside an agent session, without a second agent CLI:
+#   ./script/release-notes --prompt            # Write the prompt for a fresh subagent; prints its path
+#   ./script/release-notes --apply-file NOTES  # Put that subagent's notes into the release PR
 #
 # Environment:
-#   COPILOT_MODEL            Override AI model (default: claude-sonnet-4.6)
+#   AGENT_CLI                claude, codex, copilot or opencode (default: the first one installed)
+#   AGENT_MODEL              Model for that CLI (default: the CLI's own; for copilot, COPILOT_MODEL)
 #   RELEASE_NOTES_DIFF_MAX   Max bytes for code diff context (default: 8000)
 
 set -euo pipefail
@@ -31,7 +37,6 @@ MODE="${1:-stdout}"
 SCRATCH_DIR=".agents/scratch"
 
 # Configuration
-COPILOT_MODEL="${COPILOT_MODEL:-claude-sonnet-4.6}"
 DIFF_MAX_BYTES="${RELEASE_NOTES_DIFF_MAX:-8000}"
 
 # Integration domain — auto-detected from custom_components/
@@ -60,17 +65,16 @@ USER_FACING_PATHS=(
 # Prerequisites
 # ---------------------------------------------------------------------------
 
-# Resolve copilot binary — prefer node_modules/.bin, then PATH
-COPILOT_BIN=""
-if [[ -x "$PWD/node_modules/.bin/copilot" ]]; then
-    COPILOT_BIN="$PWD/node_modules/.bin/copilot"
-elif command -v copilot >/dev/null 2>&1; then
-    COPILOT_BIN="copilot"
-fi
+# shellcheck source=script/.lib/agent_cli.sh
+source "$SCRIPT_DIR/.lib/agent_cli.sh"
 
-if [[ -z "$COPILOT_BIN" ]]; then
-    die "GitHub Copilot CLI not found. Install with: npm install @github/copilot"
-fi
+# Only the modes that call an agent need one; --prompt and --apply-file do not.
+require_agent() {
+    agent_resolve "$@" || die "No agent CLI to use — see above, or set AGENT_CLI"
+    if [[ "$AGENT_NAME" == copilot && -z "${AGENT_MODEL:-}" ]]; then
+        AGENT_MODEL="${COPILOT_MODEL:-}"
+    fi
+}
 
 require_command jq "apt-get install jq"
 require_command gh "https://cli.github.com/"
@@ -156,6 +160,33 @@ build_user_facing_diff() {
     fi
 
     echo "$diff_context"
+}
+
+# ---------------------------------------------------------------------------
+# Helper: The sections the notes use — release-please's visible ones, so the
+# rewritten notes keep the headings CHANGELOG.md and the release use
+# ---------------------------------------------------------------------------
+
+build_sections() {
+    local type section
+    echo "## OUTPUT FORMAT"
+    echo ""
+    echo "Use these sections with ### (H3) headings, in this order:"
+    echo ""
+    echo "- ### ⚠️ Breaking Changes"
+    echo "  (Changes that require user action — reconfiguration, removal of automations, etc.)"
+    while IFS=$'\t' read -r type section; do
+        echo ""
+        echo "- ### $section"
+        case "$type" in
+        feat) echo "  (New sensors, config options, service actions — things users can now DO)" ;;
+        fix) echo "  (Bugs users experienced — describe what was wrong and what is now correct)" ;;
+        perf) echo "  (Performance or reliability improvements users would notice)" ;;
+        build) echo "  (Updated libraries users get with this release — say what that fixes or enables for them)" ;;
+        esac
+    done < <(jq -r '.packages["."]["changelog-sections"][]? | select(.hidden != true) | [.type, .section] | @tsv' \
+        release-please-config.json 2>/dev/null)
+    echo ""
 }
 
 # ---------------------------------------------------------------------------
@@ -274,22 +305,11 @@ Do NOT list every commit as a separate bullet. Group related changes.
 **Rule 7 — Imagine explaining to your neighbor.**
 Before writing each bullet, ask: "Would someone who just uses Home Assistant understand this?"
 
-## OUTPUT FORMAT
+PROMPT_HEADER
 
-Use these sections with ### (H3) headings:
+    build_sections
 
-- ### ⚠️ Breaking Changes
-  (Changes that require user action — reconfiguration, removal of automations, etc.)
-
-- ### 🎉 What's New
-  (New sensors, config options, service actions — things users can now DO)
-
-- ### 🐛 Fixed
-  (Bugs users experienced — describe what was wrong and what is now correct)
-
-- ### ⚡ Improved
-  (Performance or reliability improvements users would notice)
-
+    cat <<'PROMPT_RULES'
 Skip any section that has no content.
 Do NOT include a version header — the release system adds that.
 Do NOT include commit hashes, PR numbers, or links.
@@ -312,7 +332,7 @@ Output ONLY the markdown body, nothing else.
 - utils/, const.py, data.py = Internal (skip unless user-facing effect) → SKIP
 - script/, .github/, docs/, tests/ = Developer-only → SKIP
 
-PROMPT_HEADER
+PROMPT_RULES
 
     # Dynamic context section
     cat <<PROMPT_CONTEXT
@@ -384,80 +404,113 @@ PROMPT_DIFF
 # Execute based on mode
 # ---------------------------------------------------------------------------
 
-run_copilot() {
+run_agent() {
+    require_agent
     local prompt_file
     prompt_file=$(mktemp)
     build_prompt >"$prompt_file"
 
-    log_info "Using model: $COPILOT_MODEL"
+    log_info "Using $AGENT_NAME${AGENT_MODEL:+ with model $AGENT_MODEL}" >&2
 
     local result=0
-    "$COPILOT_BIN" --model "$COPILOT_MODEL" \
-        --allow-tool='shell(git)' \
-        --allow-tool='shell(gh)' \
-        --deny-tool='write' \
-        --deny-tool='shell(rm)' \
-        <"$prompt_file" || result=$?
+    agent_prompt "$prompt_file" || result=$?
 
     rm -f "$prompt_file"
     return "$result"
 }
 
+# apply_notes NOTES: put NOTES under the version heading of the release PR, as release-please reads it back.
+apply_notes() {
+    local body_file notes_file merged
+    body_file=$(mktemp)
+    notes_file=$(mktemp)
+    printf '%s\n' "$PR_BODY" >"$body_file"
+    printf '%s\n' "$1" >"$notes_file"
+    if ! merged=$(python3 "$SCRIPT_DIR/.lib/release_notes_body.py" "$body_file" "$notes_file"); then
+        rm -f "$body_file" "$notes_file"
+        die "PR #$PR_NUMBER left unchanged — release-please could not read the new body back"
+    fi
+    rm -f "$body_file" "$notes_file"
+
+    log_header "Updating PR #$PR_NUMBER"
+    printf '%s\n' "$merged" | gh pr edit "$PR_NUMBER" --body-file -
+    log_success "Release notes updated on PR #$PR_NUMBER"
+}
+
+require_release_pr() {
+    if [[ -z "$PR_NUMBER" ]]; then
+        die "No open release-please PR found. Cannot apply."
+    fi
+}
+
 run_hook "release-notes" "pre"
 
 case "$MODE" in
+--prompt)
+    mkdir -p "$SCRATCH_DIR"
+    PROMPT_FILE="$SCRATCH_DIR/release-notes-prompt.md"
+    build_prompt >"$PROMPT_FILE"
+    log_success "Prompt written to $PROMPT_FILE — hand it to a fresh agent, then: script/release-notes --apply-file <notes>"
+    echo "$PROMPT_FILE"
+    ;;
+
+--apply-file)
+    NOTES_PATH="${2:-}"
+    if [[ -z "$NOTES_PATH" || ! -s "$NOTES_PATH" ]]; then
+        die "Usage: script/release-notes --apply-file FILE — FILE holds the rewritten notes"
+    fi
+    require_release_pr
+    apply_notes "$(cat "$NOTES_PATH")"
+    ;;
+
 --interactive)
-    log_header "Launching Copilot CLI (interactive mode)"
+    require_agent --any
+    log_header "Launching $AGENT_NAME (interactive mode)"
     mkdir -p "$SCRATCH_DIR"
 
     CONTEXT_FILE="$SCRATCH_DIR/release-notes-context.md"
     build_prompt >"$CONTEXT_FILE"
     log_info "Context written to $CONTEXT_FILE"
-    log_info "Using model: $COPILOT_MODEL"
     log_info "Starting interactive session — reference the context file above"
     log_separator
     echo ""
-    exec "$COPILOT_BIN" --model "$COPILOT_MODEL"
+    agent_session
     ;;
 
 --apply)
-    if [[ -z "$PR_NUMBER" ]]; then
-        die "No open release-please PR found. Cannot apply."
-    fi
+    require_release_pr
 
     log_header "Generating enhanced release notes"
 
     TEMP_OUTPUT=$(mktemp)
-    if ! run_copilot >"$TEMP_OUTPUT" 2>/dev/null; then
+    if ! run_agent >"$TEMP_OUTPUT"; then
         rm -f "$TEMP_OUTPUT"
-        die "Copilot CLI failed — check authentication with: copilot"
+        die "${AGENT_NAME:-The agent} failed — is it signed in? Another CLI: AGENT_CLI=<name>"
     fi
 
     ENHANCED=$(cat "$TEMP_OUTPUT")
     rm -f "$TEMP_OUTPUT"
 
     if [[ -z "$ENHANCED" ]]; then
-        die "Copilot CLI returned empty output"
+        die "${AGENT_NAME:-The agent} returned empty output"
     fi
 
-    log_header "Updating PR #$PR_NUMBER"
-    gh pr edit "$PR_NUMBER" --body "$ENHANCED"
-    log_success "Release notes updated on PR #$PR_NUMBER"
+    apply_notes "$ENHANCED"
     ;;
 
 stdout | "")
     log_header "Generating enhanced release notes"
     log_separator
     echo ""
-    if ! run_copilot; then
+    if ! run_agent; then
         echo "" >&2
-        die "Copilot CLI failed — check authentication with: copilot"
+        die "${AGENT_NAME:-The agent} failed — is it signed in? Another CLI: AGENT_CLI=<name>"
     fi
     ;;
 
 *)
     log_error "Unknown option: $MODE"
-    echo "Usage: script/release-notes [--apply|--interactive]"
+    echo "Usage: script/release-notes [--prompt|--apply|--apply-file FILE|--interactive]"
     exit 1
     ;;
 esac

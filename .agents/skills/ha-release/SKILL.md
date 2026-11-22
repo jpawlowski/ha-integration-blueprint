@@ -123,11 +123,26 @@ script/version --check      # manifest.json vs .release-please-manifest.json
 script/release-notes              # preview AI-enhanced notes on stdout
 script/release-notes --apply      # write them into the open release PR body
 script/release-notes --interactive # write context to .agents/scratch/ and open a session
+script/release-notes --prompt     # only write the prompt to .agents/scratch/, print its path
+script/release-notes --apply-file NOTES # write finished notes into the open release PR body
 ```
 
-`script/release-notes` needs GitHub Copilot CLI and `gh auth login`. It finds the PR labelled
-`autorelease: pending`, collects commits and a compact diff since the last tag, and rewrites the notes for a
-user-facing audience. Tunable via `COPILOT_MODEL` and `RELEASE_NOTES_DIFF_MAX`.
+`script/release-notes` needs one coding agent CLI that is signed in — Claude Code, Codex, GitHub Copilot or OpenCode;
+the one this runs inside, else the first one signed in, unless `AGENT_CLI` names it — and `gh auth login`. When none
+is, it names each installed CLI's sign-in command. It finds the PR labelled `autorelease: pending`,
+collects commits and a compact diff since the last tag, and rewrites the notes for a user-facing audience, with the
+sections from `release-please-config.json`. Tunable via `AGENT_MODEL` and `RELEASE_NOTES_DIFF_MAX`.
+
+**Run `--apply` or `--apply-file` last, right before merging the release PR.** release-please rewrites that body whenever another
+commit reaches `main`, and the rewritten notes are gone without a word. `--apply` replaces only the notes under the
+version heading and leaves the rest of the body as release-please reads it back; the release takes its notes from
+there, while `CHANGELOG.md` keeps release-please's own wording.
+
+**Asked for the notes inside an agent session, never write them in that session.** It knows the work behind each
+change, and that knowledge leaks into text meant for people who do not. Run `--prompt`, hand the file to a **fresh**
+subagent with no other context — not a fork, which inherits this session — show the developer its answer, and write
+it with `--apply-file` once they agree. Without subagents, run `--apply`: it starts a separate agent CLI, which is
+just as isolated.
 
 **The generated notes are a draft.** Whoever publishes the release is accountable for their technical accuracy, so
 they get read before the release PR is merged — not after ([`AI_POLICY.md`](../../../AI_POLICY.md)).

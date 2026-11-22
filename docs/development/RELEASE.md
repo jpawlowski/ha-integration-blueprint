@@ -4,7 +4,7 @@ This document describes the release process for this integration, including auto
 
 ## Overview
 
-Releases are managed with [release-please](https://github.com/googleapis/release-please), which automates version bumping and changelog generation based on [Conventional Commits](https://www.conventionalcommits.org/). An optional local script enhances release notes using GitHub Copilot CLI.
+Releases are managed with [release-please](https://github.com/googleapis/release-please), which automates version bumping and changelog generation based on [Conventional Commits](https://www.conventionalcommits.org/). An optional local script rewrites the release notes for users with a coding agent CLI.
 
 **Version source of truth:** `custom_components/ha_integration_domain/manifest.json`
 
@@ -99,7 +99,7 @@ Reads the canonical version from `manifest.json`.
 
 ### `script/release-notes`
 
-Generates AI-enhanced release notes using [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli). Requires an active Copilot subscription and `gh auth login`.
+Generates AI-enhanced release notes with a coding agent CLI — Claude Code, Codex, GitHub Copilot or OpenCode. The dev container installs all four; the script takes the one it runs inside, otherwise the first one you are signed in to, unless `AGENT_CLI` names one. When none is signed in, it prints each one's sign-in command. It also needs `gh auth login`.
 
 ```bash
 # Preview enhanced notes on stdout
@@ -108,8 +108,12 @@ Generates AI-enhanced release notes using [GitHub Copilot CLI](https://docs.gith
 # Update the open release-please PR body with enhanced notes
 ./script/release-notes --apply
 
-# Launch Copilot CLI interactively with context pre-loaded
+# Open an agent session with the context pre-loaded
 ./script/release-notes --interactive
+
+# From an agent session: write the prompt for a fresh subagent, then apply its answer
+./script/release-notes --prompt
+./script/release-notes --apply-file notes.md
 ```
 
 **How it works:**
@@ -121,10 +125,12 @@ Generates AI-enhanced release notes using [GitHub Copilot CLI](https://docs.gith
    - Net file change list as source of truth
    - Revert commit list as chronology hints
 3. Builds a detailed prompt with audience definition, jargon rules, and file impact guidance
-4. Sends everything to Copilot CLI via stdin (avoids shell-escaping issues with large prompts)
-5. Outputs the result to stdout, or updates the PR body with `--apply`
+4. Sends everything to the agent with no tools — the prompt holds all it needs
+5. Outputs the result to stdout, or with `--apply` replaces the notes under the version heading in the PR body,
+   keeping everything release-please reads back when the PR is merged. Run it last: release-please rewrites the
+   body whenever another commit reaches `main`
 
-**`--interactive` mode** writes the full prompt and context to `.agents/scratch/release-notes-context.md` and launches a Copilot CLI session so you can iterate manually.
+**`--interactive` mode** writes the full prompt and context to `.agents/scratch/release-notes-context.md` and opens a session of the same agent so you can iterate manually.
 
 **Skip a commit from release notes** by adding a trailer to the commit body:
 
@@ -140,10 +146,11 @@ User-Impact: none
 
 **Environment variables:**
 
-| Variable                 | Default             | Description                     |
-| ------------------------ | ------------------- | ------------------------------- |
-| `COPILOT_MODEL`          | `claude-sonnet-4.6` | AI model to use                 |
-| `RELEASE_NOTES_DIFF_MAX` | `8000`              | Max bytes for code diff context |
+| Variable                 | Default             | Description                                                    |
+| ------------------------ | ------------------- | -------------------------------------------------------------- |
+| `AGENT_CLI`              | first one signed in | `claude`, `codex`, `copilot` or `opencode`                     |
+| `AGENT_MODEL`            | the CLI's own       | Model for that CLI; for `copilot`, `COPILOT_MODEL` still works |
+| `RELEASE_NOTES_DIFF_MAX` | `8000`              | Max bytes for code diff context                                |
 
 ## Typical Release Workflow
 
@@ -183,4 +190,4 @@ If you want an additional manual gate, you can add a required label (`release: a
 | `.release-please-manifest.json`        | Current version tracked by release-please                        |
 | `CHANGELOG.md`                         | Auto-generated, committed in the same commit as the version bump |
 | `script/version`                       | Local version utility                                            |
-| `script/release-notes`                 | Local Copilot CLI release notes enhancement                      |
+| `script/release-notes`                 | Local release notes rewrite with a coding agent CLI              |
