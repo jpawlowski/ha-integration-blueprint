@@ -51,6 +51,8 @@ DEPENDENCIES.md
 # script/prune-blueprint) and these entries stop the sync from reinstating them.
 initialize.sh
 script/tests/test_initialize.py
+script/import-overlay
+script/tests/test_import_overlay.py
 docs/blueprint/
 .agents/skills/blueprint-skill-maintenance/
 

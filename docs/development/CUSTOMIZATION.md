@@ -63,6 +63,11 @@ Review the PR diff before merging. If it would overwrite something you want to k
 
 **Versions are the exception.** Where your Dependabot or Renovate raised a pin further than the blueprint has, `-X theirs` would lower it again. After the sync, the workflow runs [`script/template-sync-guard`](../../script/template-sync-guard): it compares every pin the dependency bots raise — the managers and patterns in [`.github/renovate.json`](../../.github/renovate.json), so `mise.toml`, the requirements files, `package.json` (regenerating `package-lock.json` to match), the workflows and the mise version pins — with your default branch, restores each occurrence the sync lowered (a release still replaces its own pre-release), commits the higher version back to the sync branch, and comments the list on the PR. A repository made from the blueprint before this step existed does not get it through the sync, since `template-sync.yml` is excluded; copy the _Keep this repository's newer versions_ step from the blueprint's workflow.
 
+**Blueprint-only files stay out.** Some files only make sense in the blueprint itself, such as `script/import-overlay`,
+which imports an existing integration into it. A last step, _Drop blueprint-only files_, runs [`script/prune-blueprint --apply`](../../script/prune-blueprint)
+on the sync branch: it removes any of them the sync brought and adds them to `.templatesyncignore`, so they never reach
+your `main`. A repository made before this step existed copies it from the blueprint's workflow.
+
 **What the sync cannot bring.** Files in `.templatesyncignore` — `AGENTS.md`, `template-sync.yml`, this documentation — never change through the sync, and some blueprint changes need a step only you can take. Ask your agent to run the `blueprint-update` skill (`/blueprint-update` in Claude Code), or run `script/blueprint-update` yourself: it shows what the blueprint changed in those files since you last went through them, already spelled with your integration's names, and the skill walks through the manual steps one at a time.
 
 ### Modifying synced files locally

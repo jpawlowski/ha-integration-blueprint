@@ -256,6 +256,8 @@ Review before merging.
   `script/template-sync-guard` restores it on the sync branch and comments what it kept. That step lives in
   `template-sync.yml`, which the sync never updates, so a repository created before it existed copies the step over
   by hand. A sync PR that lowers a version anyway was produced without the step.
+- Blueprint-only files the sync brings are removed on the sync branch by `script/prune-blueprint --apply`, in the last
+  step of `template-sync.yml`, and listed in `.templatesyncignore` — the same copy-by-hand caveat applies.
 - Changes the sync cannot deliver — to excluded files such as `AGENTS.md`, or steps a repository has to take itself —
   are carried over with [`blueprint-update`](../blueprint-update/SKILL.md) and `script/blueprint-update`.
 

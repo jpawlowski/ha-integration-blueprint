@@ -50,11 +50,14 @@ This file is the acceptance test for phases 4 to 6. Nothing in it may change wit
 ## Phase 1 — Repository, then `initialize.sh`
 
 **Stay in the existing GitHub repository.** Issues, stars, releases and the catalog listing are tied to the repository
-URL, not to the commit history inside it. Pull the blueprint into that repository rather than starting a new one from
-the template. The git strategies — clean force-push versus merging unrelated histories — and the repository settings
-to re-check are in [`references/git-strategy.md`](references/git-strategy.md).
+URL, not to the commit history inside it. Bring the blueprint into that repository rather than starting a new one
+from the template. The recommended way overlays an initialised blueprint onto the existing `main` as one pull
+request — history kept, no force push — with the alternatives and the repository settings to re-check in
+[`references/git-strategy.md`](references/git-strategy.md).
 
-Then run `initialize.sh` **with the identifiers the integration already has**:
+Then run `initialize.sh` **with the identifiers the integration already has**. With the overlay,
+`script/import-overlay` runs it for you: pass the options below after its `--`, except `--domain` and `--force`,
+which it sets itself from the target.
 
 - `--domain` **must** be the existing domain. It is the primary key of every config entry and the prefix of every
   entity ID. Changing it does not migrate anything — it orphans every installation. If the developer wants a
@@ -69,7 +72,8 @@ Then run `initialize.sh` **with the identifiers the integration already has**:
 
 ## Phase 2 — Drop the code in unchanged, and get it green
 
-Copy `custom_components/<domain>/` from the old repository over the blueprint's generated one — **replacing it, not
+With the overlay, the integration folder never left — skip to making it green. With options B or C, copy
+`custom_components/<domain>/` from the old repository over the blueprint's generated one — **replacing it, not
 merging into it**. The blueprint's example platforms, API client and entities are demonstrations; keeping any of them
 alongside real code ships broken entities.
 
