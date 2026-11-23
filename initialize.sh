@@ -1028,6 +1028,9 @@ replace_in_files() {
         "./.agents/skills/blueprint-import/references/git-strategy.md"
         "./.agents/skills/blueprint-update/references/manual-steps.md"
         "./script/tests/fixtures/release-please-pr-body.txt"
+        "./.claude/settings.json"
+        "./.github/copilot/settings.json"
+        "./.codex/config.toml"
     )
 
     # Find all files, excluding pruned directories
