@@ -25,7 +25,7 @@ migration, not as an improvement, unless the developer explicitly asked for it.
 Without a record of the current behaviour, nothing in the later phases is verifiable.
 
 Two records are needed, and they are not the same thing. This phase captures what the code **does**.
-[`ha-grill`](../ha-grill/SKILL.md) captures what the maintainer **wants** — how many installations are at stake,
+`haci-grill` (the `haci-plan` plugin) captures what the maintainer **wants** — how many installations are at stake,
 what is deliberately unusual in there, what they already know is broken, and whether a breaking release is on the
 table at all. Run that interview first: its answers decide how much of phases 3 to 7 is affordable, and an import
 planned without them optimises for the wrong constraint.
@@ -114,7 +114,7 @@ interruptions; one release that renames them all, with a migration and a changel
 Collect them, present them together, and let the developer choose the release
 ([`ha-breaking-changes`](../ha-breaking-changes/SKILL.md)).
 
-Turn the result into a phased plan in `.agents/scratch/` ([`ha-planning`](../ha-planning/SKILL.md)) — phases 4 to 7
+Turn the result into a phased plan in `.agents/scratch/` (`haci-planning`, where the plugin is on) — phases 4 to 7
 then execute it. Weigh it against what the interview established: an integration with thousands of installations whose
 maintainer does not want a major release has a Free-only backlog, and that is a legitimate outcome, not a failed
 import.
@@ -190,7 +190,7 @@ already stand on their own.
 Report which verification actually happened and which did not ([`AI_POLICY.md`](../../../AI_POLICY.md)).
 
 The first new feature after an import is the one most likely to be built on assumptions the old repository never
-stated. Run [`ha-grill`](../ha-grill/SKILL.md) before it, not after.
+stated. Run `haci-grill` before it, not after.
 
 ## Retire this skill when the import is done
 

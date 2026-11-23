@@ -1,6 +1,6 @@
 # Decision records
 
-For [`ha-planning`](../SKILL.md), which says when a decision is worth recording. This is how.
+For [`blueprint-decisions`](../SKILL.md), which says when a decision is worth recording. This is how.
 
 A **record** says why a choice was made, and is not edited once it lands. A **rule** says what holds now, and is what
 an agent follows while it works. Keeping them apart means a superseded decision never reaches an agent's context,
