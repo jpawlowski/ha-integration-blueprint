@@ -11,7 +11,7 @@ publish. Before merging, review the diff and accurately record which checks, aut
 performed. If review is partial or some behavior could not be tested, document that limitation instead of implying full
 verification.
 
-Before that, agents run a review pass of their own — simplify, run the gates again, then a review in a context that
+Before they push, agents run a review pass of their own over the commits since the last one — simplify, run the gates again, then a review in a context that
 did not write the change (`haci-change-review`, from the `haci-review` plugin). It is
 recorded as _Agent review_ in the pull request, and it does not replace yours.
 
@@ -133,7 +133,7 @@ it) so the hook exists in your clone.
 The `main` ruleset takes every change through a pull request, squash-merged by default — what it requires and how to
 relax it is in [REPOSITORY_SETUP.md](REPOSITORY_SETUP.md). That suits agent work: a branch's working commits never reach `main`,
 each change can be reverted as a whole, and release-please reads exactly one commit per change. Open a pull request as
-a draft while an agent still pushes to it; `haci-issue-triage` walks a
+a draft while an agent still pushes to it; `haci-issue-triage`, or its autonomous run `haci-issues`, walks a
 backlog the same way, one branch and pull request per issue.
 
 ## Resources

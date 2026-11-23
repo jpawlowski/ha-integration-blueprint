@@ -10,8 +10,9 @@ once it is done. Run the check from the repository root.
 
 Interviewing, planning and backlog triage are now plugins from
 [ha-custom-integration-skills](https://github.com/jpawlowski/ha-custom-integration-skills) that a developer can turn
-off: `haci-grill` and `haci-planning` (`haci-plan`), backlog triage (`haci-triage`, off by default), and the review
-pass `haci-change-review` (`haci-review`). The sync brings the agent settings that pin and
+off: `haci-grill` and `haci-planning` (`haci-plan`), backlog triage with `haci-issue-triage` and `haci-issues`, which
+replaces the `/issues` command (`haci-triage`, off by default), and the review pass `haci-change-review` (`haci-review`),
+which now runs once before a push instead of before every commit. The sync brings the agent settings that pin and
 enable them and `script/setup/agent-plugins`, which bootstrap runs; recording decisions moves to the new
 `blueprint-decisions` skill. In Claude Code they are invoked as `/haci-plan:haci-grill` and so on.
 
