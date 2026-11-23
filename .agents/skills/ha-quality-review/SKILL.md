@@ -4,7 +4,7 @@ description: >-
   Perform a structured quality review of this Home Assistant custom integration, either as a full audit or scoped
   to a diff. Use when asked to "review the integration", "audit the code", "check quality scale", "are we
   bronze/silver/gold", "is this ready to release", "what's missing before publishing", or before a release. The
-  review of a change before a push is haci-change-review, from the haci-review plugin. Covers running the automated gates
+  review of a change before it lands is haci-change-review, from the haci-review plugin. Covers running the automated gates
   first, then auditing architecture, the Integration Quality Scale rules, error handling, security, performance, user
   experience, and documentation — and reporting findings ranked by severity with concrete fixes. SYMPTOMS — load
   this if you are about to: report a review that only restates linter output; claim real-device testing that did

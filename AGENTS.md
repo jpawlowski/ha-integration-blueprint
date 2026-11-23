@@ -104,8 +104,8 @@ Skills are validated by `script/skills-check` (part of `script/lint-check`, so C
 Working habits that a developer may want to turn off ship as plugins from
 [ha-custom-integration-skills](https://github.com/jpawlowski/ha-custom-integration-skills), pinned to one tag in
 `.claude/settings.json`, `.github/copilot/settings.json` and `.codex/config.toml`; `script/setup/bootstrap` installs
-them. Interviewing and planning are `haci-grill` and `haci-planning` (plugin `haci-plan`), the review pass before a push
-is `haci-change-review` (`haci-review`), and backlog triage is `haci-issue-triage` (`haci-triage`, off by default).
+them. Interviewing and planning are `haci-grill` and `haci-planning` (plugin `haci-plan`), the review pass is
+`haci-change-review` (`haci-review`), and backlog triage is `haci-issue-triage` (`haci-triage`, off by default).
 A plugin that is turned off leaves its task to the developer's own way of doing it. Those skills know no repository;
 this one gives them:
 

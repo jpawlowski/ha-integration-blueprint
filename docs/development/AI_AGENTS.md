@@ -12,7 +12,7 @@ performed. If review is partial or some behavior could not be tested, document t
 verification.
 
 Before that, agents run a review pass of their own — simplify, run the gates again, then a review in a context that
-did not write the change (`haci-change-review`, from the `haci-review` plugin, before a push). It is
+did not write the change (`haci-change-review`, from the `haci-review` plugin). It is
 recorded as _Agent review_ in the pull request, and it does not replace yours.
 
 Extensive AI assistance is acceptable for a community custom integration. See [`AI_POLICY.md`](../../AI_POLICY.md) for
@@ -94,7 +94,7 @@ If you edit the instructions and skills under `.agents/` with VS Code's chat,
 
 Claude Code, Codex, OpenCode, VS Code, and Copilot CLI all support lifecycle hooks. The configuration paths differ, but the
 commands here converge on `.agents/hooks/` so security behavior is implemented and tested once. Agent workflows such as backlog triage ship as plugins instead
-(`haci-issue-triage` and `haci-issues` in the `haci-triage` plugin), which every agent with a plugin marketplace installs
+(the `haci-triage` plugin), which every agent with a plugin marketplace installs
 the same way.
 These agent lifecycle hooks are unrelated to `script/hooks/`, which customizes the repository's validation scripts.
 
