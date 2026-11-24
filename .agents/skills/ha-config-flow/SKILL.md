@@ -105,7 +105,7 @@ No downgrade branch and no `return False` — the contract is under
 that can fail needs [`references/migration.md`](references/migration.md).
 
 Migrations must be idempotent and must never delete a key they do not understand. Cover every migration with a test
-([`ha-testing`](../ha-testing/SKILL.md)).
+(`haci-testing`).
 
 ## Validate
 

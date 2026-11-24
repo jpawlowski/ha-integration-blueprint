@@ -74,7 +74,7 @@ Migrating a unique ID after release breaks every existing install, so these are 
 ## Tests
 
 Also worth raising in a review of `tests/`; the procedure for fixing them is
-[`ha-testing`](../../ha-testing/SKILL.md).
+`haci-testing`.
 
 | Core check                                                                                        | Check                                                                                                                                                                         |
 | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -102,4 +102,4 @@ These Core checks only restate a rule another file owns — look the name up the
 [`blueprint.service_actions`](../../../instructions/blueprint.service_actions.instructions.md); `-logger-period`
 (`C7401`) → [`blueprint.python`](../../../instructions/blueprint.python.instructions.md); `-test-non-deterministic`
 (`W7409`), `-unused-test-fixture-argument` (`R7402`), `-json-fixture` (`W7435`), `-tests-coordinator-async-refresh`
-(`W7439`) → [`blueprint.tests`](../../../instructions/blueprint.tests.instructions.md).
+(`W7439`) → [`haci.tests`](../../../instructions/haci.tests.instructions.md).

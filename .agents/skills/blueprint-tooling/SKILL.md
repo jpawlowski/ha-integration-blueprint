@@ -79,6 +79,7 @@ script/decisions         # write (--check: verify) the decision record index (al
 script/ha-version-sync   # align the pinned Home Assistant version across config files, and mise's Python with it
 script/setup/toolchain   # install the tools mise.toml pins (--install-mise: mise itself too) — run by bootstrap
 script/setup/agent-plugins # install the haci plugins at the tag .claude/settings.json pins (--check: the 3 agents agree)
+script/haci-vendor       # copy the pinned haci skills' rules into .agents/instructions/haci.*.instructions.md (--check)
 script/setup/github      # apply the GitHub settings and .github/rulesets/ (--dry-run first) — see REPOSITORY_SETUP.md
 script/secret-scan       # betterleaks over --staged changes (the commit hook), a --range, or --all of the history
 script/clean             # remove caches, logs, build artifacts
@@ -187,13 +188,13 @@ pin no longer satisfies Home Assistant's `requires-python`. Node is not pinned t
 
 Two bots share the updates without overlapping — a dependency raised by both would arrive twice:
 
-| What                                                                | Raised by                             | Pull request                                                                                                 |
-| ------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| GitHub Actions, npm, dev container features, `requirements_dev.txt` | Dependabot (`.github/dependabot.yml`) | weekly, minor/patch grouped per ecosystem                                                                    |
-| `mise.toml`, the mise version in workflows and the dev container    | Renovate (`.github/renovate.json`)    | weekly, one `tooling` group                                                                                  |
-| `manifest.json` + `requirements.txt`                                | Renovate                              | one per package, a major waits for approval; `fix(deps)` only for a security advisory                        |
-| `pytest-homeassistant`                                              | Renovate                              | its own; a new release train fails `script/ha-version-sync` until `hacs.json` follows                        |
-| the agent plugin tag in the three agent settings files              | Renovate                              | one `agent plugins` pull request for all three; `script/setup/agent-plugins --check` fails on a partial bump |
+| What                                                                | Raised by                             | Pull request                                                                                                                                                                     |
+| ------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub Actions, npm, dev container features, `requirements_dev.txt` | Dependabot (`.github/dependabot.yml`) | weekly, minor/patch grouped per ecosystem                                                                                                                                        |
+| `mise.toml`, the mise version in workflows and the dev container    | Renovate (`.github/renovate.json`)    | weekly, one `tooling` group                                                                                                                                                      |
+| `manifest.json` + `requirements.txt`                                | Renovate                              | one per package, a major waits for approval; `fix(deps)` only for a security advisory                                                                                            |
+| `pytest-homeassistant`                                              | Renovate                              | its own; a new release train fails `script/ha-version-sync` until `hacs.json` follows                                                                                            |
+| the agent plugin tag in the three agent settings files              | Renovate                              | one `agent plugins` pull request for all three; `script/setup/agent-plugins --check` fails on a partial bump, `script/skills-check` until `script/haci-vendor` ran on the branch |
 
 Renovate needs its GitHub App installed on the repository and does nothing without it: no error, no pull request.
 Dependabot has no mise ecosystem, so without the App the tool pins and the runtime requirements only move by hand;

@@ -82,7 +82,7 @@ Cover the output with a snapshot test, so every change to it shows up in review:
 `get_diagnostics_for_config_entry` / `get_diagnostics_for_device` from
 `pytest_homeassistant.components.diagnostics` return exactly what a user downloads. Read the snapshot
 for anything that should have been redacted before committing it — procedure in
-[`ha-testing`](../skills/ha-testing/SKILL.md).
+`haci-testing`.
 
 ## When in Doubt
 

@@ -266,7 +266,7 @@ code edit.
 ## 7. Add a regression test
 
 A runtime bug that reached a user is exactly the case where a test pays for itself. Add one that reproduces the
-original failure before the fix. See [`ha-testing`](../ha-testing/SKILL.md).
+original failure before the fix. See `haci-testing`.
 
 ## Stop conditions
 

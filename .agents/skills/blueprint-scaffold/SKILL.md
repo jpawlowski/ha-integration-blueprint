@@ -171,7 +171,7 @@ The unique ID choice is effectively permanent — changing it later is a breakin
 1. `translations/en.json` and `icons.json` for every surviving entity, flow step, action and exception —
    English only, `en.json` only ([`ha-translations`](../ha-translations/SKILL.md)).
 2. `script/lint` and `script/type-check` until both are clean, then `script/hassfest`.
-3. Tests for the config flow and at least one platform ([`ha-testing`](../ha-testing/SKILL.md)), then `script/test`.
+3. Tests for the config flow and at least one platform (`haci-testing`), then `script/test`.
 4. `script/develop`, add the integration through the UI, and confirm the entities carry real values. Scaffolding is
    not done until this has happened — a green suite proves the mocks agree with each other, not that the device
    answers.

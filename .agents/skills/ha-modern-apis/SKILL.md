@@ -98,7 +98,7 @@ entry.runtime_data = {ClassPrefix}Data(client=client, coordinator=coordinator, i
 ```
 
 **3. Tests catch Home Assistant's deprecations through a fixture, not through `warnings`** — see
-[`ha-testing`](../ha-testing/SKILL.md#two-settings-that-surprise-people). Fix the deprecation; never filter it.
+[`blueprint.tests`](../../instructions/blueprint.tests.instructions.md#warnings-and-deprecations). Fix the deprecation; never filter it.
 
 ## Fixing a deprecation warning
 

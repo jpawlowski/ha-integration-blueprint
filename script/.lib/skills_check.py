@@ -19,6 +19,8 @@ Invoked by script/skills-check; not intended to be run directly.
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+import hashlib
+import json
 from pathlib import Path
 import re
 import sys
@@ -45,6 +47,9 @@ UNCONDITIONAL_INSTRUCTIONS = {"blueprint.commit-message.instructions.md"}
 # template sync. Their synchronized catalogue is the skills README.
 SKILLS_CATALOGUE = SKILLS_DIR / "README.md"
 AGENTS_CATALOGUE = Path("AGENTS.md")
+HACI_PIN_SOURCE = Path(".claude/settings.json")
+HACI_MARKETPLACE = "ha-custom-integration-skills"
+HACI_MARKER = re.compile(r"^<!-- haci-vendor: (\S+) \S+ sha256:([0-9a-f]{16}) .*-->\n", re.MULTILINE)
 
 LINK_PATTERN = re.compile(r"\[[^\]]*\]\((?!https?:|mailto:|#)([^)]+)\)")
 
@@ -374,19 +379,53 @@ def check_project_instructions_routed() -> list[Report]:
 
     Codex and OpenCode load no instructions file on their own; the routing table in
     AGENTS.md is the only way they find one. The shipped blueprint.* files are listed there
-    already, so only the project's own files are checked.
+    already, and script/haci-vendor writes the haci.* files, so only the project's own files are checked.
     """
     if not AGENTS_CATALOGUE.is_file():
         return []
     rows = [line for line in AGENTS_CATALOGUE.read_text(encoding="utf-8").splitlines() if line.startswith("|")]
     reports: list[Report] = []
     for path in sorted(INSTRUCTIONS_DIR.glob("*.instructions.md")):
-        if path.name.startswith("blueprint."):
+        if path.name.startswith(("blueprint.", "haci.")):
             continue
         report = Report(skill=str(path))
         name = path.name.removesuffix(".instructions.md")
         if not any(f"`{name}`" in row for row in rows):
             report.error(f"{AGENTS_CATALOGUE} does not name {name} — Codex and OpenCode find it only there")
+        reports.append(report)
+    return reports
+
+
+def check_vendored_rules() -> list[Report]:
+    """
+    Verify that every haci.* instructions file was copied at the marketplace tag .claude/settings.json pins.
+
+    Renovate moves the pin without running script/haci-vendor, so without this the rules would silently stay at the
+    old tag. The marker also carries a digest of the text below it, which catches a hand edit and a copy taken from
+    a local checkout instead of the tag. Both stay offline; only script/haci-vendor --check fetches the tag to compare.
+    """
+    reports: list[Report] = []
+    vendored = sorted(INSTRUCTIONS_DIR.glob("haci.*.instructions.md"))
+    if not vendored:
+        return reports
+    try:
+        settings = json.loads(HACI_PIN_SOURCE.read_text(encoding="utf-8"))
+        source = settings["extraKnownMarketplaces"][HACI_MARKETPLACE]["source"]
+        pinned = f"{source['repo']}@{source['ref']}"
+    except OSError, ValueError, KeyError, TypeError:
+        pinned = None
+    for path in vendored:
+        report = Report(skill=str(path))
+        text = path.read_text(encoding="utf-8")
+        match = HACI_MARKER.search(text)
+        if pinned is None:
+            report.error(f"{HACI_PIN_SOURCE} pins no {HACI_MARKETPLACE} tag — remove the file or pin the marketplace")
+        elif match is None:
+            report.error("no haci-vendor marker — the file is written by script/haci-vendor, not by hand")
+        elif match.group(1) != pinned:
+            report.error(f"copied from {match.group(1)}, but {pinned} is pinned — run script/haci-vendor")
+        elif hashlib.sha256(text[match.end() :].lstrip("\n").encode("utf-8")).hexdigest()[:16] != match.group(2):
+            report.error("the text below the marker was edited — run script/haci-vendor instead of editing it")
         reports.append(report)
     return reports
 
@@ -404,7 +443,12 @@ def main() -> int:
 
     reports = [check_skill(d) for d in skill_dirs]
     instruction_reports = check_instruction_paths()
-    pointer_reports = [*check_pointer_links(), *check_catalogue(skill_dirs), *check_project_instructions_routed()]
+    pointer_reports = [
+        *check_pointer_links(),
+        *check_catalogue(skill_dirs),
+        *check_project_instructions_routed(),
+        *check_vendored_rules(),
+    ]
     marker_reports = [*check_blueprint_only_markers(), check_repo_role_markers()]
 
     for report in reports:

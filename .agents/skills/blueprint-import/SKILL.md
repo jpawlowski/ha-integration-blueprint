@@ -179,7 +179,7 @@ already stand on their own.
 ## Phase 7 — Tests, review, release
 
 - Add tests for whatever the old repository had none of, starting with the config flow and one platform
-  ([`ha-testing`](../ha-testing/SKILL.md)).
+  (`haci-testing`).
 - Re-run [`ha-quality-review`](../ha-quality-review/SKILL.md). It now measures what the import produced rather than
   what it inherited, so compare it against the phase 3 audit and say what moved.
 - Start Home Assistant with the **existing** `config/.storage` and confirm the entry loads, the entity IDs are

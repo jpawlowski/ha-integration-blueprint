@@ -79,7 +79,7 @@ device, which a single-owner device cannot represent. Clean up devices a helper 
 ## Deprecated — still works in the pinned version, logs a warning
 
 These are logged and keep working until the version in the last column. How tests catch them:
-[`ha-testing`](../../ha-testing/SKILL.md#two-settings-that-surprise-people).
+[`blueprint.tests`](../../../instructions/blueprint.tests.instructions.md#warnings-and-deprecations).
 
 | Do not use                                                                                                  | Use instead                                                                        | Removed in |
 | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------- |

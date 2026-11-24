@@ -77,7 +77,7 @@ agent that implements it. If yours does not, read the `SKILL.md` before starting
 | the coordinator, the API client, runtime debugging     | [`ha-coordinator-debug`](.agents/skills/ha-coordinator-debug/SKILL.md) | `blueprint.coordinator`                                |
 | translations, `icons.json`                             | [`ha-translations`](.agents/skills/ha-translations/SKILL.md)           | `blueprint.translations`                               |
 | what users see: states, attributes, options, help text | [`ha-user-experience`](.agents/skills/ha-user-experience/SKILL.md)     | —                                                      |
-| tests                                                  | [`ha-testing`](.agents/skills/ha-testing/SKILL.md)                     | `blueprint.tests`                                      |
+| tests                                                  | `haci-testing` (plugin `haci-quality`)                                 | `blueprint.tests`, `haci.tests`                        |
 | repair issues and flows                                | [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md)   | `blueprint.repairs`                                    |
 | anything that could break existing installs            | [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md)   | —                                                      |
 | a Quality Scale audit or pre-release review            | [`ha-quality-review`](.agents/skills/ha-quality-review/SKILL.md)       | —                                                      |
@@ -105,7 +105,10 @@ Working habits that a developer may want to turn off ship as plugins from
 [ha-custom-integration-skills](https://github.com/jpawlowski/ha-custom-integration-skills), pinned to one tag in
 `.claude/settings.json`, `.github/copilot/settings.json` and `.codex/config.toml`; `script/setup/bootstrap` installs
 them. Interviewing and planning are `haci-grill` and `haci-planning` (plugin `haci-plan`), the review pass is
-`haci-change-review` (`haci-review`), and backlog triage is `haci-issue-triage` with the autonomous `haci-issues` run (`haci-triage`, off by default).
+`haci-change-review` (`haci-review`), testing is `haci-testing` (`haci-quality`), and backlog triage is
+`haci-issue-triage` with the autonomous `haci-issues` run (`haci-triage`, off by default). A skill's rules reach the
+files they govern as `.agents/instructions/haci.*.instructions.md`, which `script/haci-vendor` copies from the pinned tag
+— never edit them by hand.
 A plugin that is turned off leaves its task to the developer's own way of doing it. Those skills know no repository;
 this one gives them:
 

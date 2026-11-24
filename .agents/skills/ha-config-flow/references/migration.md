@@ -23,4 +23,4 @@ user a way out:
 3. Delete the issue once the migration succeeds, so a fix done another way — a restart, a manual correction — does
    not leave it behind.
 4. Test both paths: the migration that raises creates the issue, and the fix flow re-runs it
-   ([`ha-testing`](../../ha-testing/SKILL.md)).
+   (`haci-testing`).
