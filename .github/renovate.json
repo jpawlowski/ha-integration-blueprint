@@ -137,7 +137,10 @@
       "matchFileNames": [".claude/settings.json", ".github/copilot/settings.json", ".codex/config.toml"],
       "matchDatasources": ["github-tags"],
       "groupName": "agent plugins",
-      "addLabels": ["tooling"]
+      "addLabels": ["tooling"],
+      "prBodyNotes": [
+        "Run `script/haci-vendor` on this branch and commit the result: the `haci.*` rules files in `.agents/instructions/` still carry the old tag, and `script/skills-check` fails until they follow."
+      ]
     },
     {
       "description": "Each release tracks one Home Assistant version. A new release train means raising the minimum in hacs.json, which script/ha-version-sync enforces; a pre-release dependency is closed by the HA stability check workflow.",

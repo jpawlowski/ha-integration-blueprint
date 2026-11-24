@@ -164,7 +164,7 @@ stale. Re-verify against the newly installed source, not from memory:
 - `ha-quality-review` — `references/quality-scale-rules.md` against `script/hassfest/quality_scale.py` upstream
 - `ha-entity-platform`, `ha-config-flow`, `ha-service-action` — any API named in a code sample, including
   `references/triggers-conditions.md`, which tracks a young API
-- `ha-testing` — Home Assistant's own deprecations are logged, not raised, so run the suite: the autouse
+- `tests/` — Home Assistant's own deprecations are logged, not raised, so run the suite: the autouse
   deprecation fixture in `tests/conftest.py` fails on them
 - Every `(HA YYYY.M+)` marker, across all skills and instructions files: once the **minimum** version in `hacs.json`
   reaches it, the new API becomes the default and the marker and the old way go. Reaching it in the pinned version

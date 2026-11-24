@@ -4,12 +4,13 @@
       "source": {
         "source": "github",
         "repo": "jpawlowski/ha-custom-integration-skills",
-        "ref": "v0.2.0"
+        "ref": "v0.3.0"
       }
     }
   },
   "enabledPlugins": {
     "haci-plan@ha-custom-integration-skills": true,
+    "haci-quality@ha-custom-integration-skills": true,
     "haci-review@ha-custom-integration-skills": true
   }
 }

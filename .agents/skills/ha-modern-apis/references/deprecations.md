@@ -18,7 +18,7 @@ The device registry has its own file: [`device-registry.md`](device-registry.md)
 warning until then — `breaks_in_ha_version` from the source. **gone** means it no longer exists in the pinned version,
 so old code fails right away. **overdue** means the removal version has passed but the old form is still there; it can
 vanish in any release. **—** means not deprecated upstream, but wrong in this project. How tests catch the logged
-ones: [`ha-testing`](../../ha-testing/SKILL.md#two-settings-that-surprise-people).
+ones: [`blueprint.tests`](../../../instructions/blueprint.tests.instructions.md#warnings-and-deprecations).
 
 ## Schema validation — `voluptuous` replaced by `probatio`
 

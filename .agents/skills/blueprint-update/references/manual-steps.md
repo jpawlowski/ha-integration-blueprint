@@ -4,6 +4,22 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `haci-testing` — 2026-11-23
+
+**Check:** `test ! -e .agents/skills/ha-testing && ! grep -q 'skills/ha-testing/' AGENTS.md && grep -q 'haci.tests' AGENTS.md`
+
+The testing skill is now `haci-testing` in the `haci-quality` plugin, which the synced agent settings enable; in Claude
+Code it is `/haci-quality:haci-testing`. Its Home Assistant rules arrive as `.agents/instructions/haci.tests.instructions.md`,
+written by `script/haci-vendor` from the pinned tag, and `blueprint.tests` keeps only this repository's layout, fixtures
+and commands.
+
+1. Delete `.agents/skills/ha-testing/` where the sync left it. A copy you kept on purpose in `.templatesyncignore` has
+   `haci-testing` as its counterpart now; drop the copy or the entry.
+2. In `AGENTS.md`, change the routing row for tests to `haci-testing` (plugin `haci-quality`) with the rules
+   `blueprint.tests` and `haci.tests`, and in the _Agent plugins_ section name `haci-testing` and the `haci.*` rules
+   files that `script/haci-vendor` writes.
+3. Run `script/setup/agent-plugins` to install the plugin.
+
 ## `agent-plugins` — 2026-11-23
 
 **Check:** `grep -q 'ha-custom-integration-skills' AGENTS.md && ! grep -qE 'skills/(ha-grill|ha-planning|ha-issue-triage|blueprint-change-review)/' AGENTS.md && ! grep -q 'and the review below ran' AGENTS.md && test ! -e .agents/skills/ha-grill && test ! -e .agents/skills/ha-planning && test ! -e .agents/skills/ha-issue-triage && test ! -e .agents/skills/blueprint-change-review && test ! -e .claude/commands/issues.md && test ! -e .github/skills/issues && ! grep -q 'Review before a commit and before a pull request leaves draft' AGENTS.md`

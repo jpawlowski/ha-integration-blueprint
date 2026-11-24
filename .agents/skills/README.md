@@ -16,7 +16,6 @@ any of it in your own repository, see [`../README.md`](../README.md). This file 
 | [`ha-coordinator-debug`](ha-coordinator-debug/SKILL.md) | entities unavailable, stale data, setup failures, runtime debugging         |
 | [`ha-translations`](ha-translations/SKILL.md)           | `translations/*.json`, `icons.json`, entity and exception translations      |
 | [`ha-user-experience`](ha-user-experience/SKILL.md)     | deciding what users see — states, attributes, icons, options, help, actions |
-| [`ha-testing`](ha-testing/SKILL.md)                     | writing or fixing tests with `pytest-homeassistant`                         |
 | [`ha-quality-review`](ha-quality-review/SKILL.md)       | auditing the integration against the Integration Quality Scale              |
 | [`ha-modern-apis`](ha-modern-apis/SKILL.md)             | verifying an API is current, or fixing deprecation warnings                 |
 | [`ha-breaking-changes`](ha-breaking-changes/SKILL.md)   | anything that could break existing installs — IDs, entry data, migrations   |
@@ -45,16 +44,16 @@ blueprint repository itself.
 
 Two namespaces are in use, by topic rather than by origin:
 
-| Prefix       | Covers                                                            |
-| ------------ | ----------------------------------------------------------------- |
-| `ha-`        | Home Assistant integration development — entities, flows, testing |
-| `blueprint-` | Tooling and agent workflow the template ships — scripts, lessons  |
+| Prefix       | Covers                                                             |
+| ------------ | ------------------------------------------------------------------ |
+| `ha-`        | Home Assistant integration development — entities, flows, releases |
+| `blueprint-` | Tooling and agent workflow the template ships — scripts, lessons   |
 
 Both are reserved for skills that ship with the blueprint. **Give your own skills a different prefix** — your
 integration's short name works well. That keeps a future blueprint skill from colliding with yours, and makes it
 obvious in a listing which skills you own.
 
-The directory name is also the invocation name (`/ha-testing`), so keep it short and stable. Renaming a skill changes
+The directory name is also the invocation name (`/ha-release`), so keep it short and stable. Renaming a skill changes
 how people invoke it and silently breaks any `.templatesyncignore` entry that pinned the old path.
 
 ## Writing a new skill

@@ -159,7 +159,7 @@ ir.async_create_issue(
 
 1. Migration or deprecation code first, the new behaviour second.
 2. Test the migration explicitly: an entry created with the old shape must end up correct after setup, and running the
-   migration twice must be a no-op ([`ha-testing`](../ha-testing/SKILL.md)).
+   migration twice must be a no-op (`haci-testing`).
 3. Verify by hand: start Home Assistant with an existing `config/.storage`, load the entry, and confirm entity IDs and
    history survived.
 
