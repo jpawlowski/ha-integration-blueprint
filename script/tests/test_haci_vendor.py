@@ -128,3 +128,10 @@ def test_the_committed_rules_files_follow_the_topics_and_the_pin() -> None:
         text = (ROOT / topic.target).read_text(encoding="utf-8")
         assert f'applyTo: "{", ".join(topic.patterns)}"' in text
         assert f"<!-- haci-vendor: {source['repo']}@{source['ref']} {topic.source} sha256:" in text
+
+
+def test_initialize_leaves_every_rules_file_alone() -> None:
+    """initialize.sh would rewrite the marker's repository name and break its digest, so it skips every topic's file."""
+    script = (ROOT / "initialize.sh").read_text(encoding="utf-8")
+    for topic in haci_vendor.TOPICS:
+        assert f'"./{topic.target}"' in script
