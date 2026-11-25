@@ -178,3 +178,67 @@ def test_renovate_finds_the_pin_in_every_settings_file() -> None:
             for dep, occurrences in version_guard.pins(text, reader).items()
         }
         assert found == expected, name
+
+
+UNTRUSTED = f"Error: marketplace `{MARKET}` is not configured as a Git marketplace"
+
+
+def _install(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], fail: dict[str, str]
+) -> str:
+    """Run ``install`` with fake agent CLIs; a call whose first four words are a key of ``fail`` fails with its value."""
+    _write(tmp_path, SETTINGS, SETTINGS, CODEX)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(agent_plugins.shutil, "which", lambda name: f"/bin/{name}")
+
+    def fake_run(command: list[str], **_: object) -> subprocess.CompletedProcess[str]:
+        if command[:3] == ["claude", "plugin", "list"]:
+            return subprocess.CompletedProcess(command, 0, "[]", "")
+        error = fail.get(" ".join(command[:4]))
+        return subprocess.CompletedProcess(command, 1 if error else 0, "", error or "")
+
+    monkeypatch.setattr(agent_plugins.subprocess, "run", fake_run)
+    agent_plugins.install(agent_plugins.pins_from_settings(SETTINGS))
+    return capsys.readouterr().out
+
+
+@pytest.mark.unit
+def test_install_reports_success_only_when_every_step_succeeded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """With every CLI call succeeding, both agents get their success line."""
+    out = _install(tmp_path, monkeypatch, capsys, {})
+    assert "✓ Claude Code" in out
+    assert "✓ Codex" in out
+
+
+@pytest.mark.unit
+def test_codex_in_an_untrusted_project_is_not_reported_as_refreshed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Codex ignores .codex/config.toml until the project is trusted, so the upgrade fails and says how to finish."""
+    out = _install(tmp_path, monkeypatch, capsys, {"codex plugin marketplace upgrade": UNTRUSTED})
+    assert "✓ Codex" not in out
+    assert "⚠ Codex" in out
+    assert "trusted" in out
+    assert "script/setup/agent-plugins" in out
+
+
+@pytest.mark.unit
+def test_codex_failure_for_another_reason_shows_the_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A network failure is not mistaken for an untrusted project."""
+    out = _install(tmp_path, monkeypatch, capsys, {"codex plugin marketplace upgrade": "fatal: unable to access"})
+    assert "✓ Codex" not in out
+    assert "fatal: unable to access" in out
+
+
+@pytest.mark.unit
+def test_failed_claude_install_is_not_reported_as_done(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A failed marketplace add or plugin install withholds the Claude Code success line."""
+    out = _install(tmp_path, monkeypatch, capsys, {"claude plugin install plan@example-skills": "network down"})
+    assert "✓ Claude Code" not in out
+    assert "⚠ Claude Code" in out
