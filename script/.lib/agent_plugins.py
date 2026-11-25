@@ -32,6 +32,7 @@ CLAUDE_LOCAL = Path(".claude/settings.local.json")
 COPILOT_SETTINGS = Path(".github/copilot/settings.json")
 CODEX_CONFIG = Path(".codex/config.toml")
 TIMEOUT = 180
+UNTRUSTED_CODEX = "is not configured as a Git marketplace"
 
 
 @dataclass(frozen=True)
@@ -117,17 +118,20 @@ def claude_commands(pin: Pin, local: dict, installed: set[str]) -> list[list[str
     return commands
 
 
-def _run(command: list[str]) -> bool:
+def _run(command: list[str], *, report: bool = True) -> str | None:
+    """Run one CLI call; return why it failed, or None when it succeeded."""
     try:
         result = subprocess.run(command, capture_output=True, text=True, timeout=TIMEOUT, check=False)
     except (OSError, subprocess.TimeoutExpired) as err:
-        print(f"⚠ {' '.join(command)}: {err}", file=sys.stderr)
-        return False
-    if result.returncode != 0:
+        error = str(err)
+    else:
+        if result.returncode == 0:
+            return None
         detail = (result.stderr or result.stdout).strip().splitlines()
-        print(f"⚠ {' '.join(command)}: {detail[-1] if detail else f'exit {result.returncode}'}", file=sys.stderr)
-        return False
-    return True
+        error = detail[-1] if detail else f"exit {result.returncode}"
+    if report:
+        print(f"⚠ {' '.join(command)}: {error}", file=sys.stderr)
+    return error
 
 
 def _claude_installed() -> set[str]:
@@ -147,20 +151,37 @@ def _claude_installed() -> set[str]:
 
 
 def install(pins: list[Pin]) -> None:
-    """Install for every agent CLI on PATH; report what was skipped."""
+    """Install for every agent CLI on PATH; report what was skipped or failed."""
     if shutil.which("claude"):
         installed = _claude_installed()
-        for pin in pins:
-            for command in claude_commands(pin, _json(CLAUDE_LOCAL), installed):
-                _run(command)
-        print("✓ Claude Code: " + ", ".join(f"{p.marketplace}@{p.ref}" for p in pins))
+        failed = [
+            command
+            for pin in pins
+            for command in claude_commands(pin, _json(CLAUDE_LOCAL), installed)
+            if _run(command) is not None
+        ]
+        if failed:
+            print(f"⚠ Claude Code: {len(failed)} step(s) failed, see above; rerun script/setup/agent-plugins")
+        else:
+            print("✓ Claude Code: " + ", ".join(f"{p.marketplace}@{p.ref}" for p in pins))
     else:
         print("· Claude Code: claude not on PATH, skipped")
     if shutil.which("codex") and CODEX_CONFIG.is_file():
-        for pin in pins:
-            _run(["codex", "plugin", "marketplace", "upgrade", pin.marketplace])
-        print("✓ Codex: refreshed from .codex/config.toml (takes effect once the project is trusted)")
-    print("· Copilot: installs from .github/copilot/settings.json itself")
+        errors = [
+            error
+            for pin in pins
+            if (error := _run(["codex", "plugin", "marketplace", "upgrade", pin.marketplace], report=False))
+        ]
+        if not errors:
+            print(f"✓ Codex: refreshed from {CODEX_CONFIG}")
+        elif all(UNTRUSTED_CODEX in error for error in errors):
+            print(
+                f"⚠ Codex: not installed; Codex reads {CODEX_CONFIG} only in a trusted project."
+                " Trust this folder in Codex, then rerun script/setup/agent-plugins"
+            )
+        else:
+            print(f"⚠ Codex: not refreshed: {errors[0]}; rerun script/setup/agent-plugins")
+    print(f"· Copilot: installs from {COPILOT_SETTINGS} itself")
 
 
 def main(argv: list[str]) -> int:
