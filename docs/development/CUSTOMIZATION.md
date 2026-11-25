@@ -131,6 +131,8 @@ Files already excluded by default:
 > [!TIP]
 > If a file keeps causing conflicts in every sync PR, add it to `.templatesyncignore` instead of resolving the conflict every week.
 
+`.gitignore` is synced, so an ignore pattern only your integration needs does not belong there — the next sync removes it. Put it into `.git/info/exclude`, which Git reads like a `.gitignore` but never commits, or propose it upstream when every integration would need it.
+
 ### Staying on an older Home Assistant version
 
 The blueprint tracks the current Home Assistant release, so a sync PR can raise the version your tooling targets. Your integration code and `hacs.json` are never synced, which means your minimum Home Assistant version only changes when you change it.
