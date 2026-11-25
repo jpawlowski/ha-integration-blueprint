@@ -24,7 +24,7 @@ repository is offered as a custom repository first. `README.template.md` already
 - **The release body is what users read** — the update entity shows it under **Settings** → **Updates**, joined for
   every release since the installed one, but only within the last five releases; further behind, a user sees the
   newest notes alone. Anything the user must do first goes at the top, and a step they must not miss is also a repair
-  issue ([`ha-breaking-changes`](../../ha-breaking-changes/SKILL.md) §5; [`ha-release`](../../ha-release/SKILL.md)
+  issue (`haci-breaking-changes` §5; [`ha-release`](../../ha-release/SKILL.md)
   owns the notes).
 - **Pre-releases** reach only users who switched on **Pre-release** for the repository, and only while newer than the
   latest regular release.
@@ -46,4 +46,4 @@ repository is offered as a custom repository first. `README.template.md` already
   [`catalog-pr.md`](catalog-pr.md#removal-request), do not file it.
 - **Critical:** a repository found harmful (stealing credentials, breaking Home Assistant) is uninstalled from every
   instance at once and Home Assistant restarts. That is the consequence of shipping anything that phones home with
-  credentials ([`ha-quality-review`](../../ha-quality-review/SKILL.md) §5).
+  credentials (`haci-quality-review` §5).

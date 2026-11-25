@@ -4,6 +4,25 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `haci-quality-skills` — 2026-11-24
+
+**Check:** `test ! -e .agents/skills/ha-modern-apis && test ! -e .agents/skills/ha-breaking-changes && test ! -e .agents/skills/ha-quality-review && ! grep -qE 'skills/ha-(modern-apis|breaking-changes|quality-review)/' AGENTS.md && grep -q 'haci.repairs' AGENTS.md`
+
+`ha-modern-apis`, `ha-breaking-changes` and `ha-quality-review` are now `haci-modern-apis`, `haci-breaking-changes`
+and `haci-quality-review` in the `haci-quality` plugin, next to `haci-testing`; in Claude Code they are
+`/haci-quality:haci-modern-apis` and so on. The Home Assistant rules for repair issues arrive as
+`.agents/instructions/haci.repairs.instructions.md`, written by `script/haci-vendor`, and `blueprint.repairs` keeps
+only this repository's additions. Bumping the Home Assistant version moved to `blueprint-tooling`.
+
+1. Delete `.agents/skills/ha-modern-apis/`, `.agents/skills/ha-breaking-changes/` and `.agents/skills/ha-quality-review/`
+   where the sync left them. A copy you kept on purpose in `.templatesyncignore` has its `haci-` counterpart now; drop
+   the copy or the entry.
+2. In `AGENTS.md`, point the routing rows for repairs, breaking changes, the Quality Scale audit and deprecations at
+   the `haci-` names (plugin `haci-quality`), add `haci.repairs` beside `blueprint.repairs`, and replace every other
+   link into the three old skill directories with the new name. In the _Agent plugins_ section name the three skills,
+   and add the rows for the target tier and the Home Assistant virtualenv to its table.
+3. Run `script/setup/agent-plugins`.
+
 ## `haci-testing` — 2026-11-23
 
 **Check:** `test ! -e .agents/skills/ha-testing && ! grep -q 'skills/ha-testing/' AGENTS.md && grep -q 'haci.tests' AGENTS.md`
@@ -198,7 +217,7 @@ The sync replaces `pytest-homeassistant-custom-component` in `requirements_test.
 
 1. Raise `homeassistant` in `hacs.json` to `2026.11.0`. Users on an older Home Assistant get no further updates, so
    name the new minimum in your changelog; it is not a breaking change on its own
-   ([`ha-breaking-changes`](../../ha-breaking-changes/SKILL.md#1-recognise-it)).
+   (`haci-breaking-changes`).
 2. Replace `pytest_homeassistant_custom_component` with `pytest_homeassistant` in every import under `tests/`.
 3. Delete the autouse `auto_enable_custom_integrations` fixture from `tests/conftest.py` — the new `hass` fixture
    loads custom integrations itself.

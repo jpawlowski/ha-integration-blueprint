@@ -33,7 +33,7 @@ Record it when it is expensive to reverse and the reasoning would otherwise be l
 
 Do **not** record routine implementation choices, anything the code already makes obvious, a restatement of a Home
 Assistant convention, or a breaking change made before `1.0.0` — its record is the `BREAKING CHANGE:` footer
-([`ha-breaking-changes`](../ha-breaking-changes/SKILL.md)).
+(`haci-breaking-changes`).
 
 The bar is all three of: hard to reverse, a genuine trade-off rather than the one sensible option, and surprising to a
 reader who was not there — would the choice, without the record, read as an oversight someone fixes? **Most sessions

@@ -56,7 +56,14 @@ what does not apply: supported and unsupported devices, prerequisites, configura
 functionality, triggers, conditions and actions, examples, data updates, known limitations, troubleshooting, and
 removing the integration. Most of these answer a Quality Scale `docs-*` rule — `docs-data-update`,
 `docs-known-limitations`, `docs-troubleshooting`, `docs-removal-instructions` and the rest — so a missing section is
-usually a missing rule.
+usually a missing rule. Which file meets which rule here:
+
+| Rules                                                                                                                           | Where                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `docs-high-level-description`, `docs-supported-devices`, `docs-supported-functions`, `docs-use-cases`, `docs-known-limitations` | `README.md`                                                |
+| `docs-installation-instructions`, `docs-removal-instructions`, `docs-troubleshooting`                                           | `docs/user/GETTING_STARTED.md`                             |
+| `docs-installation-parameters`, `docs-configuration-parameters`, `docs-data-update`                                             | `docs/user/CONFIGURATION.md`                               |
+| `docs-actions`, `docs-triggers`, `docs-conditions`, `docs-examples`                                                             | `docs/user/EXAMPLES.md`, or `CONFIGURATION.md` for actions |
 
 ## Instructions Files
 

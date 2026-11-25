@@ -17,7 +17,7 @@ user a way out:
 
 1. Before raising, create a fixable repair issue for the entry — `issue_id` and `data` carry the entry ID, severity
    `ERROR`, since the integration has stopped working
-   ([`blueprint.repairs`](../../../instructions/blueprint.repairs.instructions.md)).
+   ([`haci.repairs`](../../../instructions/haci.repairs.instructions.md)).
 2. In `repairs.py`, the fix flow explains what the user has to do and, on confirmation, calls
    `await hass.config_entries.async_retry_migration(entry_id)` before finishing with `async_create_entry(data={})`.
 3. Delete the issue once the migration succeeds, so a fix done another way — a restart, a manual correction — does

@@ -29,7 +29,7 @@ mechanics therefore work identically in all of them.
 - **Config flow** creates the entry: immutable `data` (credentials, host) plus mutable `options`.
 - **Options flow** only ever changes `options`. Changing `data` is a reconfigure, not an option.
 - **Repair flows** live in `repairs.py` and follow a different architecture — see
-  [`blueprint.repairs`](blueprint.repairs.instructions.md).
+  [`haci.repairs`](haci.repairs.instructions.md).
 
 **Data Entry Flow has nothing to do with `data.py`.** The names collide and mean opposite things: one collects input
 from users, the other types `entry.runtime_data`.

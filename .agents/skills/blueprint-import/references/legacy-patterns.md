@@ -1,6 +1,6 @@
 # Patterns to expect in imported code
 
-Read this during phase 4. [`../../ha-modern-apis/SKILL.md`](../../ha-modern-apis/SKILL.md) is authoritative for
+Read this during phase 4. `haci-modern-apis` is authoritative for
 what is current — verify against the installed Home Assistant source rather than this table, which is a starting
 point for what to look for.
 

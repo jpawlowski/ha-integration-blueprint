@@ -44,4 +44,4 @@ mode you declared. An active effect may narrow `color_mode` to `ONOFF` or `BRIGH
 Colour temperature is **kelvin only**: `color_temp_kelvin`, `_attr_min_color_temp_kelvin`,
 `_attr_max_color_temp_kelvin`. The mired attributes are gone. With `ColorMode.COLOR_TEMP`, set the minimum and maximum
 to the device's real range — the defaults (2000–6535 K) are a placeholder, and never set either to `None`. See
-[`deprecations.md`](../../ha-modern-apis/references/deprecations.md).
+`deprecations.md` in `haci-modern-apis`.

@@ -88,7 +88,7 @@ The top-level `config_flow.py` is a thin shim Home Assistant discovers — leave
 ## Config entry migration
 
 Bump `MINOR_VERSION` for additive changes, `VERSION` for restructuring. Read
-[`ha-breaking-changes`](../ha-breaking-changes/SKILL.md) first — changing entry data affects every existing install.
+`haci-breaking-changes` first — changing entry data affects every existing install.
 
 Implement `async_migrate_entry()` in `custom_components/<domain>/__init__.py`:
 

@@ -63,7 +63,7 @@ Every value is read by people and by automations, and what suits one often hinde
 The answer is rarely to pick a side. Give the entity a state for both, and put each audience's extras where they cost
 the other nothing: display-only data in unrecorded attributes or a disabled-by-default entity, automation-only values
 as attributes beside the state. Decide this per entity before writing the `EntityDescription` — changing it later
-changes entity IDs, states or attributes, which [`ha-breaking-changes`](../ha-breaking-changes/SKILL.md) covers.
+changes entity IDs, states or attributes, which `haci-breaking-changes` covers.
 
 ## 2. States
 

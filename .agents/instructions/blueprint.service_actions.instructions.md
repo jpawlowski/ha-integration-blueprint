@@ -105,7 +105,7 @@ Services can return JSON-serializable data (`homeassistant.util.json.JsonObjectT
 - **datetime objects MUST use `.isoformat()`** - Template engine cannot handle raw datetime
 - Raise exceptions for errors, never return error codes in response data
 - The shape is an interface automations are built against: changing a key or the structure is a breaking change
-  ([`ha-breaking-changes`](../skills/ha-breaking-changes/SKILL.md))
+  (`haci-breaking-changes`)
 
 **SupportsResponse modes:**
 

@@ -164,7 +164,7 @@ number, MAC, or account ID — never a host, IP, URL, or user-chosen name. Add r
 Details and the reserved step names: [`ha-config-flow`](../ha-config-flow/SKILL.md).
 
 The unique ID choice is effectively permanent — changing it later is a breaking change
-([`ha-breaking-changes`](../ha-breaking-changes/SKILL.md)).
+(`haci-breaking-changes`).
 
 ## 6. Strings, then validation, then a real run
 

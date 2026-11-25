@@ -75,7 +75,7 @@ holding the lock but not answering yet because it is still starting.
 would show, without opening it.
 
 `script/ha entities` is how to check unique IDs before and after a change — see
-[`ha-breaking-changes`](../../ha-breaking-changes/SKILL.md).
+`haci-breaking-changes`.
 
 ## Diagnostics
 

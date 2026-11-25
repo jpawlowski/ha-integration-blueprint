@@ -151,7 +151,7 @@ than mid-task.
 - **A rule found false while editing the code it governs** is fixed in that change.
 - **After a template-sync pull request or a Home Assistant version bump**, check the project's own files against the
   shipped ones they extend: a shipped file may now cover them, or contradict them.
-- **Prune** whenever a rule goes in, and with every release review ([`ha-quality-review`](../ha-quality-review/SKILL.md)):
+- **Prune** whenever a rule goes in, and with every release review (`haci-quality-review`):
   a rule a check now enforces, or that the code no longer needs, goes; bullets that state one rule twice merge. Past
   about fifteen bullets in one `## Traps`, consolidate before adding. A shorter set that is followed beats a complete
   one that is not.

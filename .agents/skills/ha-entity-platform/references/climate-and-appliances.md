@@ -15,4 +15,4 @@ Only what differs per platform — read your platform's row; the general rules a
 ## Climate and water heater temperatures
 
 Code uses the `native_` temperature names, in the device's unit — the base class converts to the user's unit system.
-Which names carry the prefix: [`deprecations.md`](../../ha-modern-apis/references/deprecations.md).
+Which names carry the prefix: `deprecations.md` in `haci-modern-apis`.

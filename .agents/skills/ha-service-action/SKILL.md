@@ -196,7 +196,7 @@ makes the description functional, not decorative: write what the action does in 
 ## Removing or renaming an action
 
 Renaming an action breaks every automation and script that calls it. Treat it as a breaking change: see
-[`ha-breaking-changes`](../ha-breaking-changes/SKILL.md) and get explicit approval first.
+`haci-breaking-changes` and get explicit approval first.
 
 ## Do not
 

@@ -6,7 +6,7 @@ paths:
   - "tests/**/*.py"
 ---
 
-<!-- haci-vendor: jpawlowski/ha-custom-integration-skills@v0.3.0 plugins/haci-quality/skills/haci-testing/references/rules.md sha256:d44646179350ea3f — written by script/haci-vendor, do not edit -->
+<!-- haci-vendor: jpawlowski/ha-custom-integration-skills@v0.4.0 plugins/haci-quality/skills/haci-testing/references/rules.md sha256:d44646179350ea3f — written by script/haci-vendor, do not edit -->
 
 # Home Assistant test rules
 

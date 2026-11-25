@@ -60,7 +60,7 @@ assumes have already been made.
 
 `{entry_id}_{key}` is the documented **unique ID of last resort**. If the device or account exposes a serial, MAC or
 account ID, switch to it **before the first release** — afterwards it is a breaking change needing a registry
-migration ([`ha-breaking-changes`](../skills/ha-breaking-changes/SKILL.md)).
+migration (`haci-breaking-changes`).
 
 **You implement:** Platform-specific properties/methods (`native_value`, `is_on`, `async_press`, etc.)
 
@@ -246,10 +246,10 @@ Device info is only used when the entity is set up from a **config entry** and h
 device is not attached, and returning `device_info` anyway is reported — do not do it.
 
 Every text field of `DeviceInfo` (`model`, `sw_version`, `serial_number`, …) must be a `str` — convert a firmware
-number or an integer serial yourself; a non-string value is reported. Dates for both: [`device-registry.md`](../skills/ha-modern-apis/references/device-registry.md).
+number or an integer serial yourself; a non-string value is reported. Dates for both: `device-registry.md` in `haci-modern-apis`.
 
 **Never set `entity_id`** — an invalid one, or one whose domain is not the entity's platform, is reported
-([`deprecations.md`](../skills/ha-modern-apis/references/deprecations.md)). Let Home Assistant build entity IDs from the names.
+(`deprecations.md` in `haci-modern-apis`). Let Home Assistant build entity IDs from the names.
 
 ## Platform-Required Methods
 
@@ -302,7 +302,7 @@ Home Assistant assigns every device to exactly one config entry and at most one 
 - Return `DeviceInfo` for a device owned by the entity's own config entry.
 - Create a separate device for each config subentry; never share one device across subentries.
 - Use `via_device_id` for a separate device reached through a hub, `ChildDeviceInfo` for a part of one product —
-  which is which, and what a child device may carry: [`device-registry.md`](../skills/ha-modern-apis/references/device-registry.md).
+  which is which, and what a child device may carry: `device-registry.md` in `haci-modern-apis`.
 - Use `self.device_entry` inside an entity when the registered device is needed.
 - Scope explicit registry lookups with `async_get_device_by_identifier(identifier, config_entry_id)` or
   `async_get_device_by_connection(connection, config_entry_id)`.

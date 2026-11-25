@@ -1031,6 +1031,7 @@ replace_in_files() {
         "./.claude/settings.json"
         "./.github/copilot/settings.json"
         "./.codex/config.toml"
+        "./.agents/instructions/haci.repairs.instructions.md"
         "./.agents/instructions/haci.tests.instructions.md"
     )
 

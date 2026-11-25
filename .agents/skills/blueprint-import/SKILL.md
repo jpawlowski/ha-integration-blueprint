@@ -44,7 +44,7 @@ planned without them optimises for the wrong constraint.
    whether it uses discovery.
 
 This file is the acceptance test for phases 4 to 6. Nothing in it may change without an explicit decision under
-[`ha-breaking-changes`](../ha-breaking-changes/SKILL.md).
+`haci-breaking-changes`.
 
 ## Phase 1 — Repository, then `initialize.sh`
 
@@ -100,7 +100,7 @@ The phase 2 checkpoint is the only moment where the whole integration is in fron
 changed yet. Audit it here and the result is an inventory of what you inherited; audit it at the end and it is a
 verdict on your own work.
 
-Run a full audit with [`ha-quality-review`](../ha-quality-review/SKILL.md) against the imported code. Then sort every
+Run a full audit with `haci-quality-review` against the imported code. Then sort every
 finding — the sorting, not the audit, is what makes the result usable:
 
 | Bucket       | What lands in it                                                                                                   | What happens to it                                      |
@@ -112,7 +112,7 @@ finding — the sorting, not the audit, is what makes the result usable:
 **Costly findings are batched, not dripped.** Five releases that each rename a few entities cost users five
 interruptions; one release that renames them all, with a migration and a changelog entry they can act on, costs one.
 Collect them, present them together, and let the developer choose the release
-([`ha-breaking-changes`](../ha-breaking-changes/SKILL.md)).
+(`haci-breaking-changes`).
 
 Turn the result into a phased plan in `.agents/scratch/` (`haci-planning`, where the plugin is on) — phases 4 to 7
 then execute it. Weigh it against what the interview established: an integration with thousands of installations whose
@@ -129,7 +129,7 @@ phase 2 checkpoint you may still need to fall back to.
 ## Phase 4 — Modernise the APIs, and nothing else
 
 Old integrations accumulate APIs that Home Assistant has since deprecated or removed. Fix those now, while the file
-layout is still familiar and a diff is easy to read. [`ha-modern-apis`](../ha-modern-apis/SKILL.md) carries the full
+layout is still familiar and a diff is easy to read. `haci-modern-apis` carries the full
 table; the ones that show up in nearly every legacy integration, together with the upstream-template patterns worth
 recognising, are in [`references/legacy-patterns.md`](references/legacy-patterns.md).
 
@@ -168,7 +168,7 @@ cannot express — apply it as a review pass, file type by file type, using the 
 
 **Each of these can be a breaking change.** Adding a `translation_key` to an entity that had `name=` changes its
 name, and adding a missing `state_class` changes its statistics. Check every one against the phase 0 contract and
-raise it with the developer before implementing — see [`ha-breaking-changes`](../ha-breaking-changes/SKILL.md).
+raise it with the developer before implementing — see `haci-breaking-changes`.
 
 The phase 3 backlog says which of these this repository actually has, and which bucket each one fell into — work from
 that. The table above is what to look for when no audit was run.
@@ -180,7 +180,7 @@ already stand on their own.
 
 - Add tests for whatever the old repository had none of, starting with the config flow and one platform
   (`haci-testing`).
-- Re-run [`ha-quality-review`](../ha-quality-review/SKILL.md). It now measures what the import produced rather than
+- Re-run `haci-quality-review`. It now measures what the import produced rather than
   what it inherited, so compare it against the phase 3 audit and say what moved.
 - Start Home Assistant with the **existing** `config/.storage` and confirm the entry loads, the entity IDs are
   unchanged and history is intact. A mocked suite cannot prove this.
