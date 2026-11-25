@@ -25,8 +25,15 @@ def _stub(repo: Path, name: str, body: str) -> None:
 
 def _wait_for(condition: Callable[[], bool]) -> None:
     deadline = time.monotonic() + 10
-    while not condition() and time.monotonic() < deadline:
-        time.sleep(0.1)
+    while not condition():
+        if time.monotonic() >= deadline:
+            pytest.fail("condition not met within 10 seconds")
+        time.sleep(0.05)
+
+
+def _reads(path: Path, content: str) -> Callable[[], bool]:
+    """True once the file holds exactly this content; a file just created by a shell redirect is still empty."""
+    return lambda: path.is_file() and path.read_text(encoding="utf-8").strip() == content
 
 
 @pytest.fixture
@@ -106,14 +113,20 @@ def test_local_session_is_silent_when_set_up(repository: Path, tmp_path: Path) -
 def test_toolchain_runs_in_the_background(repository: Path, tmp_path: Path) -> None:
     """The toolchain check never holds up the session; it runs with the session's environment."""
     record = repository / "toolchain-env"
-    _stub(repository, "toolchain", f'sleep 1; echo "${{REMOTE_CONTAINERS:-}}" >"{record}"')
+    release = repository / "release"
+    _stub(
+        repository,
+        "toolchain",
+        f'for _ in $(seq 200); do [[ -e "{release}" ]] && break; sleep 0.05; done; '
+        f'echo "${{REMOTE_CONTAINERS:-}}" >"{record}"',
+    )
     _make_venv(repository)
 
-    started = time.monotonic()
     _run(repository, tmp_path, REMOTE_CONTAINERS="true")
 
-    assert time.monotonic() - started < 1
-    _wait_for(record.exists)
+    assert not record.exists()
+    release.touch()
+    _wait_for(_reads(repository / ".local" / "toolchain.status", "done"))
     assert record.read_text(encoding="utf-8").strip() == "true"
 
 
@@ -124,8 +137,7 @@ def test_cloud_session_bootstraps_in_background(repository: Path, tmp_path: Path
     assert result.returncode == 0
     assert "being set up in the background" in result.stdout
     status = repository / ".local" / "bootstrap.status"
-    _wait_for(lambda: status.is_file() and status.read_text(encoding="utf-8").strip() == "done")
-    assert status.read_text(encoding="utf-8").strip() == "done"
+    _wait_for(_reads(status, "done"))
     assert (repository / ".local" / "ha-venv" / "bin" / "activate").exists()
 
     again = _run(repository, tmp_path, CLAUDE_CODE_REMOTE="true")
