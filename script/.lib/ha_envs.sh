@@ -102,46 +102,47 @@ PY
 ha_envs_install() {
     local dir="$1" version="$2" base="https://raw.githubusercontent.com/home-assistant/core/$2"
     local tmp pinned status=0
-    tmp=$(mktemp -d)
+    tmp=$(mktemp -d) || return 1
     pinned=$(ha_test_pin_version)
+    # Callers test this function, which switches set -e off inside it: every step has to fail on its own.
     (
-        set -euo pipefail
+        set -uo pipefail
         _use_venv "$dir"
         log_header "Installing development dependencies into Home Assistant $version"
-        uv pip install --requirement requirements_dev.txt
+        uv pip install --requirement requirements_dev.txt || exit 1
 
         log_header "Installing test dependencies"
         # requirements_test.txt pins the plugin release of the minimum version; another version needs its own.
         if [[ -n $pinned && $pinned != "$version" ]]; then
-            printf 'pytest-homeassistant==%s\n' "$version" >"$tmp/override.txt"
+            printf 'pytest-homeassistant==%s\n' "$version" >"$tmp/override.txt" || exit 1
             if ! uv pip install --requirement requirements_test.txt --override "$tmp/override.txt"; then
                 log_warning "No pytest-homeassistant $version — the tests run the $pinned fixtures against it"
-                uv pip install --requirement requirements_test.txt
+                uv pip install --requirement requirements_test.txt || exit 1
             fi
         else
-            uv pip install --requirement requirements_test.txt
+            uv pip install --requirement requirements_test.txt || exit 1
         fi
 
         if grep -qE '^[[:space:]]*[^[:space:]#]' requirements.txt 2>/dev/null; then
             log_header "Installing runtime dependencies"
-            uv pip install --requirement requirements.txt
+            uv pip install --requirement requirements.txt || exit 1
         fi
         if [[ -f requirements.local.txt ]]; then
             log_header "Installing local extra dependencies (requirements.local.txt)"
-            uv pip install --requirement requirements.local.txt
+            uv pip install --requirement requirements.local.txt || exit 1
         fi
 
         log_header "Installing Home Assistant $version runtime dependencies"
-        mkdir -p "$tmp/homeassistant"
-        _download "$base/homeassistant/package_constraints.txt" "$tmp/homeassistant/package_constraints.txt"
-        _download "$base/requirements.txt" "$tmp/requirements.txt"
-        _download "$base/requirements_all.txt" "$tmp/requirements_all.txt"
-        uv pip install --requirement "$tmp/requirements_all.txt"
+        mkdir -p "$tmp/homeassistant" || exit 1
+        _download "$base/homeassistant/package_constraints.txt" "$tmp/homeassistant/package_constraints.txt" || exit 1
+        _download "$base/requirements.txt" "$tmp/requirements.txt" || exit 1
+        _download "$base/requirements_all.txt" "$tmp/requirements_all.txt" || exit 1
+        uv pip install --requirement "$tmp/requirements_all.txt" || exit 1
 
         log_header "Installing Home Assistant $version test dependencies"
-        _download "$base/requirements_test_pre_commit.txt" "$tmp/requirements_test_pre_commit.txt"
-        _download "$base/requirements_test.txt" "$tmp/requirements_test.txt"
-        uv pip install --requirement "$tmp/requirements_test.txt"
+        _download "$base/requirements_test_pre_commit.txt" "$tmp/requirements_test_pre_commit.txt" || exit 1
+        _download "$base/requirements_test.txt" "$tmp/requirements_test.txt" || exit 1
+        uv pip install --requirement "$tmp/requirements_test.txt" || exit 1
 
         log_header "Installing Home Assistant $version core"
         uv pip install "homeassistant==$version"
@@ -167,14 +168,14 @@ ha_envs_build() {
         fi
     else
         rm -rf "$dir"
-        mkdir -p "${dir%/*}"
+        mkdir -p "${dir%/*}" || return 1
         log_info "Creating the Home Assistant $version environment"
         if ! ha_envs_create_venv "$dir" "$version" || ! ha_envs_install "$dir" "$version"; then
             rm -rf "$dir"
             log_error "Could not build the Home Assistant $version environment"
             return 1
         fi
-        printf '%s\n' "$version" >"$dir/.ha-version"
+        printf '%s\n' "$version" >"$dir/.ha-version" || return 1
     fi
     printf '%s\n' "$inputs" >"$dir/.ha-inputs"
 }
@@ -190,8 +191,7 @@ ha_envs_refresh() {
     ha_envs_resolve "$slot" version || return 1
     ha_envs_build "$version" || return 1
     root="$(ha_venv_preferred_path)"
-    mkdir -p "$root/slots"
-    ln -sfn "../versions/$version" "$root/slots/$slot"
+    mkdir -p "$root/slots" && ln -sfn "../versions/$version" "$root/slots/$slot" || return 1
     touch "$root/slots/.$slot.refreshed"
     log_success "$slot: Home Assistant $version"
 }

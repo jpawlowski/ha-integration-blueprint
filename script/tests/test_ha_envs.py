@@ -148,6 +148,44 @@ def test_a_failed_build_keeps_the_previous_version(workdir: Path) -> None:
     assert _versions(workdir) == ["2026.12.0b1"]
 
 
+def _install(workdir: Path, *, download: str = "-", uv: str = "-") -> subprocess.CompletedProcess[str]:
+    """Build 2026.11.2 with the real install; the _download and uv stubs record calls and fail on a name ending."""
+    script = f"""
+source {LIB / "ha_envs.sh"}
+ha_envs_create_venv() {{ mkdir -p "$1/bin"; }}
+_download() {{ [[ $1 == *"{download}" ]] && return 1; echo "download $1" >>"$PWD/calls"; touch "$2"; }}
+uv() {{ [[ "$*" == *"{uv}" ]] && return 1; echo "uv $*" >>"$PWD/calls"; }}
+ha_envs_build 2026.11.2
+"""
+    return _bash(workdir, script)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "failing",
+    [{"download": "/requirements_test.txt"}, {"uv": "/requirements_all.txt"}],
+    ids=["download", "uv-pip-install"],
+)
+def test_a_failed_install_step_fails_the_build(workdir: Path, failing: dict[str, str]) -> None:
+    """Any step that fails ends the install, so the build is removed and never marked complete."""
+    result = _install(workdir, **failing)
+
+    assert result.returncode == 1
+    assert "Could not build the Home Assistant 2026.11.2 environment" in result.stdout + result.stderr
+    assert not (_root(workdir) / "versions" / "2026.11.2").exists()
+    assert "homeassistant==2026.11.2" not in (workdir / "calls").read_text(encoding="utf-8")
+
+
+@pytest.mark.unit
+def test_a_complete_install_marks_the_build(workdir: Path) -> None:
+    """With every step succeeding, the install ends with Home Assistant itself and the build is marked."""
+    result = _install(workdir)
+
+    assert result.returncode == 0, result.stderr
+    assert (_root(workdir) / "versions" / "2026.11.2" / ".ha-version").read_text(encoding="utf-8") == "2026.11.2\n"
+    assert (workdir / "calls").read_text(encoding="utf-8").splitlines()[-1] == "uv pip install homeassistant==2026.11.2"
+
+
 @pytest.mark.unit
 def test_use_mirrors_the_active_slot_at_the_root(workdir: Path) -> None:
     """The root's bin and pyvenv.cfg follow the active slot, so every existing venv path keeps working."""
