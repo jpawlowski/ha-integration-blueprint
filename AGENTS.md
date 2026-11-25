@@ -78,10 +78,10 @@ agent that implements it. If yours does not, read the `SKILL.md` before starting
 | translations, `icons.json`                             | [`ha-translations`](.agents/skills/ha-translations/SKILL.md)           | `blueprint.translations`                               |
 | what users see: states, attributes, options, help text | [`ha-user-experience`](.agents/skills/ha-user-experience/SKILL.md)     | —                                                      |
 | tests                                                  | `haci-testing` (plugin `haci-quality`)                                 | `blueprint.tests`, `haci.tests`                        |
-| repair issues and flows                                | [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md)   | `blueprint.repairs`                                    |
-| anything that could break existing installs            | [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md)   | —                                                      |
-| a Quality Scale audit or pre-release review            | [`ha-quality-review`](.agents/skills/ha-quality-review/SKILL.md)       | —                                                      |
-| deprecation warnings, verifying an API is current      | [`ha-modern-apis`](.agents/skills/ha-modern-apis/SKILL.md)             | —                                                      |
+| repair issues and flows                                | `haci-breaking-changes` (plugin `haci-quality`)                        | `blueprint.repairs`, `haci.repairs`                    |
+| anything that could break existing installs            | `haci-breaking-changes` (plugin `haci-quality`)                        | —                                                      |
+| a Quality Scale audit or pre-release review            | `haci-quality-review` (plugin `haci-quality`)                          | —                                                      |
+| deprecation warnings, verifying an API is current      | `haci-modern-apis` (plugin `haci-quality`)                             | —                                                      |
 | recording or superseding an architectural decision     | [`blueprint-decisions`](.agents/skills/blueprint-decisions/SKILL.md)   | —                                                      |
 | lessons from bugs and corrections, project skills      | [`blueprint-lessons`](.agents/skills/blueprint-lessons/SKILL.md)       | —                                                      |
 | commit messages, versioning, changelog, release notes  | [`ha-release`](.agents/skills/ha-release/SKILL.md)                     | `blueprint.commit-message`                             |
@@ -101,25 +101,28 @@ Skills are validated by `script/skills-check` (part of `script/lint-check`, so C
 
 ### Agent plugins
 
-Working habits that a developer may want to turn off ship as plugins from
+Home Assistant knowledge and working habits that a developer may want to turn off ship as plugins from
 [ha-custom-integration-skills](https://github.com/jpawlowski/ha-custom-integration-skills), pinned to one tag in
 `.claude/settings.json`, `.github/copilot/settings.json` and `.codex/config.toml`; `script/setup/bootstrap` installs
 them. Interviewing and planning are `haci-grill` and `haci-planning` (plugin `haci-plan`), the review pass is
-`haci-change-review` (`haci-review`), testing is `haci-testing` (`haci-quality`), and backlog triage is
-`haci-issue-triage` with the autonomous `haci-issues` run (`haci-triage`, off by default). A skill's rules reach the
-files they govern as `.agents/instructions/haci.*.instructions.md`, which `script/haci-vendor` copies from the pinned tag
-— never edit them by hand.
+`haci-change-review` (`haci-review`), testing, current APIs, breaking changes and the Quality Scale audit are
+`haci-testing`, `haci-modern-apis`, `haci-breaking-changes` and `haci-quality-review` (`haci-quality`), and backlog
+triage is `haci-issue-triage` with the autonomous `haci-issues` run (`haci-triage`, off by default). A skill's rules
+reach the files they govern as `.agents/instructions/haci.*.instructions.md`, which `script/haci-vendor` copies from the
+pinned tag — never edit them by hand.
 A plugin that is turned off leaves its task to the developer's own way of doing it. Those skills know no repository;
 this one gives them:
 
-| They ask for                | Here                                                                                                     |
-| --------------------------- | -------------------------------------------------------------------------------------------------------- |
-| the gates                   | `script/lint`, `script/type-check`, `script/test`, `script/hassfest`; check mode `script/check`          |
-| a second review             | `script/second-review --brief <the skill's references/reviewer-brief.md>`                                |
-| the scratch directory       | `.agents/scratch/` — gitignored, plans in `.agents/scratch/plans/`                                       |
-| decision records            | `docs/development/decisions/`, with [`blueprint-decisions`](.agents/skills/blueprint-decisions/SKILL.md) |
-| what counts as breaking     | _Breaking changes — warn before implementing_ below                                                      |
-| rules for posting on GitHub | _Posting on the developer's behalf_ below, and [`AI_POLICY.md`](AI_POLICY.md)                            |
+| They ask for                  | Here                                                                                                     |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------- |
+| the gates                     | `script/lint`, `script/type-check`, `script/test`, `script/hassfest`; check mode `script/check`          |
+| a second review               | `script/second-review --brief <the skill's references/reviewer-brief.md>`                                |
+| the scratch directory         | `.agents/scratch/` — gitignored, plans in `.agents/scratch/plans/`                                       |
+| decision records              | `docs/development/decisions/`, with [`blueprint-decisions`](.agents/skills/blueprint-decisions/SKILL.md) |
+| what counts as breaking       | _Breaking changes — warn before implementing_ below                                                      |
+| the target tier, deviations   | Silver or Gold, and the in-repo client and package layout: _Custom Integration Flexibility_ below        |
+| the Home Assistant virtualenv | `.venv`; `script/ha-version-sync` raises its version                                                     |
+| rules for posting on GitHub   | _Posting on the developer's behalf_ below, and [`AI_POLICY.md`](AI_POLICY.md)                            |
 
 **Critical files**, where a review miss costs most: everything on the breaking-changes list and the config entry's
 `VERSION` and migration; the config flow's auth and reauth steps, diagnostics and their redaction, anything that logs a
@@ -175,7 +178,7 @@ unique only within their owning entry — never assume they are globally unique.
   strip — are child devices (`ChildDeviceInfo`).
 - Do not rely on the compatibility shims — composite-device resolution goes in HA Core 2027.8, the rest by 2027.10.
 
-Full "do not use → use instead" table: [`ha-modern-apis`](.agents/skills/ha-modern-apis/SKILL.md).
+Full "do not use → use instead" table: `haci-modern-apis` (`references/device-registry.md`).
 
 ## Integration Structure
 
@@ -455,7 +458,7 @@ Record it with a `BREAKING CHANGE:` footer either way.
 wrapped around a shape nobody has committed to yet. What still needs asking is whether to build the **migration**:
 never write `async_migrate_entry` or bump `VERSION` / `MINOR_VERSION` unprompted, and do not log each break in
 a decision record. After `1.0.0`, prefer a migration path over a break.
-Procedure: [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md).
+Procedure: `haci-breaking-changes`.
 
 ### Code that predates the current rules
 
@@ -469,7 +472,7 @@ only ever applied to new code never reaches the old code. Bound it to what you a
   and offer it as the next piece of work (as a plan once it passes ~10 files).
 - ❌ Anything on the breaking-changes list above, however plainly the current rules forbid the old shape. Unique IDs,
   entity IDs, entry data, state values and action signatures reach users, so they take the warn-first route through
-  [`ha-breaking-changes`](.agents/skills/ha-breaking-changes/SKILL.md) instead.
+  `haci-breaking-changes` instead.
 
 Where the two are separable, the cleanup is its own commit — a drive-by `refactor:` must not decide the release type
 or the changelog entry of the fix it rode in with. Where they are not, say so in the commit body.
@@ -551,7 +554,7 @@ Everything beyond that is in the per-file-type instruction files listed in the r
 Home Assistant's APIs change often, and a pattern from an older integration, a blog post or model memory may already be
 deprecated. Verify against the [developer docs](https://contributors.home-assistant.io/), the
 [developer blog](https://contributors.home-assistant.io/blog/) and the installed Home Assistant source before relying on
-one — [`ha-modern-apis`](.agents/skills/ha-modern-apis/SKILL.md) is the procedure. The docs follow Home Assistant's
+one — `haci-modern-apis` is the procedure. The docs follow Home Assistant's
 development branch and can be ahead of the pinned version; the installed source decides what code may use.
 
 For agents, [`llms.txt`](https://contributors.home-assistant.io/llms.txt) indexes a Markdown copy of every page, and

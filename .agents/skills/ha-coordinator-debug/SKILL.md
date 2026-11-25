@@ -171,17 +171,17 @@ debugging the flow.
 
 Each symptom has one command that produces the evidence, so you are reading state rather than guessing at it.
 
-| Symptom                                           | Command                          | Layer to inspect                                                                   |
-| ------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
-| Integration missing from the add-integration list | `script/ha setup-info`           | `manifest.json`, import error at module load — check the log at startup            |
-| "Config entry not ready, retrying"                | `script/ha entries`              | `_async_update_data` / `_async_setup` raising `ConfigEntryNotReady`                |
-| Entry loads, all entities `unavailable`           | `script/ha states`               | coordinator's first refresh failed, or `last_update_success` false                 |
-| Entities available but values `unknown`/`None`    | `script/ha entity sensor.<id>`   | key mismatch between `coordinator.data` and the entity's read path                 |
-| Values never change                               | `script/ha watch --seconds 120`  | `update_interval`, caching in the API client, or a swallowed error                 |
-| Endless reauth prompts                            | `script/ha entries`              | `ConfigEntryAuthFailed` raised for a non-auth failure                              |
-| Config flow rejects valid input                   | `script/ha flow start`           | see [`ha-config-flow`](../ha-config-flow/SKILL.md)                                 |
-| "Detected blocking call inside the event loop"    | `script/ha logs --level warning` | sync I/O in async code — see [`ha-modern-apis`](../ha-modern-apis/SKILL.md)        |
-| Entity duplicated after an update                 | `script/ha entities`             | `unique_id` changed — see [`ha-breaking-changes`](../ha-breaking-changes/SKILL.md) |
+| Symptom                                           | Command                          | Layer to inspect                                                                      |
+| ------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------- |
+| Integration missing from the add-integration list | `script/ha setup-info`           | `manifest.json`, import error at module load — check the log at startup               |
+| "Config entry not ready, retrying"                | `script/ha entries`              | `_async_update_data` / `_async_setup` raising `ConfigEntryNotReady`                   |
+| Entry loads, all entities `unavailable`           | `script/ha states`               | coordinator's first refresh failed, or `last_update_success` false                    |
+| Entities available but values `unknown`/`None`    | `script/ha entity sensor.<id>`   | key mismatch between `coordinator.data` and the entity's read path                    |
+| Values never change                               | `script/ha watch --seconds 120`  | `update_interval`, caching in the API client, or a swallowed error                    |
+| Endless reauth prompts                            | `script/ha entries`              | `ConfigEntryAuthFailed` raised for a non-auth failure                                 |
+| Config flow rejects valid input                   | `script/ha flow start`           | see [`ha-config-flow`](../ha-config-flow/SKILL.md)                                    |
+| "Detected blocking call inside the event loop"    | `script/ha logs --level warning` | sync I/O in async code — see [`references/async-rules.md`](references/async-rules.md) |
+| Entity duplicated after an update                 | `script/ha entities`             | `unique_id` changed — see `haci-breaking-changes`                                     |
 
 `script/ha entries` prints the entry `state` and its `reason` — the same text the UI shows, which is usually the whole
 diagnosis for a setup failure.

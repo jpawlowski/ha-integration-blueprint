@@ -81,7 +81,7 @@ first.
 The mechanical rules are in the instructions file. What this step actually costs you is judgement:
 
 - **`key`** becomes part of the unique ID. Pick it once — renaming it later is a breaking change
-  ([`ha-breaking-changes`](../ha-breaking-changes/SKILL.md)).
+  (`haci-breaking-changes`).
 - **Primary, diagnostic or config?** The test is in
   [Entity Categories](../../instructions/blueprint.entities.instructions.md#entity-categories); disabled by default is
   a separate choice, hidden another. Which is which, and why the choice is final:
@@ -135,12 +135,12 @@ For a brand-new platform only:
 The base entity places every entity on the config entry's device. Only deviate when the integration genuinely models
 more than one device, and then decide whether each one is a part of one product (a child device) or a separate
 product behind a hub (`via_device_id`) — the decision table and the single-owner rules are in
-[`device-registry.md`](../ha-modern-apis/references/device-registry.md#hub-or-parts-via_device_id-versus-child-devices).
+`device-registry.md` in `haci-modern-apis`.
 
 When devices come and go at runtime (`dynamic-devices`), add entities from a coordinator listener that diffs
 `set(coordinator.data)` against a `known_devices` set. If the integration also removes devices that are gone
 (`stale-devices`), drop each removed ID from `known_devices` too — otherwise a device that returns is never added
-again until the entry reloads. Both rules: [`quality-scale-rules.md`](../ha-quality-review/references/quality-scale-rules.md).
+again until the entry reloads. Both rules: `quality-scale-rules.md` in `haci-quality-review`.
 
 ### 5. Translations
 
@@ -187,7 +187,7 @@ wrap the unsubscribe callable every helper returns in `entry.async_on_unload(...
   second is only for an integration that defines its **own** domain — entities added to an existing platform inherit
   scene support from it for free.
 - Do not rename an existing `key`, `translation_key`, or unique ID without reading
-  [`ha-breaking-changes`](../ha-breaking-changes/SKILL.md).
+  `haci-breaking-changes`.
 - Do not skip the sibling-file read in step 0. Most "new" entities are a variation of one that already exists.
 - Do not raise `ConfigEntryNotReady` from a platform's `async_setup_entry` — the config entry setup has already
   finished by then and nothing catches it.

@@ -94,7 +94,7 @@ The handler is constructed with **no arguments** (`return OptionsFlowHandler()`)
 
 **Auto-reload:** subclass `OptionsFlowWithReload`. Every change has one reload owner: this class for options,
 `async_update_reload_and_abort` for reauth and reconfigure. **Do not add an update listener (`entry.add_update_listener`)
-next to them** — see [`deprecations.md`](../../ha-modern-apis/references/deprecations.md). Where one genuinely must
+next to them** — see `deprecations.md` in `haci-modern-apis`. Where one genuinely must
 stay, finish with `async_update_and_abort` and pass `reload_on_update=False`, and let the listener reload. Any other
 reload from code is `hass.config_entries.async_schedule_reload(entry.entry_id)`, not `async_reload`.
 
@@ -114,7 +114,7 @@ subentry being edited, and `async_update_and_abort()` to finish a reconfigure st
 **Translations:** subentry strings live under `config_subentries.<type>.…`, not under `config`.
 
 **Devices:** one per subentry, the hub or account device on the parent entry, related by `via_device_id` —
-[`device-registry.md`](../../ha-modern-apis/references/device-registry.md).
+`device-registry.md` in `haci-modern-apis`.
 
 ## Chaining flows
 

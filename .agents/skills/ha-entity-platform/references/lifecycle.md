@@ -14,4 +14,4 @@ Beyond `async_added_to_hass()` and `async_on_remove()` — the rule for those is
 - `async_entity_id_changed(old_entity_id)` is a `@callback` that moves such a subscription when the user renames the
   entity ID. A class that defines `async_added_to_hass`, `async_will_remove_from_hass` or
   `async_prepare_to_add_to_hass` must implement it as well: without it, the entity is removed and re-added on a rename,
-  a fallback that goes in 2027.11 ([`deprecations.md`](../../ha-modern-apis/references/deprecations.md)).
+  a fallback that goes in 2027.11 (`deprecations.md` in `haci-modern-apis`).

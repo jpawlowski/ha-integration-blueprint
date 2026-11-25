@@ -47,7 +47,7 @@ visibility,description,repositoryTopics,hasIssuesEnabled`:
 - **A description, topics, and issues turned on** — each is a catalog review check.
 - **`README.md`** — the Marketplace shows it on the repository page. `initialize.sh` produced it from
   `README.template.md`; it must describe the real integration, not the blueprint's demo
-  ([`ha-quality-review`](../ha-quality-review/SKILL.md) §8).
+  (`haci-quality-review` §8).
 - **At least one published GitHub release** — a bare tag is not enough. [`ha-release`](../ha-release/SKILL.md)
   owns how releases are made.
 
@@ -74,8 +74,9 @@ it) and `hide_default_branch`; most integrations never need more. Full key table
 - **`homeassistant`** — the minimum version for _this_ release. The Marketplace does not offer the release to an
   older Home Assistant and shows those users earlier versions instead. Raise it in the release whose code first needs
   the newer version, never ahead of it. Raising it is not breaking, but older installs silently stop getting fixes,
-  so the changelog names it ([`ha-breaking-changes`](../ha-breaking-changes/SKILL.md#1-recognise-it));
-  `script/ha-version-sync` then makes the pytest plugin pin follow ([`ha-modern-apis`](../ha-modern-apis/SKILL.md)). A `b0` suffix (`"2026.11.0b0"`) also admits that
+  so the changelog names it (`haci-breaking-changes`);
+  `script/ha-version-sync` then makes the pytest plugin pin follow
+  ([`blueprint-tooling`](../blueprint-tooling/SKILL.md#bumping-the-home-assistant-version)). A `b0` suffix (`"2026.11.0b0"`) also admits that
   release's betas. Only checked for repositories with releases.
 - **`persistent_directory`** — an update replaces the whole integration folder; this names one subfolder the
   Marketplace moves aside and restores. ❌ Do not design for it: user data and runtime state belong in

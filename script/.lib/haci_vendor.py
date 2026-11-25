@@ -60,7 +60,10 @@ class Topic:
         return OUTPUT_DIR / f"{PREFIX}{self.name}{SUFFIX}"
 
 
-TOPICS = (Topic("tests", "haci-quality", "haci-testing", ("tests/**/*.py",)),)
+TOPICS = (
+    Topic("repairs", "haci-quality", "haci-breaking-changes", ("custom_components/**/repairs.py",)),
+    Topic("tests", "haci-quality", "haci-testing", ("tests/**/*.py",)),
+)
 
 
 class VendorError(Exception):

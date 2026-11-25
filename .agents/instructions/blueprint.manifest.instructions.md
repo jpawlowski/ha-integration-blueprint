@@ -84,7 +84,7 @@ This schema combines Home Assistant's official manifest requirements with the fi
 
 There is **no minimum Home Assistant version key** in `manifest.json`. That lives in `hacs.json` → `homeassistant`
 ([`ha-marketplace`](../skills/ha-marketplace/SKILL.md)), and raising it is a breaking change
-([`ha-breaking-changes`](../skills/ha-breaking-changes/SKILL.md)).
+(`haci-breaking-changes`).
 
 **Naming:** if the product exists as both a local and a cloud integration, the cloud one appends "Cloud". The local
 one uses the plain product name — never append "Local".

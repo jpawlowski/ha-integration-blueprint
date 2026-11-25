@@ -159,7 +159,7 @@ See [Integration Setup Failures](https://contributors.home-assistant.io/core/int
 - Always use constants from `homeassistant.const` - Never hardcode strings
 - Examples: `UnitOfDensity.MICROGRAMS_PER_CUBIC_METER`, `UnitOfRatio.PERCENTAGE`, `UnitOfTime.HOURS` — not the bare
   `PERCENTAGE` or the `CONCENTRATION_*` constants
-  ([`deprecations.md`](../skills/ha-modern-apis/references/deprecations.md#entities))
+  (`deprecations.md` in `haci-modern-apis`)
 - Construct compound units if no combined constant exists: `f"{UnitOfLength.METERS}/{UnitOfTime.SECONDS}"`
 - **Do not convert units Home Assistant can convert.** Set `native_unit_of_measurement` and let Home Assistant convert
   according to `hass.config.units`. Where the device class has no converter — money, currency subunits, prices per
@@ -198,7 +198,7 @@ See [Integration Setup Failures](https://contributors.home-assistant.io/core/int
 
 Ruff orders them. **Standard HA aliases:** `cv`, `dr`, `er`, `dt_util`. Schemas use a plain `import probatio`
 (`probatio.Schema`, `probatio.Required`, …), not `import voluptuous as vol` — see
-[`ha-modern-apis`](../skills/ha-modern-apis/references/deprecations.md#schema-validation--voluptuous-replaced-by-probatio).
+`haci-modern-apis` (`deprecations.md`).
 
 **A relative import may not reach into a parent package.** Ruff's `TID252` runs with the default
 `ban-relative-imports = "parents"`, the same setting Home Assistant Core uses, so `from ..const import DOMAIN` is
@@ -250,4 +250,4 @@ devcontainer is the authority** — grep it before trusting recall, a blog post,
 rg -n "deprecated|breaks_in_ha_version" .venv/lib/python*/site-packages/homeassistant/helpers/<module>.py
 ```
 
-The procedure and the full deprecation table: [`ha-modern-apis`](../skills/ha-modern-apis/SKILL.md).
+The procedure and the full deprecation table: `haci-modern-apis`.

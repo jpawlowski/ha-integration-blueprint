@@ -16,9 +16,6 @@ any of it in your own repository, see [`../README.md`](../README.md). This file 
 | [`ha-coordinator-debug`](ha-coordinator-debug/SKILL.md) | entities unavailable, stale data, setup failures, runtime debugging         |
 | [`ha-translations`](ha-translations/SKILL.md)           | `translations/*.json`, `icons.json`, entity and exception translations      |
 | [`ha-user-experience`](ha-user-experience/SKILL.md)     | deciding what users see — states, attributes, icons, options, help, actions |
-| [`ha-quality-review`](ha-quality-review/SKILL.md)       | auditing the integration against the Integration Quality Scale              |
-| [`ha-modern-apis`](ha-modern-apis/SKILL.md)             | verifying an API is current, or fixing deprecation warnings                 |
-| [`ha-breaking-changes`](ha-breaking-changes/SKILL.md)   | anything that could break existing installs — IDs, entry data, migrations   |
 | [`blueprint-decisions`](blueprint-decisions/SKILL.md)   | recording or superseding an architectural decision, and its index           |
 | [`blueprint-lessons`](blueprint-lessons/SKILL.md)       | keeping a lesson from a bug or a repeated correction; project skills        |
 | [`ha-release`](ha-release/SKILL.md)                     | cutting a release, commit messages, changelog, release notes                |

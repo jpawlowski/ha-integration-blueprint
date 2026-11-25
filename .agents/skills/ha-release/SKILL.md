@@ -70,7 +70,7 @@ authenticated with a username must generate an API key in the vendor portal and
 re-authenticate when prompted.
 ```
 
-See [`ha-breaking-changes`](../ha-breaking-changes/SKILL.md) before writing one.
+See `haci-breaking-changes` before writing one.
 
 ## How a release happens
 
@@ -180,7 +180,7 @@ Also confirm:
 - `docs/user/` and the README match the released behaviour.
 - `hacs.json` → `homeassistant` is still the minimum this release needs
   ([`ha-marketplace`](../ha-marketplace/SKILL.md#2-hacsjson--when-to-touch-it)), and a raised one is named in the
-  changelog — it is not a breaking change ([`ha-breaking-changes`](../ha-breaking-changes/SKILL.md#1-recognise-it)).
+  changelog — it is not a breaking change (`haci-breaking-changes`).
 - `custom_components/<domain>/brand/icon.png` is the product's icon, not the blueprint's placeholder.
 
 ## Troubleshooting

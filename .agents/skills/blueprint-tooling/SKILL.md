@@ -161,7 +161,7 @@ an update is `build`, which puts it into the changelog; Renovate uses it already
 Before adding a dependency at all, decide whether you want it: the criteria are in `AGENTS.md` § Custom Integration
 Flexibility, and the choice belongs in a decision record ([`blueprint-decisions`](../blueprint-decisions/SKILL.md)).
 For a serial port that means `serialx`, not `pyserial-asyncio` — the replacement table is in
-[`ha-modern-apis`](../ha-modern-apis/references/deprecations.md).
+`haci-modern-apis` (`deprecations.md`).
 
 Every package you add ships to every user, so check it like Core does
 ([`dependency-transparency`](https://contributors.home-assistant.io/core/quality-scale/dependency-transparency/)),
@@ -210,6 +210,27 @@ this section is `docs/development/DEPENDENCY_UPDATES.md`.
 To drop Dependabot and let Renovate raise everything, delete `.github/dependabot.yml` and the first two package rules
 in `.github/renovate.json`; the grouping and the release-age settings for those ecosystems are already there. Keep
 Dependabot alerts on in the repository settings either way — Renovate reads them for its security pull requests.
+
+## Bumping the Home Assistant version
+
+```bash
+script/ha-version-sync        # keeps hacs.json, .devcontainer/.env, mise's Python and the pytest plugin aligned
+```
+
+Then rebuild the container (or re-run `script/setup/bootstrap`), and:
+
+```bash
+script/hassfest && script/test
+rg -n "Detected that custom integration|The deprecated|DeprecationWarning|will be removed" config/home-assistant.log
+```
+
+When `script/test` reports that the manifest schema's categories differ from the installed Home Assistant, run
+`python3 script/.lib/manifest_categories.py` in the project virtualenv to copy them over. Fixing what the new version
+deprecates: `haci-modern-apis`.
+
+Raising the minimum version is a separate decision:
+[`ha-marketplace`](../ha-marketplace/SKILL.md#2-hacsjson--when-to-touch-it) for where it lives, `haci-breaking-changes`
+for why it is not breaking and how to announce it.
 
 ## Extending the scripts with hooks
 
