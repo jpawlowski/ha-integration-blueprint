@@ -13,8 +13,7 @@ any of it in your own repository, see [`../README.md`](../README.md). This file 
 | [`blueprint-dev-instance`](blueprint-dev-instance/SKILL.md) | starting, restarting and reading the development instance with `script/ha` |
 | [`blueprint-decisions`](blueprint-decisions/SKILL.md)       | recording or superseding an architectural decision, and its index          |
 | [`blueprint-lessons`](blueprint-lessons/SKILL.md)           | keeping a lesson from a bug or a repeated correction; project skills       |
-| [`ha-release`](ha-release/SKILL.md)                         | cutting a release, commit messages, changelog, release notes               |
-| [`ha-marketplace`](ha-marketplace/SKILL.md)                 | publishing through the Marketplace/HACS catalog, `hacs.json`, brand images |
+| [`blueprint-release`](blueprint-release/SKILL.md)           | cutting a release, commit messages, changelog, release notes               |
 | [`blueprint-tooling`](blueprint-tooling/SKILL.md)           | validation scripts, hook scripts, dependencies, template sync              |
 | [`blueprint-update`](blueprint-update/SKILL.md)             | carrying over blueprint changes the template sync cannot deliver           |
 | [`blueprint-scaffold`](blueprint-scaffold/SKILL.md)         | turning the fresh template into an integration for one real device         |
@@ -45,7 +44,7 @@ Both are reserved for skills that ship with the blueprint. **Give your own skill
 integration's short name works well. That keeps a future blueprint skill from colliding with yours, and makes it
 obvious in a listing which skills you own.
 
-The directory name is also the invocation name (`/ha-release`), so keep it short and stable. Renaming a skill changes
+The directory name is also the invocation name (`/blueprint-release`), so keep it short and stable. Renaming a skill changes
 how people invoke it and silently breaks any `.templatesyncignore` entry that pinned the old path.
 
 ## Writing a new skill

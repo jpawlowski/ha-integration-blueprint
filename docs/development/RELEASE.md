@@ -11,7 +11,7 @@ Releases are managed with [release-please](https://github.com/googleapis/release
 > [!NOTE]
 > This document explains _how the release machinery works_ and covers the one-time GitHub repository setup. The
 > step-by-step procedure for cutting a release, the commit-message rules that drive it, and the pre-release checklist
-> are maintained as the [`ha-release`](../../.agents/skills/ha-release/SKILL.md) agent skill, so humans and AI agents
+> are maintained as the [`blueprint-release`](../../.agents/skills/blueprint-release/SKILL.md) agent skill, so humans and AI agents
 > follow the same process.
 
 ## How It Works
@@ -162,7 +162,7 @@ User-Impact: none
 ## Typical Release Workflow
 
 The end-to-end procedure — commit conventions, the pre-release checklist, and troubleshooting a release that did not
-happen — is documented in the [`ha-release`](../../.agents/skills/ha-release/SKILL.md) skill.
+happen — is documented in the [`blueprint-release`](../../.agents/skills/blueprint-release/SKILL.md) skill.
 
 The short version:
 

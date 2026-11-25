@@ -1,6 +1,6 @@
 # Branches and pull requests
 
-For [`ha-release`](../SKILL.md). The rules — one branch per change, force push only with a lease and only when asked,
+For [`blueprint-release`](../SKILL.md). The rules — one branch per change, force push only with a lease and only when asked,
 one logical change per pull request — are in `AGENTS.md` under _Commits, branches and pull requests_. This file is how
 to carry them out. Push only when the developer asked for the push or for a pull request.
 

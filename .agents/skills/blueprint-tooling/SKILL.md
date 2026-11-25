@@ -94,7 +94,7 @@ script/help              # list every script with its description
 [HACS action](https://github.com/hacs/action) in CI only. It skips itself with a notice on a private repository,
 which the action cannot read, and adds `ignore: brands` with a warning while `brand/icon.png` is missing — so a green
 job proves less than it looks. What it checks, and why `ignore` is never the fix:
-[`ha-marketplace`](../ha-marketplace/SKILL.md).
+`haci-marketplace`.
 
 ### architecture-check vs. tests/
 
@@ -229,7 +229,7 @@ When `script/test` reports that the manifest schema's categories differ from the
 deprecates: `haci-modern-apis`.
 
 Raising the minimum version is a separate decision:
-[`ha-marketplace`](../ha-marketplace/SKILL.md#2-hacsjson--when-to-touch-it) for where it lives, `haci-breaking-changes`
+`haci-marketplace` for where it lives, `haci-breaking-changes`
 for why it is not breaking and how to announce it.
 
 ## Extending the scripts with hooks

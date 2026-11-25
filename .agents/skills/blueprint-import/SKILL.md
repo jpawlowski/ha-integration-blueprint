@@ -184,7 +184,7 @@ already stand on their own.
   what it inherited, so compare it against the phase 3 audit and say what moved.
 - Start Home Assistant with the **existing** `config/.storage` and confirm the entry loads, the entity IDs are
   unchanged and history is intact. A mocked suite cannot prove this.
-- Release under [`ha-release`](../ha-release/SKILL.md). If anything in the phase 0 contract did change, it needs a
+- Release under [`blueprint-release`](../blueprint-release/SKILL.md). If anything in the phase 0 contract did change, it needs a
   `BREAKING CHANGE:` footer and a migration note for users.
 
 Report which verification actually happened and which did not ([`AI_POLICY.md`](../../../AI_POLICY.md)).

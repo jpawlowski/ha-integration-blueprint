@@ -130,5 +130,5 @@ Always do a `--dry-run` pass first, and confirm:
 - **Secrets** — anything the old workflows used has to exist in this repository too.
 - **`hacs.json`** — `initialize.sh` sets `name` and `homeassistant`, but does not preserve other fields the old
   repository may have had, such as `render_readme`. Restore them by hand, but keep the template's `zip_release`,
-  `filename` and `hide_default_branch` ([`ha-marketplace`](../../ha-marketplace/SKILL.md#2-hacsjson--when-to-touch-it)).
+  `filename` and `hide_default_branch` (`haci-marketplace`).
 - **`manifest.json`** — `documentation` and `issue_tracker` must point at this repository.

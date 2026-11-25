@@ -1,11 +1,11 @@
 ---
-description: "Cut a release: follow the ha-release skill's procedure end to end."
+description: "Cut a release: follow the blueprint-release skill's procedure end to end."
 argument-hint: "[check|notes|apply-notes]"
 allowed-tools: Bash, Read, Grep, Glob, Skill
 disable-model-invocation: true
 ---
 
-Load the [`ha-release`](../../.agents/skills/ha-release/SKILL.md) skill with the `Skill` tool and follow its
+Load the [`blueprint-release`](../../.agents/skills/blueprint-release/SKILL.md) skill with the `Skill` tool and follow its
 procedure exactly — this command does not restate it, so re-read that file rather than relying on what you already
 know about it, in case it has changed.
 

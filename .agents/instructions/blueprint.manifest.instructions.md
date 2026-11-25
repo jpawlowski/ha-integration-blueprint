@@ -17,5 +17,5 @@ loads with this file; what follows is only what this project adds.
   Marketplace requires, and carries the category list. Always validate against it.
 - `version` is SemVer, and `script/version` owns the field — never edit it by hand.
 - The minimum Home Assistant version lives in `hacs.json` → `homeassistant`
-  ([`ha-marketplace`](../skills/ha-marketplace/SKILL.md)).
+  (`haci-marketplace`).
 - `script/hassfest` is the gate.
