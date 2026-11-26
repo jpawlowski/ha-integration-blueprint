@@ -100,6 +100,10 @@ commands here converge on `.agents/hooks/` so security behavior is implemented a
 marketplace; it loads the skills from one catalog URL per enabled plugin in `opencode.json` → `skills` and fetches
 them each time it starts, so it needs network access then — a catalog whose `index.json` cannot be fetched is dropped
 for that session. `script/setup/agent-plugins --check` fails when the four files disagree.
+
+Copilot CLI installs the plugins from `.github/copilot/settings.json` itself, but only in a folder it trusts: confirm
+the trust prompt once, or pass `--trust-folder` with `-p`. The session that installs them does not see them yet; the
+next one does. `copilot plugin list` shows them as disabled, because they are enabled for this project only.
 These agent lifecycle hooks are unrelated to `script/hooks/`, which customizes the repository's validation scripts.
 
 ### Session start
