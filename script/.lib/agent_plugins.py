@@ -3,7 +3,9 @@ Install the agent plugins this repository enables, at the version it pins, and c
 
 The pin has one source: the ``ref`` of the GitHub marketplace in ``.claude/settings.json`` →
 ``extraKnownMarketplaces``, with the plugins its ``enabledPlugins`` turns on. ``.github/copilot/settings.json`` and
-``.codex/config.toml`` repeat both; ``--check`` fails when they do not match it.
+``.codex/config.toml`` repeat both, and ``opencode.json`` → ``skills`` names one raw.githubusercontent.com catalog URL
+per enabled plugin at the same tag; ``--check`` fails when any of them does not match it. ``opencode.json`` is compared
+only when it exists.
 
 Without ``--check``, this installs for the agent CLIs found on ``PATH``:
 
@@ -13,6 +15,7 @@ Without ``--check``, this installs for the agent CLIs found on ``PATH``:
 - Codex reads its marketplace from ``.codex/config.toml`` once the project is trusted; refreshing that one marketplace
   installs the enabled plugins.
 - Copilot installs from ``.github/copilot/settings.json`` itself.
+- OpenCode fetches the catalogs in ``opencode.json`` itself when it starts.
 
 A failed install is reported and skipped; it never fails the caller.
 
@@ -22,6 +25,7 @@ Invoked by script/setup/agent-plugins; not intended to be run directly.
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -31,6 +35,10 @@ CLAUDE_SETTINGS = Path(".claude/settings.json")
 CLAUDE_LOCAL = Path(".claude/settings.local.json")
 COPILOT_SETTINGS = Path(".github/copilot/settings.json")
 CODEX_CONFIG = Path(".codex/config.toml")
+OPENCODE_CONFIG = Path("opencode.json")
+CATALOG_URL = re.compile(
+    r"https://raw\.githubusercontent\.com/(?P<repo>[^/]+/[^/]+)/(?P<ref>[^/]+)/plugins/(?P<plugin>[^/]+)/skills/?"
+)
 TIMEOUT = 180
 UNTRUSTED_CODEX = "is not configured as a Git marketplace"
 
@@ -82,13 +90,55 @@ def codex_pins(config: dict) -> list[Pin]:
     return pins
 
 
-def mismatches(expected: list[Pin], copilot: list[Pin], codex: list[Pin]) -> list[str]:
-    """Name every way the Copilot or Codex settings differ from the Claude Code pins."""
+def _skill_entries(skills: object) -> list[str]:
+    if isinstance(skills, str):
+        return [skills]
+    if isinstance(skills, list):
+        return [entry for entry in skills if isinstance(entry, str)]
+    if isinstance(skills, dict):
+        return [entry for value in skills.values() for entry in _skill_entries(value)]
+    return []
+
+
+def opencode_pins(config: dict, expected: list[Pin]) -> list[Pin]:
+    """Read the plugin catalogs an ``opencode.json`` loads skills from, one pin per repository and ref.
+
+    Only raw.githubusercontent.com catalog URLs count; a local path or another URL is not a pin. Each pin takes the
+    marketplace name of the expected pin for the same repository, or the repository itself when none pins it.
+    """
+    names = {pin.repo: pin.marketplace for pin in expected}
+    plugins: dict[tuple[str, str], set[str]] = {}
+    for entry in _skill_entries(config.get("skills")):
+        if match := CATALOG_URL.fullmatch(entry):
+            plugins.setdefault((match["repo"], match["ref"]), set()).add(match["plugin"])
+    return [Pin(names.get(repo, repo), repo, ref, tuple(sorted(found))) for (repo, ref), found in plugins.items()]
+
+
+def mismatches(
+    expected: list[Pin], copilot: list[Pin], codex: list[Pin], opencode: list[Pin] | None = None
+) -> list[str]:
+    """Name every way the Copilot, Codex or OpenCode settings differ from the Claude Code pins.
+
+    ``opencode`` is None when the repository has no ``opencode.json``, which is then not compared.
+    """
     problems = []
-    for label, actual in ((str(COPILOT_SETTINGS), copilot), (str(CODEX_CONFIG), codex)):
+    sources = [(str(COPILOT_SETTINGS), copilot), (str(CODEX_CONFIG), codex)]
+    if opencode is not None:
+        sources.append((str(OPENCODE_CONFIG), opencode))
+    for label, actual in sources:
+        refs: dict[str, list[str]] = {}
+        for pin in actual:
+            refs.setdefault(pin.marketplace, []).append(pin.ref)
+        doubled = {name for name, found in refs.items() if len(found) > 1}
+        problems.extend(
+            f"{label}: marketplace {name} is pinned at more than one ref: {', '.join(sorted(refs[name]))}"
+            for name in sorted(doubled)
+        )
         by_name = {pin.marketplace: pin for pin in actual}
         for pin in expected:
             other = by_name.get(pin.marketplace)
+            if pin.marketplace in doubled:
+                continue
             if other is None:
                 problems.append(f"{label}: marketplace {pin.marketplace} is missing")
             elif other != pin:
@@ -97,7 +147,7 @@ def mismatches(expected: list[Pin], copilot: list[Pin], codex: list[Pin]) -> lis
         problems.extend(
             f"{label}: marketplace {pin.marketplace} is not pinned in {CLAUDE_SETTINGS}, the one source of the version"
             for pin in actual
-            if pin.marketplace not in names
+            if pin.marketplace not in names and pin.marketplace not in doubled
         )
     return problems
 
@@ -182,6 +232,8 @@ def install(pins: list[Pin]) -> None:
         else:
             print(f"⚠ Codex: not refreshed: {errors[0]}; rerun script/setup/agent-plugins")
     print(f"· Copilot: installs from {COPILOT_SETTINGS} itself")
+    if OPENCODE_CONFIG.is_file():
+        print(f"· OpenCode: fetches the catalogs in {OPENCODE_CONFIG} itself when it starts")
 
 
 def main(argv: list[str]) -> int:
@@ -189,15 +241,19 @@ def main(argv: list[str]) -> int:
     pins = pins_from_settings(_json(CLAUDE_SETTINGS))
     codex = codex_pins(tomllib.loads(CODEX_CONFIG.read_text(encoding="utf-8"))) if CODEX_CONFIG.is_file() else []
     copilot = pins_from_settings(_json(COPILOT_SETTINGS))
-    if not (pins or copilot or codex):
+    opencode = opencode_pins(_json(OPENCODE_CONFIG), pins) if OPENCODE_CONFIG.is_file() else None
+    if not (pins or copilot or codex or opencode):
         print(f"· {CLAUDE_SETTINGS} pins no GitHub marketplace; nothing to do")
         return 0
-    problems = mismatches(pins, copilot, codex)
+    problems = mismatches(pins, copilot, codex, opencode)
     for problem in problems:
         print(f"✗ {problem}", file=sys.stderr)
     if problems:
         return 1
-    print(f"✓ {CLAUDE_SETTINGS}, {COPILOT_SETTINGS} and {CODEX_CONFIG} pin the same plugins")
+    files = [str(CLAUDE_SETTINGS), str(COPILOT_SETTINGS), str(CODEX_CONFIG)]
+    if opencode is not None:
+        files.append(str(OPENCODE_CONFIG))
+    print(f"✓ {', '.join(files[:-1])} and {files[-1]} pin the same plugins")
     if "--check" not in argv:
         install(pins)
     return 0

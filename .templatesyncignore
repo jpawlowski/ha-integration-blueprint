@@ -75,8 +75,8 @@ CLAUDE.md
 # To take ownership of a blueprint skill (your edits win, and you keep it
 # current yourself), or to switch one off, uncomment and adjust:
 #
-# .agents/skills/ha-config-flow/
-# .agents/skills/ha-release/
+# .agents/skills/blueprint-tooling/
+# .agents/skills/blueprint-scaffold/
 #
 # See .agents/skills/README.md → "Customizing in your own repository".
 

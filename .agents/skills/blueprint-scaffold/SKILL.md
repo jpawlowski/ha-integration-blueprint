@@ -21,7 +21,7 @@ with the `ha-*` skills.
 
 **Stop if the repository already has real code.** Placeholder identifiers gone _and_ platforms that match a real
 device mean scaffolding already happened. Adding an entity to an existing integration is
-[`ha-entity-platform`](../ha-entity-platform/SKILL.md), not this. Migrating a pre-existing integration in is
+`haci-entity-platform`, not this. Migrating a pre-existing integration in is
 [`blueprint-import`](../blueprint-import/SKILL.md).
 
 ## 1. Gather the facts — do not start without them
@@ -82,7 +82,7 @@ list in `schemas/json/manifest_schema.json`, primary first, unless `initialize.s
 Marketplace catalog publishes them; when to add the key is in `blueprint.manifest`.
 
 Add discovery matchers only when you will also implement the matching flow step
-([`ha-config-flow`](../ha-config-flow/SKILL.md)); a matcher without a handler fails `script/hassfest`.
+(`haci-config-flow`); a matcher without a handler fails `script/hassfest`.
 
 Declare runtime dependencies in **both** `manifest.json` → `requirements` and the root `requirements.txt`
 ([`blueprint-tooling`](../blueprint-tooling/SKILL.md)).
@@ -98,7 +98,7 @@ above it exists.
 2. **`coordinator/`** — replace `_async_update_data` with the real call and return the shape the entities will read.
    Translate API exceptions into `ConfigEntryAuthFailed`, `UpdateFailed` or — when the failure will never resolve by
    itself, such as a closed account — `ConfigEntryError`, there and only there
-   ([`ha-coordinator-debug`](../ha-coordinator-debug/SKILL.md)). If the values are produced rather than fetched, this
+   (`haci-coordinator-debug`). If the values are produced rather than fetched, this
    is where the computation lives, driven by a state listener or a timer instead of a poll — and a coordinator that
    would only re-run a local calculation on a timer should be replaced by the listener outright. The polling interval
    is a constant, never a config field ([`blueprint.config_flow`](../../instructions/blueprint.config_flow.instructions.md)).
@@ -107,7 +107,7 @@ above it exists.
 If one response stays true for a defined period — a day's prices, a published forecast — decide **now** whether the
 integration persists it and starts from that without a network. It changes the coordinator's shape (a `Store`, a
 validity window, a scheduler instead of a short interval) and is awkward to retrofit; the rules are in
-[`blueprint.coordinator`](../../instructions/blueprint.coordinator.instructions.md).
+[`haci.coordinator`](../../instructions/haci.coordinator.instructions.md).
 
 Decide the coordinator's data shape deliberately: a parsed model or `TypedDict` beats passing raw JSON around,
 because every entity would otherwise repeat the same defensive key lookups.
@@ -131,13 +131,13 @@ data actually arrives:
 - Start the coordinator **after** `async_forward_entry_setups`, so every platform has had a chance to subscribe:
   `entry.async_on_unload(coordinator.async_start())`.
 - An advertisement-only device needs `connectable: false` in the manifest matcher
-  ([`ha-config-flow`](../ha-config-flow/references/discovery-matchers.md)).
+  (`discovery-matchers.md` in `haci-config-flow`).
 
 ### Infrared and radio remotes have no source of their own
 
 An integration that knows a device's IR or RF codes — a TV, a fan, a wireless socket — but not the hardware that
 sends them is a _consumer_: no `api/`, no coordinator, `integration_type: device` and `iot_class: assumed_state` —
-the pattern is in [`other-platforms.md`](../ha-entity-platform/references/other-platforms.md#infrared-and-radio-frequency-devices).
+the pattern is in `other-platforms.md` in `haci-entity-platform`.
 
 ## 4. Keep, adapt, delete each platform
 
@@ -145,7 +145,7 @@ The blueprint ships `binary_sensor`, `button`, `fan`, `number`, `select`, `senso
 each one: does this integration have a real equivalent — a value it reads, computes, or a command it can send?
 
 - **Yes** → adapt it. Reuse the file layout and the `EntityDescription` pattern
-  ([`ha-entity-platform`](../ha-entity-platform/SKILL.md)).
+  (`haci-entity-platform`).
 - **No** → delete the whole directory. Not a stub, not a commented-out class.
 
 Then update `PLATFORMS` in `custom_components/<domain>/__init__.py` to exactly the surviving list, and delete the
@@ -155,13 +155,13 @@ without a directory fails at setup; an orphaned translation key fails `script/ha
 behind for a deleted platform turns it red.
 
 Same treatment for `service_actions/` and `services.yaml` — the example actions go unless the device has a real
-equivalent ([`ha-service-action`](../ha-service-action/SKILL.md)).
+equivalent (`haci-service-action`).
 
 ## 5. Config flow and identity
 
 Ask for the minimum needed to connect, validate it by actually connecting, and set a `unique_id` from a serial
 number, MAC, or account ID — never a host, IP, URL, or user-chosen name. Add reauth if credentials can expire.
-Details and the reserved step names: [`ha-config-flow`](../ha-config-flow/SKILL.md).
+Details and the reserved step names: `haci-config-flow`.
 
 The unique ID choice is effectively permanent — changing it later is a breaking change
 (`haci-breaking-changes`).
@@ -169,7 +169,7 @@ The unique ID choice is effectively permanent — changing it later is a breakin
 ## 6. Strings, then validation, then a real run
 
 1. `translations/en.json` and `icons.json` for every surviving entity, flow step, action and exception —
-   English only, `en.json` only ([`ha-translations`](../ha-translations/SKILL.md)).
+   English only, `en.json` only (`haci-translations`).
 2. `script/lint` and `script/type-check` until both are clean, then `script/hassfest`.
 3. Tests for the config flow and at least one platform (`haci-testing`), then `script/test`.
 4. `script/develop`, add the integration through the UI, and confirm the entities carry real values. Scaffolding is

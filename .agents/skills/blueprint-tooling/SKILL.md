@@ -88,7 +88,7 @@ script/help              # list every script with its description
 ```
 
 `script/develop` is a **takeover**, not a "start if needed" — the run-loop rules, and why, are in
-[`ha-coordinator-debug`](../ha-coordinator-debug/SKILL.md).
+[`blueprint-dev-instance`](../blueprint-dev-instance/SKILL.md).
 
 **HACS validation has no local script.** The `hacs` job in `.github/workflows/validate.yml` runs the
 [HACS action](https://github.com/hacs/action) in CI only. It skips itself with a notice on a private repository,

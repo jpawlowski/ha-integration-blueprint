@@ -108,7 +108,7 @@ including the job of keeping it current:
 
 ```text
 # I maintain my own version of these
-.agents/skills/ha-config-flow/
+.agents/skills/blueprint-tooling/
 .agents/instructions/blueprint.python.instructions.md
 ```
 

@@ -37,15 +37,19 @@ enabled = true
 [plugins."review@{MARKET}"]
 enabled = true
 """
+RAW = "https://raw.githubusercontent.com/someone/example-skills"
+OPENCODE = {"skills": [f"{RAW}/v1.2.0/plugins/plan/skills/", f"{RAW}/v1.2.0/plugins/review/skills/"]}
 
 
-def _write(root: Path, claude: dict, copilot: dict, codex: str) -> None:
+def _write(root: Path, claude: dict, copilot: dict, codex: str, opencode: dict | None = None) -> None:
     (root / ".claude").mkdir()
     (root / ".claude/settings.json").write_text(json.dumps(claude), encoding="utf-8")
     (root / ".github/copilot").mkdir(parents=True)
     (root / ".github/copilot/settings.json").write_text(json.dumps(copilot), encoding="utf-8")
     (root / ".codex").mkdir()
     (root / ".codex/config.toml").write_text(codex, encoding="utf-8")
+    if opencode is not None:
+        (root / "opencode.json").write_text(json.dumps(opencode), encoding="utf-8")
 
 
 def _check(root: Path) -> subprocess.CompletedProcess[str]:
@@ -82,6 +86,47 @@ def test_check_fails_on_a_ref_or_marketplace_that_differs(tmp_path: Path, copilo
     result = _check(tmp_path)
     assert result.returncode == 1
     assert MARKET in result.stderr
+
+
+@pytest.mark.unit
+def test_opencode_catalogs_are_read_as_pins_and_local_paths_ignored() -> None:
+    """Each raw catalog URL counts toward the pin of its repository; a local skills folder pins nothing."""
+    config = {"skills": [*OPENCODE["skills"], ".agents/skills", "https://example.com/skills/"]}
+    expected = agent_plugins.pins_from_settings(SETTINGS)
+    assert agent_plugins.opencode_pins(config, expected) == expected
+
+
+@pytest.mark.unit
+def test_check_passes_when_opencode_agrees_too(tmp_path: Path) -> None:
+    """opencode.json with one catalog per enabled plugin at the same tag is the fourth matching source."""
+    _write(tmp_path, SETTINGS, SETTINGS, CODEX, OPENCODE)
+    result = _check(tmp_path)
+    assert result.returncode == 0, result.stderr
+    assert "opencode.json" in result.stdout
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("skills", "message"),
+    [
+        ([url.replace("v1.2.0", "v1.1.0") for url in OPENCODE["skills"]], "differs"),
+        ([OPENCODE["skills"][0], OPENCODE["skills"][1].replace("v1.2.0", "v1.1.0")], "more than one ref"),
+        (OPENCODE["skills"][:1], "differs"),
+        (None, "is missing"),
+        (
+            [*OPENCODE["skills"], "https://raw.githubusercontent.com/someone/other/v1.0.0/plugins/x/skills/"],
+            "not pinned in .claude/settings.json",
+        ),
+    ],
+    ids=["wrong-ref", "two-refs", "missing-plugin", "no-skills", "unpinned-repo"],
+)
+def test_check_fails_when_opencode_differs(tmp_path: Path, skills: list[str] | None, message: str) -> None:
+    """A catalog at another tag, a plugin without its catalog, or a catalog nobody pins is reported."""
+    _write(tmp_path, SETTINGS, SETTINGS, CODEX, {} if skills is None else {"skills": skills})
+    result = _check(tmp_path)
+    assert result.returncode == 1
+    assert "opencode.json" in result.stderr
+    assert message in result.stderr
 
 
 @pytest.mark.unit
@@ -148,7 +193,7 @@ def test_claude_updates_installed_plugins_only_when_the_ref_moved() -> None:
 
 @pytest.mark.unit
 def test_this_repository_agrees_with_itself() -> None:
-    """The three settings files of this repository pin the same marketplace, tag and plugins."""
+    """The settings files of this repository, opencode.json among them when present, pin the same plugins."""
     result = _check(ROOT)
     assert result.returncode == 0, result.stderr
 
@@ -169,7 +214,8 @@ def test_renovate_finds_the_pin_in_every_settings_file() -> None:
         json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
     )
     expected = {pin.repo: pin.ref for pin in pins}
-    for name in (".claude/settings.json", ".github/copilot/settings.json", ".codex/config.toml"):
+    names = [".claude/settings.json", ".github/copilot/settings.json", ".codex/config.toml", "opencode.json"]
+    for name in (name for name in names if (ROOT / name).is_file()):
         text = (ROOT / name).read_text(encoding="utf-8")
         found = {
             dep: occurrences[0][0]
@@ -184,10 +230,14 @@ UNTRUSTED = f"Error: marketplace `{MARKET}` is not configured as a Git marketpla
 
 
 def _install(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], fail: dict[str, str]
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    fail: dict[str, str],
+    opencode: dict | None = None,
 ) -> str:
     """Run ``install`` with fake agent CLIs; a call whose first four words are a key of ``fail`` fails with its value."""
-    _write(tmp_path, SETTINGS, SETTINGS, CODEX)
+    _write(tmp_path, SETTINGS, SETTINGS, CODEX, opencode)
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(agent_plugins.shutil, "which", lambda name: f"/bin/{name}")
 
@@ -210,6 +260,16 @@ def test_install_reports_success_only_when_every_step_succeeded(
     out = _install(tmp_path, monkeypatch, capsys, {})
     assert "✓ Claude Code" in out
     assert "✓ Codex" in out
+    assert "· OpenCode" not in out
+
+
+@pytest.mark.unit
+def test_install_says_opencode_fetches_its_own_catalogs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """OpenCode needs no install step, so the run only says where it reads the catalogs from."""
+    out = _install(tmp_path, monkeypatch, capsys, {}, OPENCODE)
+    assert "· OpenCode: fetches the catalogs in opencode.json itself when it starts" in out
 
 
 @pytest.mark.unit

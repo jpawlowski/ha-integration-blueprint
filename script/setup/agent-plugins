@@ -3,7 +3,8 @@
 # script/setup/agent-plugins: Install the agent plugins this repository enables, at the version it pins
 #
 # Reads the pinned marketplace and the enabled plugins from .claude/settings.json, checks that
-# .github/copilot/settings.json and .codex/config.toml say the same, and installs them for the agent CLIs on PATH.
+# .github/copilot/settings.json, .codex/config.toml and the skill catalog URLs in opencode.json say the same,
+# and installs them for the agent CLIs on PATH.
 # Run by script/setup/bootstrap; INSTALL_AGENT_PLUGINS=0 skips the install, never the check.
 #
 # Usage:
@@ -11,7 +12,7 @@
 #
 # Examples:
 #   ./script/setup/agent-plugins          # Check, then install
-#   ./script/setup/agent-plugins --check  # Only check that the three settings files agree
+#   ./script/setup/agent-plugins --check  # Only check that the four settings files agree
 
 set -euo pipefail
 

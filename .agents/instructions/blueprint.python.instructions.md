@@ -116,7 +116,7 @@ them on unload, which `hass.async_create_task` does not.
 **Never block the event loop.** File and directory operations, `urllib`, `time.sleep` and SSL context loading all
 block; so does calling an `async_*` API from a worker thread, which raises outright. The lookup tables — which sync
 twin to call from a thread, the full blocking-call list with the `open()` trap, and the four late-import cases — are
-in [`ha-coordinator-debug/references/async-rules.md`](../skills/ha-coordinator-debug/references/async-rules.md).
+in `haci-coordinator-debug` (`async-rules.md`).
 
 **Late imports:** module-level imports are safe. Anything conditional needs one of the import helpers in that
 reference, because CPython's import machinery is not thread-safe. Type-only imports go in `if TYPE_CHECKING:`.
@@ -164,7 +164,7 @@ See [Integration Setup Failures](https://contributors.home-assistant.io/core/int
 - **Do not convert units Home Assistant can convert.** Set `native_unit_of_measurement` and let Home Assistant convert
   according to `hass.config.units`. Where the device class has no converter — money, currency subunits, prices per
   unit — converting is the integration's job
-  ([`ha-user-experience`](../skills/ha-user-experience/SKILL.md#units-users-think-in)). `hass.config.language`,
+  (`haci-user-experience`). `hass.config.language`,
   `.country` and `.currency` are there too, when an API needs a locale.
 
 **Time and Timestamps:**
@@ -226,7 +226,7 @@ reports it, but only after the file is written.
 **Errors that reach the user** — from a service action handler _and_ from an entity method
 (`async_set_native_value`, `async_set_hvac_mode`, …) — are a translated `ServiceValidationError` or
 `HomeAssistantError`, **never `ValueError`**, which reaches the user as an unhandled crash. Which of the two:
-[`blueprint.service_actions`](blueprint.service_actions.instructions.md#exception-handling).
+[`haci.service-actions`](haci.service-actions.instructions.md#exception-handling).
 
 **Logging:** `_LOGGER.exception()` inside an exception handler, `_LOGGER.info()` sparingly and only for something the
 user needs. No period at the end (syslog style), never a credential, token or API key in any line at any level, and

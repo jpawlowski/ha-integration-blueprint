@@ -110,7 +110,7 @@ is organized modularly to support complex flows without becoming monolithic.
 - Reconfiguration of the stored credentials
 
 A subentry flow goes in `config_flow_handler/subentry_flow.py` when the integration grows to
-need one; see [`ha-config-flow`](../../.agents/skills/ha-config-flow/SKILL.md).
+need one; see `haci-config-flow`.
 
 **Key classes:**
 

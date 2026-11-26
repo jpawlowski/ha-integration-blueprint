@@ -9,5 +9,5 @@ Run `script/ha-env $ARGUMENTS`, or `script/ha-env list` when no arguments were g
 or two lines: which environment is active, and which Home Assistant version it runs.
 
 The command refuses to switch or refresh the environment a running Home Assistant uses; when it does, follow the
-shared-instance rules in [`ha-coordinator-debug`](../../.agents/skills/ha-coordinator-debug/SKILL.md). `add` and
+shared-instance rules in [`blueprint-dev-instance`](../../.agents/skills/blueprint-dev-instance/SKILL.md). `add` and
 `refresh` download and build for several minutes; say that before starting them.
