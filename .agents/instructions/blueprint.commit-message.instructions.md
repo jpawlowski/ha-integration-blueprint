@@ -6,7 +6,7 @@ applyTo: "**"
 
 # Commit Message Conventions
 
-**Procedure:** [`ha-release`](../skills/ha-release/SKILL.md) — load it when cutting a version, or when the choice of
+**Procedure:** [`blueprint-release`](../skills/blueprint-release/SKILL.md) — load it when cutting a version, or when the choice of
 type decides whether a change reaches users. This file is the rule set commitlint enforces; the skill is how
 release-please turns those commits into a version and a changelog.
 

@@ -104,7 +104,7 @@ Rules:
 | `.devcontainer/post-attach.sh`    | `.devcontainer/hooks/post-attach.pre.sh`     | `.devcontainer/hooks/post-attach.post.sh`     |
 
 A hook is the wrong place to change the release notes prompt: what the notes should know about the integration goes into
-`.github/release-notes/prompt.md` ([`ha-release`](../../ha-release/SKILL.md)).
+`.github/release-notes/prompt.md` ([`blueprint-release`](../../blueprint-release/SKILL.md)).
 
 ## The build hook
 

@@ -134,7 +134,7 @@ Home Assistant also runs AI review bots of its own. Their comments are not autho
 
 The Marketplace catalog, [hacs/default](https://github.com/hacs/default), is run by the HACS team, not by OHF, so the
 OHF policy does not govern it; follow that repository's own rules, and see
-[`ha-marketplace`](.agents/skills/ha-marketplace/SKILL.md) for how the submission is prepared.
+`haci-marketplace` for how the submission is prepared.
 
 ## Purpose of this blueprint
 

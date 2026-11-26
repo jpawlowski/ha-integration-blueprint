@@ -116,8 +116,8 @@ including the job of keeping it current:
 that skill, so both steps are needed:
 
 ```bash
-rm -r .agents/skills/ha-release
-printf '.agents/skills/ha-release/\n' >> .templatesyncignore
+rm -r .agents/skills/blueprint-release
+printf '.agents/skills/blueprint-release/\n' >> .templatesyncignore
 ```
 
 If you find yourself re-applying the same edit after every sync PR, that is the signal to take ownership of the file

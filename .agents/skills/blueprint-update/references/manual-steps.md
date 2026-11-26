@@ -4,6 +4,22 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `haci-publish-skills` — 2026-11-25
+
+**Check:** `test ! -e .agents/skills/ha-marketplace && test ! -e .agents/skills/ha-release && ! grep -qE 'skills/ha-(marketplace|release)/' AGENTS.md && grep -q 'blueprint-release' AGENTS.md`
+
+Publishing is now `haci-marketplace` in the `haci-publish` plugin (`/haci-publish:haci-marketplace` in Claude Code),
+and `ha-release` is renamed `blueprint-release` (`/blueprint-release`), which also took this repository's own release
+path from the old marketplace skill: the ZIP asset, the draft release, the CI gates and the README template.
+
+1. Delete `.agents/skills/ha-marketplace/` and `.agents/skills/ha-release/` where the sync left them. A copy you kept
+   in `.templatesyncignore` has its counterpart now; drop the copy or the entry, and rename an entry for `ha-release`
+   to `blueprint-release`.
+2. In `AGENTS.md`, point the routing rows for commit messages and publishing at `blueprint-release` and
+   `haci-marketplace` (plugin `haci-publish`), fix the link to `branches-and-pull-requests.md`, and name
+   `haci-marketplace` in _Agent plugins_.
+3. Run `script/setup/agent-plugins`.
+
 ## `haci-build-skills` — 2026-11-25
 
 **Check:** `for s in entity-platform service-action config-flow translations user-experience coordinator-debug; do test ! -e .agents/skills/ha-$s || exit 1; done && ! grep -qE 'skills/ha-(entity-platform|service-action|config-flow|translations|user-experience|coordinator-debug)/' AGENTS.md && grep -q 'blueprint-dev-instance' AGENTS.md && grep -q 'haci.entities' AGENTS.md`
@@ -148,7 +164,7 @@ excluded from the sync:
 
 The blueprint now has rules for branches and pull requests: branch names, one logical change per pull request,
 force push only with a lease, and pushing only when asked. The procedures — updating a branch from `main`, conflicts,
-splitting mixed work, stacked pull requests — arrive through the sync in `ha-release`. `AGENTS.md` is not synced:
+splitting mixed work, stacked pull requests — arrive through the sync in `blueprint-release`. `AGENTS.md` is not synced:
 replace its _Commits_ section with the blueprint's _Commits, branches and pull requests_, keeping anything this
 repository added there.
 
@@ -180,7 +196,7 @@ the install badge and its fallbacks, a Codespaces blurb, the contributing sectio
 `<!-- ha-marketplace:exclude-start -->` and `<!-- ha-marketplace:exclude-end -->`; GitHub renders nothing for them.
 `README.md` is never synced, so copy the placement from the blueprint's `README.template.md`, and copy
 `tests/test_readme_markers.py`, which checks that the markers pair up. Optional, and the reasoning is in
-[`ha-marketplace`](../../ha-marketplace/SKILL.md#6-the-readme-is-read-in-two-places).
+`haci-marketplace`.
 
 ## `release-zip-asset` — 2026-11-22
 
@@ -202,7 +218,7 @@ release, because `hacs.json` and `release-please-config.json` are not synced:
    reads `hacs.json` from the tag of the version it installs. `script/tests/test_hacs_json.py`, which the sync
    brings, fails CI while the keys of steps 1 and 2 do not match.
 
-[`ha-marketplace`](../../ha-marketplace/SKILL.md#2-hacsjson--when-to-touch-it) has the reasoning.
+`haci-marketplace` has the reasoning.
 
 ## `test-timeout` — 2026-11-21
 
@@ -266,7 +282,7 @@ old name in `source_repo_path` of this repository's `template-sync.yml`; the wor
 **Check:** `ls custom_components/*/brand/icon.png`
 
 Replace `custom_components/<domain>/brand/` with the product's images — what is required:
-[`ha-marketplace`](../../ha-marketplace/SKILL.md#3-brand-images). `custom_components/` is never synced, so only new repositories get the blueprint's placeholder. Once the file exists,
+`haci-marketplace`. `custom_components/` is never synced, so only new repositories get the blueprint's placeholder. Once the file exists,
 the HACS validation in `validate.yml` stops skipping its `brands` check.
 
 ## `root-gitignore` — 2026-11-02

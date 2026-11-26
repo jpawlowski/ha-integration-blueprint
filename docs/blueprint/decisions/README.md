@@ -7,12 +7,13 @@ How to write one: the `blueprint-decisions` skill, `references/decision-records.
 
 ## In force
 
-| Record                                                                                | Decision                                                                            | Rule |
-| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---- |
-| [20261123-optional-skills-as-plugins](20261123-optional-skills-as-plugins.md)         | Ship Optional Agent Workflow Skills as Plugins from a Separate Marketplace          | —    |
-| [20260815-static-architecture-guardrails](20260815-static-architecture-guardrails.md) | Synchronize Static Architecture Guardrails with the Tooling                         | —    |
-| [20260810-own-development-cli](20260810-own-development-cli.md)                       | Own Development CLI Instead of `homeassistant-cli`                                  | —    |
-| [20260810-offline-development-token](20260810-offline-development-token.md)           | Mint the Development Access Token Offline, Through Home Assistant's Own AuthManager | —    |
+| Record                                                                                          | Decision                                                                                  | Rule |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ---- |
+| [20261125-home-assistant-knowledge-as-plugins](20261125-home-assistant-knowledge-as-plugins.md) | Ship the Home Assistant Knowledge as Plugins, and Vendor Their Rules as Path-Scoped Files | —    |
+| [20261123-optional-skills-as-plugins](20261123-optional-skills-as-plugins.md)                   | Ship Optional Agent Workflow Skills as Plugins from a Separate Marketplace                | —    |
+| [20260815-static-architecture-guardrails](20260815-static-architecture-guardrails.md)           | Synchronize Static Architecture Guardrails with the Tooling                               | —    |
+| [20260810-own-development-cli](20260810-own-development-cli.md)                                 | Own Development CLI Instead of `homeassistant-cli`                                        | —    |
+| [20260810-offline-development-token](20260810-offline-development-token.md)                     | Mint the Development Access Token Offline, Through Home Assistant's Own AuthManager       | —    |
 
 ## History
 

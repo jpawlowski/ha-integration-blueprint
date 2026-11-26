@@ -1,16 +1,15 @@
 ---
-name: ha-release
+name: blueprint-release
 description: >-
   Cut a release of this Home Assistant custom integration, or prepare the commits that feed it. Use when asked to
-  "release", "cut a version", "bump the version", "prepare release notes", "release notes tone", "a release footer", "write a
-  commit message", "why didn't release-please pick this up", "update my branch", "rebase",
-  "stacked PR", "release a beta", or when reviewing whether a change is user-facing. Covers the
-  commit rules commitlint enforces, how release-please versions and writes the changelog, pre-1.0 bumps, betas,
-  the release scripts, and branch upkeep. SYMPTOMS — load this if you are about
-  to: commit without an explicit request; offer to `git push`; force-push without a lease; merge a pull request
-  another one is stacked on; label a user-facing fix as `chore` (hidden types never reach the changelog or trigger a
-  release); write a commit subject over 100 characters or in sentence case; edit the version in `manifest.json` by
-  hand; name a beta `1.2.0b1`; or edit the prompt in `script/release-notes`.
+  "release", "bump the version", "prepare release notes", "write a commit message", "why didn't release-please pick
+  this up", "update my branch", "rebase", "stacked PR", "release a beta", "the release is stuck as a draft", "the ZIP
+  asset is missing", or when reviewing whether a change is user-facing. Covers commitlint's rules, how release-please
+  versions and writes the changelog, betas, the release scripts, branch upkeep, the ZIP asset and the catalog gates.
+  SYMPTOMS — load this if you are about to: commit without an explicit request; offer to `git push`; force-push
+  without a lease; merge a pull request another one is stacked on; label a user-facing fix as `chore`; write a commit
+  subject over 100 characters; edit the version in `manifest.json` by hand; name a beta `1.2.0b1`; edit `hacs.json`,
+  `script/build` or the HACS job in `validate.yml`; or re-run a failed release with "Re-run all jobs".
 ---
 
 # Releases and commit messages
@@ -119,7 +118,7 @@ Release-As: 1.2.0-beta.1
   pre-release, so nobody without the switch gets an update.
 
 How a published release reaches users, and getting the repository into the catalog in the first place, is
-[`ha-marketplace`](../ha-marketplace/SKILL.md).
+`haci-marketplace`.
 
 ## Commands
 
@@ -162,6 +161,36 @@ Release-Notes: skip
 
 or `User-Impact: none`.
 
+## Publishing through HACS here
+
+What a listing needs and how it reaches users is `haci-marketplace` (plugin `haci-publish`); this is how this
+repository provides it.
+
+- **The ZIP asset.** `hacs.json` ships `name`, `homeassistant`, `hacs`, `zip_release`, `filename` (`initialize.sh`
+  sets the domain in it) and `hide_default_branch`; it validates against `schemas/json/hacs_schema.json`.
+  release-please creates the release as a **draft** (`draft` and `force-tag-creation` in `release-please-config.json`).
+  The `release-asset` job in `release-please.yml` runs `script/build` — the tracked files of `custom_components/<domain>/`
+  at the archive root, the build hooks, and a check that the manifest version equals the tag — attaches the ZIP under
+  the name `filename` gives, and only then publishes. The file name lives only in `hacs.json`; the workflow reads it
+  from there and must never repeat it. `script/tests/test_hacs_json.py` fails CI when `zip_release` lacks
+  `filename`, `hide_default_branch` or the draft settings.
+- **A release stuck as a draft** means that job failed. Run the workflow by hand with the tag; "Re-run all jobs"
+  creates no release and skips the job.
+- **Build-time files** — a bundled frontend card, generated assets — come from `script/hooks/build.post.sh`
+  ([`hooks.md`](../blueprint-tooling/references/hooks.md#the-build-hook)), never from files committed into the
+  integration.
+- **The catalog's gates** run in `.github/workflows/validate.yml`: on pull requests, weekly and on demand
+  (`gh workflow run validate.yml --ref main`), not on every push to `main`, and its `changes` job skips both gates on a pull
+  request that touches neither the integration, `README.md`, `hacs.json` nor the workflow. Its `hacs` job skips itself with a notice on a private repository and
+  adds `ignore: brands` with a warning while `brand/icon.png` is missing; the other gate is the `Hassfest validation`
+  job. Replacing the placeholder icon is a `blueprint-scaffold` step.
+- **The README** is generated once by `initialize.sh` from `README.template.md`, which already wraps the Codespaces
+  blurb, the install badge with its fallbacks and the contributing section in the Marketplace exclude markers, and
+  carries the My links `marketplace_repository` and `config_flow_start` — keep their parameters in step with a
+  repository rename. `tests/test_readme_markers.py` holds every exclude marker to its end.
+- **Raising `hacs.json` → `homeassistant`**: `script/ha-version-sync` makes the development and test pins follow
+  ([`blueprint-tooling`](../blueprint-tooling/SKILL.md#bumping-the-home-assistant-version)).
+
 ## Pre-release checklist
 
 Before suggesting the release PR be merged:
@@ -179,7 +208,7 @@ Also confirm:
 - Every breaking change has a `BREAKING CHANGE:` footer and a migration note.
 - `docs/user/` and the README match the released behaviour.
 - `hacs.json` → `homeassistant` is still the minimum this release needs
-  ([`ha-marketplace`](../ha-marketplace/SKILL.md#2-hacsjson--when-to-touch-it)), and a raised one is named in the
+  (`haci-marketplace`), and a raised one is named in the
   changelog — it is not a breaking change (`haci-breaking-changes`).
 - `custom_components/<domain>/brand/icon.png` is the product's icon, not the blueprint's placeholder.
 
