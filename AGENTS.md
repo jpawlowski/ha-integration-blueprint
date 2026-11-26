@@ -69,29 +69,30 @@ agent that implements it. If yours does not, read the `SKILL.md` before starting
 
 ### Routing table
 
-| Working on                                             | Procedure                                                              | Style rules (`.agents/instructions/`)                  |
-| ------------------------------------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------ |
-| an entity platform or an individual entity             | [`ha-entity-platform`](.agents/skills/ha-entity-platform/SKILL.md)     | `blueprint.entities`                                   |
-| a service action                                       | [`ha-service-action`](.agents/skills/ha-service-action/SKILL.md)       | `blueprint.service_actions`, `blueprint.services_yaml` |
-| config flow, options, reauth, reconfigure, discovery   | [`ha-config-flow`](.agents/skills/ha-config-flow/SKILL.md)             | `blueprint.config_flow`                                |
-| the coordinator, the API client, runtime debugging     | [`ha-coordinator-debug`](.agents/skills/ha-coordinator-debug/SKILL.md) | `blueprint.coordinator`                                |
-| translations, `icons.json`                             | [`ha-translations`](.agents/skills/ha-translations/SKILL.md)           | `blueprint.translations`                               |
-| what users see: states, attributes, options, help text | [`ha-user-experience`](.agents/skills/ha-user-experience/SKILL.md)     | —                                                      |
-| tests                                                  | `haci-testing` (plugin `haci-quality`)                                 | `blueprint.tests`, `haci.tests`                        |
-| repair issues and flows                                | `haci-breaking-changes` (plugin `haci-quality`)                        | `blueprint.repairs`, `haci.repairs`                    |
-| anything that could break existing installs            | `haci-breaking-changes` (plugin `haci-quality`)                        | —                                                      |
-| a Quality Scale audit or pre-release review            | `haci-quality-review` (plugin `haci-quality`)                          | —                                                      |
-| deprecation warnings, verifying an API is current      | `haci-modern-apis` (plugin `haci-quality`)                             | —                                                      |
-| recording or superseding an architectural decision     | [`blueprint-decisions`](.agents/skills/blueprint-decisions/SKILL.md)   | —                                                      |
-| lessons from bugs and corrections, project skills      | [`blueprint-lessons`](.agents/skills/blueprint-lessons/SKILL.md)       | —                                                      |
-| commit messages, versioning, changelog, release notes  | [`ha-release`](.agents/skills/ha-release/SKILL.md)                     | `blueprint.commit-message`                             |
-| publishing through HACS and the Marketplace            | [`ha-marketplace`](.agents/skills/ha-marketplace/SKILL.md)             | —                                                      |
-| validation scripts, dependencies, hooks, template sync | [`blueprint-tooling`](.agents/skills/blueprint-tooling/SKILL.md)       | `blueprint.shell`                                      |
-| blueprint changes the template sync cannot deliver     | [`blueprint-update`](.agents/skills/blueprint-update/SKILL.md)         | —                                                      |
-| `manifest.json`                                        | —                                                                      | `blueprint.manifest`                                   |
-| diagnostics                                            | —                                                                      | `blueprint.diagnostics`                                |
-| any Python, YAML, JSON or Markdown file                | —                                                                      | `blueprint.python`, `.yaml`, `.json`, `.markdown`      |
-| commenting any file, in any syntax                     | —                                                                      | `blueprint.comments`                                   |
+| Working on                                             | Procedure                                                                  | Style rules (`.agents/instructions/`)                                                                |
+| ------------------------------------------------------ | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| an entity platform or an individual entity             | `haci-entity-platform` (plugin `haci-build`)                               | `blueprint.entities`, `haci.entities`                                                                |
+| a service action                                       | `haci-service-action` (plugin `haci-build`)                                | `blueprint.service_actions`, `blueprint.services_yaml`, `haci.service-actions`, `haci.services-yaml` |
+| config flow, options, reauth, reconfigure, discovery   | `haci-config-flow` (plugin `haci-build`)                                   | `blueprint.config_flow`, `haci.config-flow`                                                          |
+| the coordinator, the API client, runtime debugging     | `haci-coordinator-debug` (plugin `haci-build`)                             | `blueprint.coordinator`, `haci.coordinator`                                                          |
+| the development instance: start, restart, `script/ha`  | [`blueprint-dev-instance`](.agents/skills/blueprint-dev-instance/SKILL.md) | —                                                                                                    |
+| translations, `icons.json`                             | `haci-translations` (plugin `haci-build`)                                  | `blueprint.translations`, `haci.translations`                                                        |
+| what users see: states, attributes, options, help text | `haci-user-experience` (plugin `haci-build`)                               | —                                                                                                    |
+| tests                                                  | `haci-testing` (plugin `haci-quality`)                                     | `blueprint.tests`, `haci.tests`                                                                      |
+| repair issues and flows                                | `haci-breaking-changes` (plugin `haci-quality`)                            | `blueprint.repairs`, `haci.repairs`                                                                  |
+| anything that could break existing installs            | `haci-breaking-changes` (plugin `haci-quality`)                            | —                                                                                                    |
+| a Quality Scale audit or pre-release review            | `haci-quality-review` (plugin `haci-quality`)                              | —                                                                                                    |
+| deprecation warnings, verifying an API is current      | `haci-modern-apis` (plugin `haci-quality`)                                 | —                                                                                                    |
+| recording or superseding an architectural decision     | [`blueprint-decisions`](.agents/skills/blueprint-decisions/SKILL.md)       | —                                                                                                    |
+| lessons from bugs and corrections, project skills      | [`blueprint-lessons`](.agents/skills/blueprint-lessons/SKILL.md)           | —                                                                                                    |
+| commit messages, versioning, changelog, release notes  | [`ha-release`](.agents/skills/ha-release/SKILL.md)                         | `blueprint.commit-message`                                                                           |
+| publishing through HACS and the Marketplace            | [`ha-marketplace`](.agents/skills/ha-marketplace/SKILL.md)                 | —                                                                                                    |
+| validation scripts, dependencies, hooks, template sync | [`blueprint-tooling`](.agents/skills/blueprint-tooling/SKILL.md)           | `blueprint.shell`                                                                                    |
+| blueprint changes the template sync cannot deliver     | [`blueprint-update`](.agents/skills/blueprint-update/SKILL.md)             | —                                                                                                    |
+| `manifest.json`                                        | `haci-config-flow` (plugin `haci-build`)                                   | `blueprint.manifest`, `haci.manifest`                                                                |
+| diagnostics                                            | `haci-coordinator-debug` (plugin `haci-build`)                             | `blueprint.diagnostics`, `haci.diagnostics`                                                          |
+| any Python, YAML, JSON or Markdown file                | —                                                                          | `blueprint.python`, `.yaml`, `.json`, `.markdown`                                                    |
+| commenting any file, in any syntax                     | —                                                                          | `blueprint.comments`                                                                                 |
 
 Two one-time skills exist for a fresh repository and remove themselves as their final step:
 [`blueprint-scaffold`](.agents/skills/blueprint-scaffold/SKILL.md) (turn the template into an integration for one real
@@ -103,9 +104,11 @@ Skills are validated by `script/skills-check` (part of `script/lint-check`, so C
 
 Home Assistant knowledge and working habits that a developer may want to turn off ship as plugins from
 [ha-custom-integration-skills](https://github.com/jpawlowski/ha-custom-integration-skills), pinned to one tag in
-`.claude/settings.json`, `.github/copilot/settings.json` and `.codex/config.toml`; `script/setup/bootstrap` installs
-them. Interviewing and planning are `haci-grill` and `haci-planning` (plugin `haci-plan`), the review pass is
-`haci-change-review` (`haci-review`), testing, current APIs, breaking changes and the Quality Scale audit are
+`.claude/settings.json`, `.github/copilot/settings.json`, `.codex/config.toml` and the OpenCode catalog URLs in
+`opencode.json`; `script/setup/bootstrap` installs them. Interviewing and planning are `haci-grill` and
+`haci-planning` (plugin `haci-plan`), the review pass is `haci-change-review` (`haci-review`), building is
+`haci-entity-platform`, `haci-service-action`, `haci-config-flow`, `haci-translations`, `haci-user-experience` and
+`haci-coordinator-debug` (`haci-build`), testing, current APIs, breaking changes and the Quality Scale audit are
 `haci-testing`, `haci-modern-apis`, `haci-breaking-changes` and `haci-quality-review` (`haci-quality`), and backlog
 triage is `haci-issue-triage` with the autonomous `haci-issues` run (`haci-triage`, off by default). A skill's rules
 reach the files they govern as `.agents/instructions/haci.*.instructions.md`, which `script/haci-vendor` copies from the
@@ -142,7 +145,7 @@ These are the ones an agent typically breaks _before_ it realises a skill or ins
 - **Never add `device_trigger.py`, `device_condition.py` or `device_action.py`.** Device automations are frozen
   upstream — existing ones keep working, new ones are not accepted. Older integrations are full of them, so this is a
   pattern to recognise and not copy. Use the trigger and condition platform instead
-  ([`ha-service-action`](.agents/skills/ha-service-action/SKILL.md)).
+  (`haci-service-action`).
 - **A unique ID is a serial number, MAC, device ID or account ID** — never an IP address, hostname, URL, an email
   address, a username, or a name the user chose. Take a MAC from the device API or a discovery handler and normalise
   it with `format_mac()`; reading the ARP cache (`getmac` and friends) does not work in every supported network setup
@@ -159,7 +162,7 @@ These are the ones an agent typically breaks _before_ it realises a skill or ins
 - **While Home Assistant runs, ask it — do not read `config/.storage/`.** Those files are written 1–180 seconds after
   the change they describe and hold no live state at all, so `script/ha` is the source of truth. With Home Assistant
   stopped it is the other way round. Never write into `config/.storage/` while it runs; the next save discards the
-  edit. Decision table: [`ha-coordinator-debug`](.agents/skills/ha-coordinator-debug/SKILL.md).
+  edit. Decision table: [`blueprint-dev-instance`](.agents/skills/blueprint-dev-instance/SKILL.md).
 
 ### Device registry ownership (Home Assistant 2026.8+)
 
@@ -291,8 +294,8 @@ the process tree looking for an explanation.
 
 **`./script/develop` is a takeover, not "start if not running"** — it kills whatever is already bound to `config/`.
 Check `script/ha status` first, announce a restart, and announce **beforehand** when you need the instance
-exclusively. Log reading, failure triage, and the rest of the run-loop rules:
-[`ha-coordinator-debug`](.agents/skills/ha-coordinator-debug/SKILL.md).
+exclusively. The rest of the run-loop rules: [`blueprint-dev-instance`](.agents/skills/blueprint-dev-instance/SKILL.md); reading the
+log and triaging a failure: `haci-coordinator-debug` (plugin `haci-build`).
 
 **CLI tools everywhere:** `mise.toml` pins Python, `uv`, `fd`, `jq`, `rg`, `shellcheck`, `shfmt` and `yq`
 for the dev container, CI, a local machine and cloud sessions alike, and every `script/*` applies `mise env` itself —

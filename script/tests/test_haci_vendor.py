@@ -135,3 +135,13 @@ def test_initialize_leaves_every_rules_file_alone() -> None:
     script = (ROOT / "initialize.sh").read_text(encoding="utf-8")
     for topic in haci_vendor.TOPICS:
         assert f'"./{topic.target}"' in script
+
+
+def test_a_topic_can_name_a_second_rules_file_of_its_skill() -> None:
+    """A skill that governs two kinds of file ships rules.<topic>.md beside rules.md."""
+    default = haci_vendor.Topic("example", "haci-build", "haci-service-action", ("**/x.py",))
+    second = haci_vendor.Topic("other", "haci-build", "haci-service-action", ("**/x.yaml",), rules="rules.other")
+
+    assert default.source == "plugins/haci-build/skills/haci-service-action/references/rules.md"
+    assert second.source == "plugins/haci-build/skills/haci-service-action/references/rules.other.md"
+    assert second.target.name == "haci.other.instructions.md"

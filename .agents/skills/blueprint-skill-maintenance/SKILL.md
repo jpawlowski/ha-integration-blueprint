@@ -163,9 +163,9 @@ stale. Re-verify against the newly installed source, not from memory:
   — `haci-modern-apis` (`references/deprecations.md`, `references/device-registry.md`: move rows whose "Removed in"
   version has arrived to "gone", add new `breaks_in_ha_version` entries) and `haci-quality-review`
   (`references/quality-scale-rules.md` against `script/hassfest/quality_scale.py` upstream). The fix is a release
-  there and a pin bump here
-- `ha-entity-platform`, `ha-config-flow`, `ha-service-action` — any API named in a code sample, including
-  `references/triggers-conditions.md`, which tracks a young API
+  there and a pin bump here. The same holds for the `haci-build` plugin: `haci-entity-platform`, `haci-config-flow`,
+  `haci-service-action` — any API named in a code sample, including `references/triggers-conditions.md`, which tracks
+  a young API
 - `tests/` — Home Assistant's own deprecations are logged, not raised, so run the suite: the autouse
   deprecation fixture in `tests/conftest.py` fails on them
 - Every `(HA YYYY.M+)` marker, across all skills and instructions files: once the **minimum** version in `hacs.json`

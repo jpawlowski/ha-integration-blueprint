@@ -4,6 +4,28 @@ What an integration repository has to do by hand because template sync cannot do
 for the `skipped` list in `.agents/blueprint-update.json`, the date it entered the blueprint, and a check that passes
 once it is done. Run the check from the repository root.
 
+## `haci-build-skills` — 2026-11-25
+
+**Check:** `for s in entity-platform service-action config-flow translations user-experience coordinator-debug; do test ! -e .agents/skills/ha-$s || exit 1; done && ! grep -qE 'skills/ha-(entity-platform|service-action|config-flow|translations|user-experience|coordinator-debug)/' AGENTS.md && grep -q 'blueprint-dev-instance' AGENTS.md && grep -q 'haci.entities' AGENTS.md`
+
+The building skills are now the `haci-build` plugin: `haci-entity-platform`, `haci-service-action`,
+`haci-config-flow`, `haci-translations`, `haci-user-experience` and `haci-coordinator-debug`; in Claude Code they are
+`/haci-build:haci-entity-platform` and so on. Their Home Assistant rules arrive as eight more `haci.*.instructions.md`
+files (`entities`, `service-actions`, `services-yaml`, `config-flow`, `manifest`, `translations`, `coordinator`,
+`diagnostics`), and the `blueprint.*` file beside each keeps only this repository's additions. Running and reading the
+development instance — `script/develop`, `script/ha`, `config/.storage/` — is the new skill `blueprint-dev-instance`.
+OpenCode now loads the plugins from the catalog URLs in `opencode.json`.
+
+1. Delete `.agents/skills/ha-entity-platform/`, `ha-service-action/`, `ha-config-flow/`, `ha-translations/`,
+   `ha-user-experience/` and `ha-coordinator-debug/` where the sync left them. A copy you kept on purpose in
+   `.templatesyncignore` has its `haci-` counterpart now; drop the copy or the entry. A `blueprint.*` instructions file
+   you own there lost its Home Assistant part to the `haci.*` file; keep only your additions.
+2. In `AGENTS.md`, point those routing rows at the `haci-` names (plugin `haci-build`) with their `haci.*` rules files,
+   name `haci-config-flow` for `manifest.json` and `haci-coordinator-debug` for diagnostics, add the row for
+   `blueprint-dev-instance`, and point the `config/.storage/` decision table and the run-loop rules at it. In _Agent
+   plugins_, name the `haci-build` skills and `opencode.json`.
+3. Run `script/setup/agent-plugins`.
+
 ## `haci-quality-skills` — 2026-11-24
 
 **Check:** `test ! -e .agents/skills/ha-modern-apis && test ! -e .agents/skills/ha-breaking-changes && test ! -e .agents/skills/ha-quality-review && ! grep -qE 'skills/ha-(modern-apis|breaking-changes|quality-review)/' AGENTS.md && grep -q 'haci.repairs' AGENTS.md`
@@ -142,7 +164,7 @@ too if this repository's conftest has none. A failure after copying lists the ke
 
 ## `ux-skill-routing` — 2026-11-22
 
-**Check:** `grep -q 'ha-user-experience' AGENTS.md`
+**Check:** `grep -qE 'ha(ci)?-user-experience' AGENTS.md`
 
 The sync brings the skill `ha-user-experience` and corrected rules in `blueprint.entities`. `AGENTS.md` is not
 synced, so carry over two changes from the blueprint's `AGENTS.md`: the routing row above the `tests` row — agents

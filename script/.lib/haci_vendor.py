@@ -6,7 +6,8 @@ to ``.agents/instructions/haci.<topic>.instructions.md`` with the patterns from 
 layout, not the skill's — and the marketplace tag ``.claude/settings.json`` pins. Copilot, VS Code and Claude Code then
 load the rules whenever an agent opens a matching file, with or without the skill.
 
-The tag is read from the settings and nowhere else; the run stops when the Copilot or Codex settings pin another one.
+The tag is read from the settings and nowhere else; the run stops when the Copilot, Codex or OpenCode settings pin
+another one.
 ``HACI_VENDOR_SOURCE`` names a local checkout to read instead of cloning the tag; the marker then says ``<tag>+local``,
 which script/skills-check rejects, so such a file is for trying out a rules change and never passes the gates. The
 marker also carries a digest of the text below it, so a hand edit fails the same check.
@@ -27,10 +28,12 @@ from agent_plugins import (
     CLAUDE_SETTINGS,
     CODEX_CONFIG,
     COPILOT_SETTINGS,
+    OPENCODE_CONFIG,
     Pin,
     _json,
     codex_pins,
     mismatches,
+    opencode_pins,
     pins_from_settings,
 )
 
@@ -48,11 +51,12 @@ class Topic:
     plugin: str
     skill: str
     patterns: tuple[str, ...]
+    rules: str = "rules"
 
     @property
     def source(self) -> str:
         """The path of the rules file inside the marketplace repository."""
-        return f"plugins/{self.plugin}/skills/{self.skill}/references/rules.md"
+        return f"plugins/{self.plugin}/skills/{self.skill}/references/{self.rules}.md"
 
     @property
     def target(self) -> Path:
@@ -61,8 +65,77 @@ class Topic:
 
 
 TOPICS = (
+    Topic(
+        "config-flow",
+        "haci-build",
+        "haci-config-flow",
+        (
+            "custom_components/**/config_flow_handler/**/*.py",
+            "custom_components/**/config_flow.py",
+        ),
+    ),
+    Topic(
+        "coordinator",
+        "haci-build",
+        "haci-coordinator-debug",
+        (
+            "custom_components/**/coordinator/**/*.py",
+            "custom_components/**/api/**/*.py",
+        ),
+    ),
+    Topic(
+        "diagnostics",
+        "haci-build",
+        "haci-coordinator-debug",
+        ("custom_components/**/diagnostics.py",),
+        rules="rules.diagnostics",
+    ),
+    Topic(
+        "entities",
+        "haci-build",
+        "haci-entity-platform",
+        (
+            "custom_components/**/alarm_control_panel/**/*.py",
+            "custom_components/**/binary_sensor/**/*.py",
+            "custom_components/**/button/**/*.py",
+            "custom_components/**/camera/**/*.py",
+            "custom_components/**/climate/**/*.py",
+            "custom_components/**/cover/**/*.py",
+            "custom_components/**/date/**/*.py",
+            "custom_components/**/datetime/**/*.py",
+            "custom_components/**/device_tracker/**/*.py",
+            "custom_components/**/event/**/*.py",
+            "custom_components/**/fan/**/*.py",
+            "custom_components/**/humidifier/**/*.py",
+            "custom_components/**/image/**/*.py",
+            "custom_components/**/lawn_mower/**/*.py",
+            "custom_components/**/light/**/*.py",
+            "custom_components/**/lock/**/*.py",
+            "custom_components/**/media_player/**/*.py",
+            "custom_components/**/notify/**/*.py",
+            "custom_components/**/number/**/*.py",
+            "custom_components/**/scene/**/*.py",
+            "custom_components/**/select/**/*.py",
+            "custom_components/**/sensor/**/*.py",
+            "custom_components/**/siren/**/*.py",
+            "custom_components/**/switch/**/*.py",
+            "custom_components/**/text/**/*.py",
+            "custom_components/**/time/**/*.py",
+            "custom_components/**/todo/**/*.py",
+            "custom_components/**/update/**/*.py",
+            "custom_components/**/vacuum/**/*.py",
+            "custom_components/**/valve/**/*.py",
+            "custom_components/**/water_heater/**/*.py",
+            "custom_components/**/entity/**/*.py",
+            "custom_components/**/entity_utils/**/*.py",
+        ),
+    ),
+    Topic("manifest", "haci-build", "haci-config-flow", ("**/manifest.json",), rules="rules.manifest"),
     Topic("repairs", "haci-quality", "haci-breaking-changes", ("custom_components/**/repairs.py",)),
+    Topic("service-actions", "haci-build", "haci-service-action", ("custom_components/**/service_actions/**/*.py",)),
+    Topic("services-yaml", "haci-build", "haci-service-action", ("**/services.yaml",), rules="rules.services-yaml"),
     Topic("tests", "haci-quality", "haci-testing", ("tests/**/*.py",)),
+    Topic("translations", "haci-build", "haci-translations", ("**/translations/*.json",)),
 )
 
 
@@ -74,7 +147,8 @@ def pinned() -> Pin:
     """Return the marketplace pin from the Claude settings, after checking the other agents pin the same."""
     pins = pins_from_settings(_json(CLAUDE_SETTINGS))
     codex = codex_pins(tomllib.loads(CODEX_CONFIG.read_text(encoding="utf-8"))) if CODEX_CONFIG.is_file() else []
-    problems = mismatches(pins, pins_from_settings(_json(COPILOT_SETTINGS)), codex)
+    opencode = opencode_pins(_json(OPENCODE_CONFIG), pins) if OPENCODE_CONFIG.is_file() else None
+    problems = mismatches(pins, pins_from_settings(_json(COPILOT_SETTINGS)), codex, opencode)
     if problems:
         raise VendorError("; ".join(problems))
     for pin in pins:

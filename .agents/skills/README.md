@@ -8,22 +8,17 @@ any of it in your own repository, see [`../README.md`](../README.md). This file 
 
 ## Available skills
 
-| Skill                                                   | Use when                                                                    |
-| ------------------------------------------------------- | --------------------------------------------------------------------------- |
-| [`ha-entity-platform`](ha-entity-platform/SKILL.md)     | adding or changing an entity platform or an individual entity               |
-| [`ha-service-action`](ha-service-action/SKILL.md)       | adding or changing a service action (`services.yaml` + handler)             |
-| [`ha-config-flow`](ha-config-flow/SKILL.md)             | config flow, options, reauth, reconfigure, discovery, subentries            |
-| [`ha-coordinator-debug`](ha-coordinator-debug/SKILL.md) | entities unavailable, stale data, setup failures, runtime debugging         |
-| [`ha-translations`](ha-translations/SKILL.md)           | `translations/*.json`, `icons.json`, entity and exception translations      |
-| [`ha-user-experience`](ha-user-experience/SKILL.md)     | deciding what users see — states, attributes, icons, options, help, actions |
-| [`blueprint-decisions`](blueprint-decisions/SKILL.md)   | recording or superseding an architectural decision, and its index           |
-| [`blueprint-lessons`](blueprint-lessons/SKILL.md)       | keeping a lesson from a bug or a repeated correction; project skills        |
-| [`ha-release`](ha-release/SKILL.md)                     | cutting a release, commit messages, changelog, release notes                |
-| [`ha-marketplace`](ha-marketplace/SKILL.md)             | publishing through the Marketplace/HACS catalog, `hacs.json`, brand images  |
-| [`blueprint-tooling`](blueprint-tooling/SKILL.md)       | validation scripts, hook scripts, dependencies, template sync               |
-| [`blueprint-update`](blueprint-update/SKILL.md)         | carrying over blueprint changes the template sync cannot deliver            |
-| [`blueprint-scaffold`](blueprint-scaffold/SKILL.md)     | turning the fresh template into an integration for one real device          |
-| [`blueprint-import`](blueprint-import/SKILL.md)         | migrating an existing custom integration into this repository               |
+| Skill                                                       | Use when                                                                   |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [`blueprint-dev-instance`](blueprint-dev-instance/SKILL.md) | starting, restarting and reading the development instance with `script/ha` |
+| [`blueprint-decisions`](blueprint-decisions/SKILL.md)       | recording or superseding an architectural decision, and its index          |
+| [`blueprint-lessons`](blueprint-lessons/SKILL.md)           | keeping a lesson from a bug or a repeated correction; project skills       |
+| [`ha-release`](ha-release/SKILL.md)                         | cutting a release, commit messages, changelog, release notes               |
+| [`ha-marketplace`](ha-marketplace/SKILL.md)                 | publishing through the Marketplace/HACS catalog, `hacs.json`, brand images |
+| [`blueprint-tooling`](blueprint-tooling/SKILL.md)           | validation scripts, hook scripts, dependencies, template sync              |
+| [`blueprint-update`](blueprint-update/SKILL.md)             | carrying over blueprint changes the template sync cannot deliver           |
+| [`blueprint-scaffold`](blueprint-scaffold/SKILL.md)         | turning the fresh template into an integration for one real device         |
+| [`blueprint-import`](blueprint-import/SKILL.md)             | migrating an existing custom integration into this repository              |
 
 `blueprint-scaffold` and `blueprint-import` are one-time skills: each ends with a step that removes itself once its
 job is done. Leaving them in place costs context in every later session.

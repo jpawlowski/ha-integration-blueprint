@@ -94,8 +94,12 @@ If you edit the instructions and skills under `.agents/` with VS Code's chat,
 
 Claude Code, Codex, OpenCode, VS Code, and Copilot CLI all support lifecycle hooks. The configuration paths differ, but the
 commands here converge on `.agents/hooks/` so security behavior is implemented and tested once. Agent workflows such as backlog triage ship as plugins instead
-(the `haci-triage` plugin), which every agent with a plugin marketplace installs
-the same way.
+(the `haci-triage` plugin), pinned to one tag in four files that move together:
+[.claude/settings.json](../../.claude/settings.json), [.github/copilot/settings.json](../../.github/copilot/settings.json),
+[.codex/config.toml](../../.codex/config.toml) and [opencode.json](../../opencode.json). OpenCode has no plugin
+marketplace; it loads the skills from one catalog URL per enabled plugin in `opencode.json` → `skills` and fetches
+them each time it starts, so it needs network access then — a catalog whose `index.json` cannot be fetched is dropped
+for that session. `script/setup/agent-plugins --check` fails when the four files disagree.
 These agent lifecycle hooks are unrelated to `script/hooks/`, which customizes the repository's validation scripts.
 
 ### Session start

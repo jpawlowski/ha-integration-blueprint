@@ -14,4 +14,4 @@ issues and repair flows are `haci.repairs`, which loads with this file; what fol
 - `repairs.py` sits at the integration root, beside `config_flow_handler/` and never inside it — a repair flow is not
   a config flow, and the shim `config_flow.py` must stay a shim.
 - `learn_more_url` points at the page in `docs/user/` that explains the problem, never at the README's top.
-- Issue text goes into `translations/en.json` only ([`ha-translations`](../skills/ha-translations/SKILL.md)).
+- Issue text goes into `translations/en.json` only (`haci-translations`).

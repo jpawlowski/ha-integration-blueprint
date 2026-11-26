@@ -5,7 +5,7 @@ reading a log file and asking a human to click through the UI: entity states, co
 error log, service actions, and config flows are all reachable directly.
 
 The debugging procedure that uses these commands is
-[`ha-coordinator-debug`](../../ha-coordinator-debug/SKILL.md). This file is the command reference.
+`haci-coordinator-debug`. This file is the command reference.
 
 ## Authentication
 
@@ -196,8 +196,8 @@ sequence, and the full surrounding context of a traceback. Use `config/home-assi
 `config/home-assistant.log.1` for the previous run.
 
 **Never edit `config/.storage/` while Home Assistant is running** — it rewrites each store wholesale from memory on its
-next save, so the edit disappears without a message. The decision table and the per-store save delays are in
-[`ha-coordinator-debug`](../../ha-coordinator-debug/SKILL.md).
+next save, so the edit disappears without a message. The decision table is in
+[`blueprint-dev-instance`](../../blueprint-dev-instance/SKILL.md), the per-store save delays in `haci-coordinator-debug`.
 
 ## Targeting another instance
 

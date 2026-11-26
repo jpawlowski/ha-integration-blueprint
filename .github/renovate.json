@@ -51,7 +51,7 @@
     },
     {
       "customType": "regex",
-      "description": "The agent plugin marketplace, pinned to one tag in each agent's settings. script/setup/agent-plugins --check fails unless all three move together, so the rule below groups them.",
+      "description": "The agent plugin marketplace, pinned to one tag in each agent's settings. script/setup/agent-plugins --check fails unless all four move together, so the rule below groups them.",
       "managerFilePatterns": [
         "/(^|/)\\.claude/settings\\.json$/",
         "/(^|/)\\.github/copilot/settings\\.json$/",
@@ -60,6 +60,15 @@
       "matchStrings": [
         "\"repo\":\\s*\"(?<depName>[^\"]+)\",\\s*\"ref\":\\s*\"(?<currentValue>[^\"]+)\"",
         "source = \"https://github\\.com/(?<depName>[^\"]+?)\\.git\"\\s*ref = \"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "description": "The same tag in OpenCode's skill catalog URLs, one per enabled plugin.",
+      "managerFilePatterns": ["/(^|/)opencode\\.json$/"],
+      "matchStrings": [
+        "\"https://raw\\.githubusercontent\\.com/(?<depName>[^/\"]+/[^/\"]+)/(?<currentValue>[^/\"]+)/plugins/[^/\"]+/skills/?\""
       ],
       "datasourceTemplate": "github-tags"
     }
@@ -133,8 +142,8 @@
       "matchDepNames": ["node"]
     },
     {
-      "description": "The agent plugins: one pull request that raises the tag in all three settings files. Development tooling, so it stays out of the changelog.",
-      "matchFileNames": [".claude/settings.json", ".github/copilot/settings.json", ".codex/config.toml"],
+      "description": "The agent plugins: one pull request that raises the tag in all four settings files. Development tooling, so it stays out of the changelog.",
+      "matchFileNames": [".claude/settings.json", ".github/copilot/settings.json", ".codex/config.toml", "opencode.json"],
       "matchDatasources": ["github-tags"],
       "groupName": "agent plugins",
       "addLabels": ["tooling"],

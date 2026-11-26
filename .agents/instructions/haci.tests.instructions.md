@@ -6,7 +6,7 @@ paths:
   - "tests/**/*.py"
 ---
 
-<!-- haci-vendor: jpawlowski/ha-custom-integration-skills@v0.4.0 plugins/haci-quality/skills/haci-testing/references/rules.md sha256:d44646179350ea3f — written by script/haci-vendor, do not edit -->
+<!-- haci-vendor: jpawlowski/ha-custom-integration-skills@v0.5.1 plugins/haci-quality/skills/haci-testing/references/rules.md sha256:37bb7f5873cc89b5 — written by script/haci-vendor, do not edit -->
 
 # Home Assistant test rules
 
@@ -51,7 +51,8 @@ diagnostics, config flow results. Commit the `.ambr` files.
   case
 - No network — `pytest-homeassistant` blocks sockets except to `127.0.0.1`; a test that needs one is missing a mock
 - Recorded payloads go in `tests/fixtures/`, loaded with `load_fixture(name)` or `load_json_object_fixture(name)` from a
-  test file at any depth — never with a second argument, which points at Core's tree
+  test file at any depth — never with a second argument, which points at Core's tree. Tests outside `<rootdir>/tests`
+  need the `ha_test_root` ini option, or the loaders look in the wrong place
 
 ## Core interface testing
 

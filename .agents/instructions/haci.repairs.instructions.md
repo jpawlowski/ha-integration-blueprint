@@ -6,7 +6,7 @@ paths:
   - "custom_components/**/repairs.py"
 ---
 
-<!-- haci-vendor: jpawlowski/ha-custom-integration-skills@v0.4.0 plugins/haci-quality/skills/haci-breaking-changes/references/rules.md sha256:0b3611a0a309e5d3 — written by script/haci-vendor, do not edit -->
+<!-- haci-vendor: jpawlowski/ha-custom-integration-skills@v0.5.1 plugins/haci-quality/skills/haci-breaking-changes/references/rules.md sha256:0b3611a0a309e5d3 — written by script/haci-vendor, do not edit -->
 
 # Repair issues and flows
 
